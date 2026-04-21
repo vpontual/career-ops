@@ -1,0 +1,13 @@
+# Scanner container — zero-token portal scan + Gemini evaluation.
+# Deliberately SLIM: scan.mjs is pure HTTP, no Playwright/Chromium needed.
+# Separate Dockerfile.pdf will handle PDF generation (needs Chromium).
+#
+# node_modules is installed on the host side via `npm install` and bind-mounted
+# at runtime — this keeps the image ephemeral and rebuilds fast.
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Default command — override via `docker compose run` to call specific scripts
+CMD ["node", "scan.mjs"]

@@ -1,0 +1,61 @@
+# Career-Ops local stack — VEEPEE / vpontual personalization.
+#
+# Services:
+#   scanner  — one-shot, invoked by cron (P2) or manually.
+#   ui       — TODO P1: Next.js reader UI at :3340.
+#   pdf      — TODO P1: Playwright + Chromium for generate-pdf.mjs (on-demand).
+#
+# Resource caps are non-negotiable per ~/Dev/career-ops-plan.md invariants.
+
+services:
+
+  scanner:
+    build:
+      context: .
+      dockerfile: Dockerfile.scanner
+    image: career-ops-scanner:local
+    # Run as host uid/gid so files written from the container land owned by vp,
+    # matching the repo owner. Avoids root-owned data/ and reports/ on the host.
+    user: "1000:1000"
+    # Bind-mount the whole project so edits to cv.md / portals.yml / modes are live
+    # without rebuilding the image.
+    volumes:
+      - .:/app
+    working_dir: /app
+    env_file:
+      - .env
+    cpus: 1.0
+    mem_limit: 1g
+    # One-shot by default — `docker compose run --rm scanner` to invoke.
+    # Never keep running.
+    restart: "no"
+    command: node scan.mjs
+
+  # ---- P1 stubs, uncomment when those phases start ----
+  # ui:
+  #   build:
+  #     context: ./ui
+  #   image: career-ops-ui:local
+  #   ports:
+  #     - "3340:3000"
+  #   volumes:
+  #     - ./data:/data:ro
+  #     - ./reports:/reports:ro
+  #     - ./output:/output:ro
+  #   cpus: 0.5
+  #   mem_limit: 256m
+  #   restart: unless-stopped
+  #
+  # pdf:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.pdf
+  #   image: career-ops-pdf:local
+  #   volumes:
+  #     - .:/app
+  #   env_file:
+  #     - .env
+  #   cpus: 1.0
+  #   mem_limit: 1g
+  #   restart: "no"
+  #   entrypoint: ["node", "generate-pdf.mjs"]

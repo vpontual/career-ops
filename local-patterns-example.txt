@@ -1,0 +1,16 @@
+# Personal pattern examples for .git/hooks/local-patterns
+# Copy lines you need to .git/hooks/local-patterns (gitignored, not committed).
+# Each line is an extended regex grep will match against staged diff additions.
+
+# Personal email
+# v\.pontual@gmail\.com
+
+# Personal phone (area code variations)
+# \+?1[ .-]?\(?858\)?[ .-]?[0-9]{3}[ .-]?[0-9]{4}
+
+# Internal hostnames
+# vpmm\.local
+# casavp\.com
+
+# Specific fleet IPs (redundant with 10.x.x.x pattern but can be made stricter)
+# 10\.0\.154\.[0-9]+

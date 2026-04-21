@@ -40,4 +40,20 @@ bun.lock
 .claude/settings.local.json
 .claude/memory/
 career-dashboard
-package-lock.json
+package-lock.json# --- Additions for vpontual fork ---
+# Upstream .gitignore already covers cv.md, config/profile.yml, portals.yml,
+# reports/, output/, data/, .env. These additions are for local extras.
+
+# Docker build artifacts
+docker-compose.override.yml
+.env.local
+
+# Editor scratch
+.vscode/
+.idea/
+
+# Extra personal docs that must stay local
+career-ops-cv.pdf
+cv.private.md
+article-digest.md
+modes/_profile.md
