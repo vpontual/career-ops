@@ -1,0 +1,159 @@
+import { loadPipeline, PipelineRow, PipelineStatus } from "@/lib/pipeline";
+import Link from "next/link";
+
+export const dynamic = "force-dynamic";
+
+const TABS: { id: string; label: string; match: (r: PipelineRow) => boolean }[] = [
+  { id: "all", label: "All", match: () => true },
+  { id: "new", label: "New", match: r => r.status === "new" },
+  { id: "scored", label: "Scored", match: r => typeof r.score === "number" },
+  { id: "high", label: "High fit (≥4.0)", match: r => typeof r.score === "number" && r.score >= 4.0 },
+  { id: "review", label: "Under review", match: r => r.status === "under_review" },
+  { id: "applied", label: "Applied", match: r => r.status === "applied" },
+  { id: "rejected", label: "Rejected", match: r => r.status === "rejected" }
+];
+
+function isNycCompatible(locs: string[]): boolean {
+  return locs.some(l => /new york|nyc|manhattan|brooklyn|queens|jersey city|hoboken|stamford/i.test(l));
+}
+function isLaCompatible(locs: string[]): boolean {
+  return locs.some(l => /los angeles|\bLA\b|santa monica|culver|pasadena|el segundo/i.test(l));
+}
+function isRemote(locs: string[]): boolean {
+  return locs.some(l => /remote|anywhere|distributed/i.test(l));
+}
+
+function locationBadge(row: PipelineRow) {
+  const tags: { label: string; color: string }[] = [];
+  if (isNycCompatible(row.locations)) tags.push({ label: "NYC", color: "text-sky-300 border-sky-400/40" });
+  if (isLaCompatible(row.locations)) tags.push({ label: "LA", color: "text-orange-300 border-orange-400/40" });
+  if (isRemote(row.locations)) tags.push({ label: "REMOTE", color: "text-green-300 border-green-400/40" });
+  if (tags.length === 0) tags.push({ label: "OTHER", color: "text-zinc-500 border-zinc-600" });
+  return tags;
+}
+
+export default async function Home({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+  const data = await loadPipeline();
+  const { tab = "all" } = await searchParams;
+
+  const activeTab = TABS.find(t => t.id === tab) ?? TABS[0];
+  const filtered = data.rows.filter(activeTab.match);
+
+  const byCompany = new Map<string, PipelineRow[]>();
+  for (const r of filtered) {
+    const arr = byCompany.get(r.company) ?? [];
+    arr.push(r);
+    byCompany.set(r.company, arr);
+  }
+  const companyGroups = [...byCompany.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+
+  return (
+    <main className="min-h-screen px-6 py-8 md:px-12 md:py-10 max-w-6xl mx-auto">
+      <header className="mb-8 border-b border-zinc-800 pb-6">
+        <div className="flex items-end justify-between flex-wrap gap-4">
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight">Career Ops</h1>
+            <p className="text-sm text-zinc-400 mt-1">
+              {data.totalCount} roles in pipeline · filtered to {filtered.length}
+            </p>
+          </div>
+          <div className="text-xs text-zinc-500 font-mono">
+            last scan: {data.lastScannedAt ? data.lastScannedAt.toLocaleString() : "never"}
+          </div>
+        </div>
+
+        <nav className="mt-6 flex flex-wrap gap-2">
+          {TABS.map(t => {
+            const count = data.rows.filter(t.match).length;
+            const isActive = t.id === activeTab.id;
+            return (
+              <Link
+                key={t.id}
+                href={`?tab=${t.id}`}
+                className={
+                  "px-3 py-1.5 text-sm rounded-md border transition-colors " +
+                  (isActive
+                    ? "border-sky-400/60 bg-sky-400/10 text-sky-200"
+                    : "border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200")
+                }
+              >
+                {t.label} <span className="text-zinc-600 ml-1">{count}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      </header>
+
+      {filtered.length === 0 ? (
+        <p className="text-zinc-500 text-sm">Nothing here yet. Run a scan to populate.</p>
+      ) : (
+        <div className="space-y-8">
+          {companyGroups.map(([company, rows]) => (
+            <section key={company}>
+              <h2 className="text-xs font-mono uppercase tracking-wider text-zinc-500 mb-3 border-b border-zinc-800 pb-2">
+                {company} <span className="text-zinc-600">({rows.length})</span>
+              </h2>
+              <ul className="space-y-2">
+                {rows.map(r => (
+                  <li
+                    key={r.url}
+                    className="flex items-start gap-4 px-4 py-3 rounded-md border border-zinc-800/60 bg-zinc-900/40 hover:bg-zinc-900/80 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <a
+                        href={r.url}
+                        target="_blank"
+                        rel="noopener"
+                        className="text-zinc-100 hover:text-sky-300 font-medium underline-offset-4 hover:underline break-words"
+                      >
+                        {r.role}
+                      </a>
+                      {r.locations.length > 0 && (
+                        <div className="mt-1 text-xs text-zinc-500 font-mono">
+                          {r.locations.join(" · ")}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {locationBadge(r).map(tag => (
+                        <span
+                          key={tag.label}
+                          className={`text-[10px] font-mono border rounded px-1.5 py-0.5 ${tag.color}`}
+                        >
+                          {tag.label}
+                        </span>
+                      ))}
+                      {typeof r.score === "number" ? (
+                        <span
+                          className={
+                            "text-xs font-mono px-2 py-0.5 rounded " +
+                            (r.score >= 4.0
+                              ? "bg-green-500/15 text-green-300"
+                              : r.score >= 3.5
+                                ? "bg-amber-500/15 text-amber-300"
+                                : "bg-red-500/15 text-red-300")
+                          }
+                        >
+                          {r.score.toFixed(1)}
+                        </span>
+                      ) : (
+                        <span className="text-xs font-mono text-zinc-600">unscored</span>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+      )}
+
+      <footer className="mt-12 pt-6 border-t border-zinc-800 text-xs text-zinc-600 font-mono">
+        <p>
+          Status changes: edit <code className="text-zinc-400">data/applications.md</code> or let
+          the scorer populate <code className="text-zinc-400">reports/</code>.
+        </p>
+      </footer>
+    </main>
+  );
+}

@@ -31,21 +31,25 @@ services:
     restart: "no"
     command: node scan.mjs
 
-  # ---- P1 stubs, uncomment when those phases start ----
-  # ui:
-  #   build:
-  #     context: ./ui
-  #   image: career-ops-ui:local
-  #   ports:
-  #     - "3340:3000"
-  #   volumes:
-  #     - ./data:/data:ro
-  #     - ./reports:/reports:ro
-  #     - ./output:/output:ro
-  #   cpus: 0.5
-  #   mem_limit: 256m
-  #   restart: unless-stopped
-  #
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.ui
+    image: career-ops-ui:local
+    ports:
+      - "3340:3000"
+    # Mount repo root as /data so the UI can read data/pipeline.md, reports/,
+    # applications.md, etc. Read-only — UI never writes state.
+    volumes:
+      - .:/data:ro
+    environment:
+      - CAREER_OPS_ROOT=/data
+      - NODE_ENV=production
+    cpus: 0.5
+    mem_limit: 256m
+    restart: unless-stopped
+
+  # ---- P1 later, uncomment when needed ----
   # pdf:
   #   build:
   #     context: .

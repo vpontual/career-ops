@@ -1,0 +1,32 @@
+# Next.js reader UI.
+# Standalone output for small runtime image. Build runs in Node 20 alpine.
+
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY ui/package.json ui/package-lock.json* ./
+RUN npm install --include=dev
+
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY ui/ ./
+RUN npm run build
+
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV CAREER_OPS_ROOT=/data
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+
+# Copy standalone server + static assets + public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+
+# Non-root user
+RUN addgroup -S ui && adduser -S ui -G ui
+USER ui
+
+EXPOSE 3000
+CMD ["node", "server.js"]

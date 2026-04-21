@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --bg: #0b0b0d;
+  --surface: #141418;
+  --surface-hover: #1a1a20;
+  --border: #2a2a32;
+  --text: #e8e8ec;
+  --text-dim: #9a9aa4;
+  --accent: #7dd3fc;
+  --green: #86efac;
+  --red: #fca5a5;
+  --amber: #fcd34d;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+}

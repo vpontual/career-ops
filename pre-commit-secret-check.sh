@@ -42,16 +42,13 @@ if [ -z "$STAGED_FILES" ]; then
   exit 0
 fi
 
-# Block any attempt to commit a .env (not .env.example)
+# Block any attempt to commit a .env (not .env.example, not .env.sample)
 for file in $STAGED_FILES; do
-  case "$file" in
-    .env|.env.*|!(*.example))
-      if [ "$(basename "$file")" = ".env" ]; then
-        echo "BLOCKED: refusing to commit .env (never commit actual secrets)"
-        exit 1
-      fi
-      ;;
-  esac
+  base=$(basename "$file")
+  if [ "$base" = ".env" ] || [[ "$base" =~ ^\.env\.local$ ]] || [[ "$base" =~ ^\.env\.production$ ]]; then
+    echo "BLOCKED: refusing to commit $file (never commit actual secrets)"
+    exit 1
+  fi
 done
 
 FAILED=0
