@@ -10,8 +10,8 @@ const TABS: { id: string; label: string; match: (r: PipelineRow) => boolean }[] 
   { id: "scored", label: "Scored", match: r => typeof r.score === "number" },
   { id: "high", label: "High fit (≥4.0)", match: r => typeof r.score === "number" && r.score >= 4.0 },
   { id: "highactive", label: "High + active", match: r => typeof r.score === "number" && r.score >= 4.0 && r.computedLegitimacy !== "ghost-likely" && r.computedLegitimacy !== "ancient" },
-  { id: "highfresh", label: "High + fresh (≤5d)", match: r => typeof r.score === "number" && r.score >= 4.0 && (r.postedDaysAgo ?? 999) <= 5 },
-  { id: "highrecent", label: "High + recent (≤30d)", match: r => typeof r.score === "number" && r.score >= 4.0 && (r.postedDaysAgo ?? 999) <= 30 },
+  { id: "highfresh", label: "High + fresh (≤5d)", match: r => typeof r.score === "number" && r.score >= 4.0 && effectiveDays(r) <= 5 },
+  { id: "highrecent", label: "High + recent (≤30d)", match: r => typeof r.score === "number" && r.score >= 4.0 && effectiveDays(r) <= 30 },
   { id: "staged", label: "Auto-staged", match: r => Boolean(r.stagedSlug) },
   { id: "review", label: "Under review", match: r => r.status === "under_review" },
   { id: "applied", label: "Applied", match: r => r.status === "applied" },
@@ -81,6 +81,18 @@ function encodeRoleSlug(url: string): string {
   return Buffer.from(url, "utf-8").toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
+// Effective freshness = min(updated, posted) when both are present, else
+// whichever exists. A role posted 364d ago but updated 6d ago counts as
+// 6d fresh, since the listing was demonstrably touched then.
+function effectiveDays(r: PipelineRow): number {
+  const p = r.postedDaysAgo;
+  const u = r.updatedDaysAgo;
+  if (p == null && u == null) return 9999;
+  if (p == null) return u!;
+  if (u == null) return p;
+  return Math.min(p, u);
+}
+
 const SORTS: { id: string; label: string }[] = [
   { id: "default", label: "Default" },
   { id: "score", label: "Score" },
@@ -115,8 +127,10 @@ function applySort(rows: PipelineRow[], sort: string): PipelineRow[] {
       });
     case "days":
       return out.sort((a, b) => {
-        const da = a.postedDaysAgo ?? 9999;
-        const db = b.postedDaysAgo ?? 9999;
+        // Use most-recent-touch so a 364d listing updated 6d ago beats
+        // a 30d listing not updated since.
+        const da = effectiveDays(a);
+        const db = effectiveDays(b);
         if (da !== db) return da - db;
         return (b.score ?? -1) - (a.score ?? -1);
       });
