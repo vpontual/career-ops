@@ -16,6 +16,8 @@ export interface PipelineRow {
   checked: boolean;
   score?: number; // present once a report has been written
   reportPath?: string;
+  postedDaysAgo?: number;       // parsed from the linked report
+  legitimacyTier?: string;      // Fresh / Mature / Stale / Ancient / Ghost-Likely
 }
 
 export interface PipelineData {
@@ -84,7 +86,13 @@ async function readApplicationsMd(): Promise<Map<string, PipelineStatus>> {
   return statusMap;
 }
 
-async function findReportForUrl(url: string): Promise<{ path: string; score?: number } | null> {
+async function findReportForUrl(url: string): Promise<{
+  path: string;
+  score?: number;
+  postedDaysAgo?: number;
+  legitimacyTier?: string;
+  locations?: string[];
+} | null> {
   // Reports are generated with various filename schemes depending on the mode.
   // For P1 we just glob reports/ and look for any file that mentions this URL.
   try {
@@ -95,9 +103,20 @@ async function findReportForUrl(url: string): Promise<{ path: string; score?: nu
       const fp = path.join(reportsDir, entry);
       const content = await readFile(fp, "utf-8");
       if (!content.includes(url)) continue;
-      // Extract a global score if present — career-ops writes "**Global:** 4.2/5" or similar
       const scoreMatch = content.match(/(?:Global|Score|Overall)[^0-9]*([1-5](?:\.\d)?)\s*\/\s*5/i);
-      return { path: fp, score: scoreMatch ? parseFloat(scoreMatch[1]) : undefined };
+      const daysMatch = content.match(/\((\d+)\s+days\s+ago\)/i);
+      const tierMatch = content.match(/\*\*Legitimacy tier:\*\*\s+(\S+)/);
+      const locMatch = content.match(/\*\*Location \(from JD\):\*\*\s+(.+)/);
+      const locations = locMatch
+        ? locMatch[1].split(/[|;•]/).map(s => s.trim()).filter(Boolean)
+        : undefined;
+      return {
+        path: fp,
+        score: scoreMatch ? parseFloat(scoreMatch[1]) : undefined,
+        postedDaysAgo: daysMatch ? parseInt(daysMatch[1], 10) : undefined,
+        legitimacyTier: tierMatch ? tierMatch[1] : undefined,
+        locations
+      };
     }
   } catch {
     // reports/ may be empty
@@ -135,6 +154,12 @@ export async function loadPipeline(): Promise<PipelineData> {
     if (report) {
       row.reportPath = report.path;
       row.score = report.score;
+      row.postedDaysAgo = report.postedDaysAgo;
+      row.legitimacyTier = report.legitimacyTier;
+      // Locations live in the JD/report, not in pipeline.md, so backfill here.
+      if (report.locations && report.locations.length > 0) {
+        row.locations = report.locations;
+      }
     }
 
     rows.push(row);

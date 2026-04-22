@@ -49,17 +49,18 @@ services:
     mem_limit: 256m
     restart: unless-stopped
 
-  # ---- P1 later, uncomment when needed ----
-  # pdf:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile.pdf
-  #   image: career-ops-pdf:local
-  #   volumes:
-  #     - .:/app
-  #   env_file:
-  #     - .env
-  #   cpus: 1.0
-  #   mem_limit: 1g
-  #   restart: "no"
-  #   entrypoint: ["node", "generate-pdf.mjs"]
+  applier:
+    build:
+      context: .
+      dockerfile: Dockerfile.applier
+    image: career-ops-applier:local
+    user: "1000:1000"
+    volumes:
+      - .:/app
+    working_dir: /app
+    env_file:
+      - .env
+    cpus: 1.0
+    mem_limit: 2g
+    restart: "no"
+    # Override per command: `docker compose run --rm applier node stage-applications.mjs`

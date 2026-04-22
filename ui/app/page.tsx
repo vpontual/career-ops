@@ -8,6 +8,8 @@ const TABS: { id: string; label: string; match: (r: PipelineRow) => boolean }[] 
   { id: "new", label: "New", match: r => r.status === "new" },
   { id: "scored", label: "Scored", match: r => typeof r.score === "number" },
   { id: "high", label: "High fit (≥4.0)", match: r => typeof r.score === "number" && r.score >= 4.0 },
+  { id: "highfresh", label: "High + fresh (≤5d)", match: r => typeof r.score === "number" && r.score >= 4.0 && (r.postedDaysAgo ?? 999) <= 5 },
+  { id: "highrecent", label: "High + recent (≤30d)", match: r => typeof r.score === "number" && r.score >= 4.0 && (r.postedDaysAgo ?? 999) <= 30 },
   { id: "review", label: "Under review", match: r => r.status === "under_review" },
   { id: "applied", label: "Applied", match: r => r.status === "applied" },
   { id: "rejected", label: "Rejected", match: r => r.status === "rejected" }
@@ -32,6 +34,16 @@ function locationBadge(row: PipelineRow) {
   return tags;
 }
 
+// Vitor's freshness scale: ≤5d = goal, ≤30d = old-but-possible, >30d = irrelevant, >90d = ghost.
+function ageBadge(row: PipelineRow) {
+  const d = row.postedDaysAgo;
+  if (d == null) return null;
+  if (d <= 5)  return { label: `${d}d`,    color: "text-green-300 border-green-400/40 bg-green-500/15" };
+  if (d <= 30) return { label: `${d}d`,    color: "text-amber-300 border-amber-400/40 bg-amber-500/10" };
+  if (d <= 90) return { label: `${d}d`,    color: "text-red-300 border-red-400/40 bg-red-500/10" };
+  return { label: `${d}d 👻`, color: "text-red-400 border-red-500/50 bg-red-600/15" };
+}
+
 export default async function Home({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const data = await loadPipeline();
   const { tab = "all" } = await searchParams;
@@ -39,11 +51,25 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
   const activeTab = TABS.find(t => t.id === tab) ?? TABS[0];
   const filtered = data.rows.filter(activeTab.match);
 
+  // For score-based tabs, show a flat list sorted by score DESC then age ASC
+  // rather than grouping by company. Group-by-company for other views.
+  const isScoredView = activeTab.id === "scored" || activeTab.id === "high" || activeTab.id === "highfresh" || activeTab.id === "highrecent";
+
+  const flatSorted = isScoredView
+    ? filtered.slice().sort((a, b) => {
+        const scoreDiff = (b.score ?? 0) - (a.score ?? 0);
+        if (scoreDiff !== 0) return scoreDiff;
+        return (a.postedDaysAgo ?? 9999) - (b.postedDaysAgo ?? 9999);
+      })
+    : [];
+
   const byCompany = new Map<string, PipelineRow[]>();
-  for (const r of filtered) {
-    const arr = byCompany.get(r.company) ?? [];
-    arr.push(r);
-    byCompany.set(r.company, arr);
+  if (!isScoredView) {
+    for (const r of filtered) {
+      const arr = byCompany.get(r.company) ?? [];
+      arr.push(r);
+      byCompany.set(r.company, arr);
+    }
   }
   const companyGroups = [...byCompany.entries()].sort((a, b) => a[0].localeCompare(b[0]));
 
@@ -86,6 +112,71 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
 
       {filtered.length === 0 ? (
         <p className="text-zinc-500 text-sm">Nothing here yet. Run a scan to populate.</p>
+      ) : isScoredView ? (
+        <ul className="space-y-2">
+          {flatSorted.map(r => {
+            const age = ageBadge(r);
+            return (
+              <li
+                key={r.url}
+                className="flex items-start gap-4 px-4 py-3 rounded-md border border-zinc-800/60 bg-zinc-900/40 hover:bg-zinc-900/80 transition-colors"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs text-zinc-500 font-mono uppercase tracking-wide mb-1">
+                    {r.company}
+                  </div>
+                  <a
+                    href={r.url}
+                    target="_blank"
+                    rel="noopener"
+                    className="text-zinc-100 hover:text-sky-300 font-medium underline-offset-4 hover:underline break-words"
+                  >
+                    {r.role}
+                  </a>
+                  {r.locations.length > 0 && (
+                    <div className="mt-1 text-xs text-zinc-500 font-mono">
+                      {r.locations.join(" · ")}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {locationBadge(r).map(tag => (
+                    <span
+                      key={tag.label}
+                      className={`text-[10px] font-mono border rounded px-1.5 py-0.5 ${tag.color}`}
+                    >
+                      {tag.label}
+                    </span>
+                  ))}
+                  {age && (
+                    <span
+                      className={`text-[10px] font-mono border rounded px-1.5 py-0.5 ${age.color}`}
+                      title={r.legitimacyTier ? `Legitimacy: ${r.legitimacyTier}` : undefined}
+                    >
+                      {age.label}
+                    </span>
+                  )}
+                  {typeof r.score === "number" ? (
+                    <span
+                      className={
+                        "text-xs font-mono px-2 py-0.5 rounded " +
+                        (r.score >= 4.0
+                          ? "bg-green-500/15 text-green-300"
+                          : r.score >= 3.5
+                            ? "bg-amber-500/15 text-amber-300"
+                            : "bg-red-500/15 text-red-300")
+                      }
+                    >
+                      {r.score.toFixed(1)}
+                    </span>
+                  ) : (
+                    <span className="text-xs font-mono text-zinc-600">unscored</span>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       ) : (
         <div className="space-y-8">
           {companyGroups.map(([company, rows]) => (
@@ -94,54 +185,65 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
                 {company} <span className="text-zinc-600">({rows.length})</span>
               </h2>
               <ul className="space-y-2">
-                {rows.map(r => (
-                  <li
-                    key={r.url}
-                    className="flex items-start gap-4 px-4 py-3 rounded-md border border-zinc-800/60 bg-zinc-900/40 hover:bg-zinc-900/80 transition-colors"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <a
-                        href={r.url}
-                        target="_blank"
-                        rel="noopener"
-                        className="text-zinc-100 hover:text-sky-300 font-medium underline-offset-4 hover:underline break-words"
-                      >
-                        {r.role}
-                      </a>
-                      {r.locations.length > 0 && (
-                        <div className="mt-1 text-xs text-zinc-500 font-mono">
-                          {r.locations.join(" · ")}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {locationBadge(r).map(tag => (
-                        <span
-                          key={tag.label}
-                          className={`text-[10px] font-mono border rounded px-1.5 py-0.5 ${tag.color}`}
+                {rows.map(r => {
+                  const age = ageBadge(r);
+                  return (
+                    <li
+                      key={r.url}
+                      className="flex items-start gap-4 px-4 py-3 rounded-md border border-zinc-800/60 bg-zinc-900/40 hover:bg-zinc-900/80 transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <a
+                          href={r.url}
+                          target="_blank"
+                          rel="noopener"
+                          className="text-zinc-100 hover:text-sky-300 font-medium underline-offset-4 hover:underline break-words"
                         >
-                          {tag.label}
-                        </span>
-                      ))}
-                      {typeof r.score === "number" ? (
-                        <span
-                          className={
-                            "text-xs font-mono px-2 py-0.5 rounded " +
-                            (r.score >= 4.0
-                              ? "bg-green-500/15 text-green-300"
-                              : r.score >= 3.5
-                                ? "bg-amber-500/15 text-amber-300"
-                                : "bg-red-500/15 text-red-300")
-                          }
-                        >
-                          {r.score.toFixed(1)}
-                        </span>
-                      ) : (
-                        <span className="text-xs font-mono text-zinc-600">unscored</span>
-                      )}
-                    </div>
-                  </li>
-                ))}
+                          {r.role}
+                        </a>
+                        {r.locations.length > 0 && (
+                          <div className="mt-1 text-xs text-zinc-500 font-mono">
+                            {r.locations.join(" · ")}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {locationBadge(r).map(tag => (
+                          <span
+                            key={tag.label}
+                            className={`text-[10px] font-mono border rounded px-1.5 py-0.5 ${tag.color}`}
+                          >
+                            {tag.label}
+                          </span>
+                        ))}
+                        {age && (
+                          <span
+                            className={`text-[10px] font-mono border rounded px-1.5 py-0.5 ${age.color}`}
+                            title={r.legitimacyTier ? `Legitimacy: ${r.legitimacyTier}` : undefined}
+                          >
+                            {age.label}
+                          </span>
+                        )}
+                        {typeof r.score === "number" ? (
+                          <span
+                            className={
+                              "text-xs font-mono px-2 py-0.5 rounded " +
+                              (r.score >= 4.0
+                                ? "bg-green-500/15 text-green-300"
+                                : r.score >= 3.5
+                                  ? "bg-amber-500/15 text-amber-300"
+                                  : "bg-red-500/15 text-red-300")
+                            }
+                          >
+                            {r.score.toFixed(1)}
+                          </span>
+                        ) : (
+                          <span className="text-xs font-mono text-zinc-600">unscored</span>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             </section>
           ))}
