@@ -38,7 +38,8 @@ function parseDefaults(md) {
     lastName: get('Legal last name'),
     email: get('Email \\(for ATS logins\\)'),
     phone: get('Phone'),
-    location: get('Current city'),
+    location: get('Current city \\(LA \\+ remote, default\\)') || get('Current city'),
+    locationNyc: get('Current city \\(NYC roles\\)'),
     linkedin: get('LinkedIn'),
     website: get('Personal website / portfolio'),
     workAuth: get('Authorized to work in the United States\\?'),
@@ -84,6 +85,29 @@ async function trySelect(page, label, selectors, value, filled, missed) {
     } catch {}
   }
   missed.push(label);
+}
+
+
+// Read the JD's Location line and pick which 'Current city' value to use.
+// Rule: NYC role -> NYC value; everything else (LA, remote, SF, hybrid-without-NYC) -> default LA.
+async function pickCityForRole(slug, defaults) {
+  try {
+    const coverMd = await readFile(path.join(OUTPUT_DIR, slug, 'cover-letter.md'), 'utf-8');
+    const url = (coverMd.match(/\*\*URL:\*\*\s+(\S+)/) || [])[1];
+    if (!url) return defaults.location;
+    const jdsDir = path.join(ROOT, 'jds');
+    const files = await readdir(jdsDir);
+    for (const f of files) {
+      const text = await readFile(path.join(jdsDir, f), 'utf-8');
+      if (!text.includes(url)) continue;
+      const locLine = (text.match(/\*\*Location:\*\*\s+(.+)/) || [])[1] || '';
+      if (/new york|\bNYC\b|manhattan|brooklyn|queens|jersey city|hoboken|stamford/i.test(locLine)) {
+        return defaults.locationNyc || defaults.location;
+      }
+      return defaults.location;
+    }
+  } catch {}
+  return defaults.location;
 }
 
 async function processOne(browser, slug, defaults) {
@@ -179,11 +203,12 @@ async function processOne(browser, slug, defaults) {
       ['input[name*="linkedin" i]', 'input[id*="linkedin" i]'],
       defaults.linkedin, filled, missed);
 
-    // Location
+    // Location - LA by default, NYC for NYC-located roles
+    const cityForThisRole = await pickCityForRole(slug, defaults);
     await tryFill(page, 'location',
       ['#candidate-location', 'input[name*="location" i][type="text"]',
        'input[autocomplete="address-level2"]', 'input[name*="city" i]'],
-      defaults.location, filled, missed);
+      cityForThisRole, filled, missed);
 
     // Personal site
     await tryFill(page, 'website',
