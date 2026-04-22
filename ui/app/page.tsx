@@ -97,6 +97,7 @@ const SORTS: { id: string; label: string }[] = [
   { id: "default", label: "Default" },
   { id: "score", label: "Score" },
   { id: "days", label: "Days (newest)" },
+  { id: "updated", label: "Updated" },
   { id: "city", label: "City" },
   { id: "title", label: "Title" },
   { id: "company", label: "Company" }
@@ -134,6 +135,18 @@ function applySort(rows: PipelineRow[], sort: string): PipelineRow[] {
         if (da !== db) return da - db;
         return (b.score ?? -1) - (a.score ?? -1);
       });
+    case "updated":
+      // Only show roles with a JD-derived Updated date; sort newest first.
+      // Roles whose listing was never re-touched are dropped because the
+      // signal of "is this still active" is what we are sorting on.
+      return out
+        .filter(r => r.updatedDaysAgo != null)
+        .sort((a, b) => {
+          const da = a.updatedDaysAgo!;
+          const db = b.updatedDaysAgo!;
+          if (da !== db) return da - db;
+          return (b.score ?? -1) - (a.score ?? -1);
+        });
     case "city":
       return out.sort((a, b) => {
         const c = primaryCity(a.locations).localeCompare(primaryCity(b.locations));
@@ -274,6 +287,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
             <h1 className="text-3xl font-semibold tracking-tight">Career Ops</h1>
             <p className="text-sm text-zinc-400 mt-1">
               {data.totalCount} roles in pipeline · filtered to {filtered.length}
+              {!useGroupedView && flatSorted.length !== filtered.length && (
+                <> · showing {flatSorted.length}</>
+              )}
             </p>
           </div>
           <div className="text-xs text-zinc-500 font-mono">
