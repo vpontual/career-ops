@@ -1,4 +1,5 @@
 import { loadPipeline, PipelineRow, PipelineStatus } from "@/lib/pipeline";
+import StatusControl from "@/components/StatusControl";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +14,8 @@ const TABS: { id: string; label: string; match: (r: PipelineRow) => boolean }[] 
   { id: "staged", label: "Auto-staged", match: r => Boolean(r.stagedSlug) },
   { id: "review", label: "Under review", match: r => r.status === "under_review" },
   { id: "applied", label: "Applied", match: r => r.status === "applied" },
-  { id: "rejected", label: "Rejected", match: r => r.status === "rejected" }
+  { id: "rejected", label: "Rejected", match: r => r.status === "rejected" },
+  { id: "archived", label: "Archived", match: r => r.status === "archived" }
 ];
 
 function isNycCompatible(locs: string[]): boolean {
@@ -43,6 +45,92 @@ function ageBadge(row: PipelineRow) {
   if (d <= 30) return { label: `${d}d`,    color: "text-amber-300 border-amber-400/40 bg-amber-500/10" };
   if (d <= 90) return { label: `${d}d`,    color: "text-red-300 border-red-400/40 bg-red-500/10" };
   return { label: `${d}d 👻`, color: "text-red-400 border-red-500/50 bg-red-600/15" };
+}
+
+function encodeRoleSlug(url: string): string {
+  return Buffer.from(url, "utf-8").toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function RoleRow({ r, showCompany }: { r: PipelineRow; showCompany: boolean }) {
+  const age = ageBadge(r);
+  const detailsHref = `/role/${encodeRoleSlug(r.url)}`;
+  return (
+    <li className="flex items-start gap-4 px-4 py-3 rounded-md border border-zinc-800/60 bg-zinc-900/40 hover:bg-zinc-900/80 transition-colors">
+      <div className="flex-1 min-w-0">
+        {showCompany && (
+          <div className="text-xs text-zinc-500 font-mono uppercase tracking-wide mb-1">
+            {r.company}
+          </div>
+        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          <a
+            href={r.url}
+            target="_blank"
+            rel="noopener"
+            className="text-zinc-100 hover:text-sky-300 font-medium underline-offset-4 hover:underline break-words"
+          >
+            {r.role}
+          </a>
+          <Link
+            href={detailsHref}
+            className="text-[10px] font-mono text-zinc-500 hover:text-sky-300 border border-zinc-700 hover:border-sky-400/60 rounded px-1.5 py-0.5"
+            title="Open details (report + JD preview)"
+          >
+            details →
+          </Link>
+        </div>
+        {r.locations.length > 0 && (
+          <div className="mt-1 text-xs text-zinc-500 font-mono">
+            {r.locations.join(" · ")}
+          </div>
+        )}
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        {locationBadge(r).map(tag => (
+          <span
+            key={tag.label}
+            className={`text-[10px] font-mono border rounded px-1.5 py-0.5 ${tag.color}`}
+          >
+            {tag.label}
+          </span>
+        ))}
+        {age && (
+          <span
+            className={`text-[10px] font-mono border rounded px-1.5 py-0.5 ${age.color}`}
+            title={r.legitimacyTier ? `Legitimacy: ${r.legitimacyTier}` : undefined}
+          >
+            {age.label}
+          </span>
+        )}
+        {r.stagedSlug && (
+          <Link
+            href={`/pack/${r.stagedSlug}`}
+            className="text-[10px] font-mono border rounded px-1.5 py-0.5 text-purple-300 border-purple-400/50 bg-purple-500/15 hover:bg-purple-500/25"
+            title="Open application pack"
+          >
+            📦 PACK
+          </Link>
+        )}
+        {typeof r.score === "number" ? (
+          <span
+            className={
+              "text-xs font-mono px-2 py-0.5 rounded " +
+              (r.score >= 4.0
+                ? "bg-green-500/15 text-green-300"
+                : r.score >= 3.5
+                  ? "bg-amber-500/15 text-amber-300"
+                  : "bg-red-500/15 text-red-300")
+            }
+          >
+            {r.score.toFixed(1)}
+          </span>
+        ) : (
+          <span className="text-xs font-mono text-zinc-600">unscored</span>
+        )}
+        <StatusControl url={r.url} company={r.company} role={r.role} current={r.status} />
+      </div>
+    </li>
+  );
 }
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
@@ -115,77 +203,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
         <p className="text-zinc-500 text-sm">Nothing here yet. Run a scan to populate.</p>
       ) : isScoredView ? (
         <ul className="space-y-2">
-          {flatSorted.map(r => {
-            const age = ageBadge(r);
-            return (
-              <li
-                key={r.url}
-                className="flex items-start gap-4 px-4 py-3 rounded-md border border-zinc-800/60 bg-zinc-900/40 hover:bg-zinc-900/80 transition-colors"
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs text-zinc-500 font-mono uppercase tracking-wide mb-1">
-                    {r.company}
-                  </div>
-                  <a
-                    href={r.url}
-                    target="_blank"
-                    rel="noopener"
-                    className="text-zinc-100 hover:text-sky-300 font-medium underline-offset-4 hover:underline break-words"
-                  >
-                    {r.role}
-                  </a>
-                  {r.locations.length > 0 && (
-                    <div className="mt-1 text-xs text-zinc-500 font-mono">
-                      {r.locations.join(" · ")}
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {locationBadge(r).map(tag => (
-                    <span
-                      key={tag.label}
-                      className={`text-[10px] font-mono border rounded px-1.5 py-0.5 ${tag.color}`}
-                    >
-                      {tag.label}
-                    </span>
-                  ))}
-                  {age && (
-                    <span
-                      className={`text-[10px] font-mono border rounded px-1.5 py-0.5 ${age.color}`}
-                      title={r.legitimacyTier ? `Legitimacy: ${r.legitimacyTier}` : undefined}
-                    >
-                      {age.label}
-                    </span>
-                  )}
-                  {r.stagedSlug && (
-                    <Link
-                      href={`/pack/${r.stagedSlug}`}
-                      className="text-[10px] font-mono border rounded px-1.5 py-0.5 text-purple-300 border-purple-400/50 bg-purple-500/15 hover:bg-purple-500/25"
-                      title="Open application pack"
-                    >
-                      📦 PACK
-                    </Link>
-                  )}
-                  {typeof r.score === "number" ? (
-                    <span
-                      className={
-                        "text-xs font-mono px-2 py-0.5 rounded " +
-                        (r.score >= 4.0
-                          ? "bg-green-500/15 text-green-300"
-                          : r.score >= 3.5
-                            ? "bg-amber-500/15 text-amber-300"
-                            : "bg-red-500/15 text-red-300")
-                      }
-                    >
-                      {r.score.toFixed(1)}
-                    </span>
-                  ) : (
-                    <span className="text-xs font-mono text-zinc-600">unscored</span>
-                  )}
-                </div>
-              </li>
-            );
-          })}
+          {flatSorted.map(r => <RoleRow key={r.url} r={r} showCompany />)}
         </ul>
       ) : (
         <div className="space-y-8">
@@ -195,65 +213,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
                 {company} <span className="text-zinc-600">({rows.length})</span>
               </h2>
               <ul className="space-y-2">
-                {rows.map(r => {
-                  const age = ageBadge(r);
-                  return (
-                    <li
-                      key={r.url}
-                      className="flex items-start gap-4 px-4 py-3 rounded-md border border-zinc-800/60 bg-zinc-900/40 hover:bg-zinc-900/80 transition-colors"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <a
-                          href={r.url}
-                          target="_blank"
-                          rel="noopener"
-                          className="text-zinc-100 hover:text-sky-300 font-medium underline-offset-4 hover:underline break-words"
-                        >
-                          {r.role}
-                        </a>
-                        {r.locations.length > 0 && (
-                          <div className="mt-1 text-xs text-zinc-500 font-mono">
-                            {r.locations.join(" · ")}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        {locationBadge(r).map(tag => (
-                          <span
-                            key={tag.label}
-                            className={`text-[10px] font-mono border rounded px-1.5 py-0.5 ${tag.color}`}
-                          >
-                            {tag.label}
-                          </span>
-                        ))}
-                        {age && (
-                          <span
-                            className={`text-[10px] font-mono border rounded px-1.5 py-0.5 ${age.color}`}
-                            title={r.legitimacyTier ? `Legitimacy: ${r.legitimacyTier}` : undefined}
-                          >
-                            {age.label}
-                          </span>
-                        )}
-                        {typeof r.score === "number" ? (
-                          <span
-                            className={
-                              "text-xs font-mono px-2 py-0.5 rounded " +
-                              (r.score >= 4.0
-                                ? "bg-green-500/15 text-green-300"
-                                : r.score >= 3.5
-                                  ? "bg-amber-500/15 text-amber-300"
-                                  : "bg-red-500/15 text-red-300")
-                            }
-                          >
-                            {r.score.toFixed(1)}
-                          </span>
-                        ) : (
-                          <span className="text-xs font-mono text-zinc-600">unscored</span>
-                        )}
-                      </div>
-                    </li>
-                  );
-                })}
+                {rows.map(r => <RoleRow key={r.url} r={r} showCompany={false} />)}
               </ul>
             </section>
           ))}
@@ -262,8 +222,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
 
       <footer className="mt-12 pt-6 border-t border-zinc-800 text-xs text-zinc-600 font-mono">
         <p>
-          Status changes: edit <code className="text-zinc-400">data/applications.md</code> or let
-          the scorer populate <code className="text-zinc-400">reports/</code>.
+          Status changes write to <code className="text-zinc-400">data/applications.md</code> via the UI,
+          or edit the file directly. Reports live in <code className="text-zinc-400">reports/</code>.
         </p>
       </footer>
     </main>

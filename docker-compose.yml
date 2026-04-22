@@ -38,10 +38,13 @@ services:
     image: career-ops-ui:local
     ports:
       - "3340:3000"
+    # Mount repo root as /data. UI reads scanner output and writes to data/applications.md
+    # via /api/status; runs as host uid 1000 so writes land owned by vp.
+    user: "1000:1000"
     # Mount repo root as /data so the UI can read data/pipeline.md, reports/,
-    # applications.md, etc. Read-only — UI never writes state.
+    # applications.md, etc.
     volumes:
-      - .:/data:ro
+      - .:/data
     environment:
       - CAREER_OPS_ROOT=/data
       - NODE_ENV=production
