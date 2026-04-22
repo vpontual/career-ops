@@ -1,5 +1,6 @@
 import { loadPipeline, PipelineRow, PipelineStatus } from "@/lib/pipeline";
 import StatusControl from "@/components/StatusControl";
+import SearchFilter from "@/components/SearchFilter";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -31,10 +32,10 @@ function isRemote(locs: string[]): boolean {
 
 function locationBadge(row: PipelineRow) {
   const tags: { label: string; color: string }[] = [];
-  if (isNycCompatible(row.locations)) tags.push({ label: "NYC", color: "text-sky-300 border-sky-400/40" });
+  if (isNycCompatible(row.locations)) tags.push({ label: "NYC", color: "text-blue-300 border-blue-400/40" });
   if (isLaCompatible(row.locations)) tags.push({ label: "LA", color: "text-orange-300 border-orange-400/40" });
   if (isRemote(row.locations)) tags.push({ label: "REMOTE", color: "text-green-300 border-green-400/40" });
-  if (tags.length === 0) tags.push({ label: "OTHER", color: "text-zinc-500 border-zinc-600" });
+  if (tags.length === 0) tags.push({ label: "OTHER", color: "text-slate-500 border-slate-600" });
   return tags;
 }
 
@@ -70,7 +71,7 @@ function ageBadges(row: PipelineRow): { label: string; color: string; title: str
   }
 
   // Updated is materially more recent → show both, lead with updated
-  const mutedColor = "text-zinc-500 border-zinc-700 bg-zinc-800/40";
+  const mutedColor = "text-slate-500 border-slate-700 bg-slate-800/40";
   return [
     { label: `↻ ${u}d`, color: ageColor(u), title: `Updated ${u}d ago — recent activity` },
     { label: `${d}d`, color: mutedColor, title: `Originally posted ${d}d ago` }
@@ -170,10 +171,10 @@ function RoleRow({ r, showCompany }: { r: PipelineRow; showCompany: boolean }) {
   const ageItems = ageBadges(r);
   const detailsHref = `/role/${encodeRoleSlug(r.url)}`;
   return (
-    <li className="flex items-start gap-4 px-4 py-3 rounded-md border border-zinc-800/60 bg-zinc-900/40 hover:bg-zinc-900/80 transition-colors">
+    <li className="flex items-start gap-4 px-4 py-3 rounded-md border border-slate-800/60 bg-slate-900/40 hover:bg-slate-900/80 transition-colors">
       <div className="flex-1 min-w-0">
         {showCompany && (
-          <div className="text-xs text-zinc-500 font-mono uppercase tracking-wide mb-1">
+          <div className="text-xs text-slate-500 font-mono uppercase tracking-wide mb-1">
             {r.company}
           </div>
         )}
@@ -182,20 +183,20 @@ function RoleRow({ r, showCompany }: { r: PipelineRow; showCompany: boolean }) {
             href={r.url}
             target="_blank"
             rel="noopener"
-            className="text-zinc-100 hover:text-sky-300 font-medium underline-offset-4 hover:underline break-words"
+            className="text-slate-100 hover:text-blue-300 font-medium underline-offset-4 hover:underline break-words"
           >
             {r.role}
           </a>
           <Link
             href={detailsHref}
-            className="text-[10px] font-mono text-zinc-500 hover:text-sky-300 border border-zinc-700 hover:border-sky-400/60 rounded px-1.5 py-0.5"
+            className="text-[10px] font-mono text-slate-500 hover:text-blue-300 border border-slate-700 hover:border-blue-400/60 rounded px-1.5 py-0.5"
             title="Open details (report + JD preview)"
           >
             details →
           </Link>
         </div>
         {r.locations.length > 0 && (
-          <div className="mt-1 text-xs text-zinc-500 font-mono">
+          <div className="mt-1 text-xs text-slate-500 font-mono">
             {r.locations.join(" · ")}
           </div>
         )}
@@ -241,7 +242,7 @@ function RoleRow({ r, showCompany }: { r: PipelineRow; showCompany: boolean }) {
             {r.score.toFixed(1)}
           </span>
         ) : (
-          <span className="text-xs font-mono text-zinc-600">unscored</span>
+          <span className="text-xs font-mono text-slate-600">unscored</span>
         )}
         <StatusControl url={r.url} company={r.company} role={r.role} current={r.status} />
       </div>
@@ -249,12 +250,16 @@ function RoleRow({ r, showCompany }: { r: PipelineRow; showCompany: boolean }) {
   );
 }
 
-export default async function Home({ searchParams }: { searchParams: Promise<{ tab?: string; sort?: string }> }) {
+export default async function Home({ searchParams }: { searchParams: Promise<{ tab?: string; sort?: string; q?: string }> }) {
   const data = await loadPipeline();
-  const { tab = "all", sort: sortParam } = await searchParams;
+  const { tab = "all", sort: sortParam, q: rawQ } = await searchParams;
+  const q = (rawQ ?? "").trim().toLowerCase();
 
   const activeTab = TABS.find(t => t.id === tab) ?? TABS[0];
-  const filtered = data.rows.filter(activeTab.match);
+  const tabFiltered = data.rows.filter(activeTab.match);
+  const filtered = q
+    ? tabFiltered.filter(r => `${r.company} ${r.role}`.toLowerCase().includes(q))
+    : tabFiltered;
 
   // Defaults per tab type when ?sort isn't set:
   //   scored-style tabs → sort by score DESC (then age ASC) in a flat list
@@ -281,27 +286,40 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
 
   return (
     <main className="min-h-screen px-6 py-8 md:px-12 md:py-10 max-w-6xl mx-auto">
-      <header className="mb-8 border-b border-zinc-800 pb-6">
-        <div className="flex items-end justify-between flex-wrap gap-4">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight">Career Ops</h1>
-            <p className="text-sm text-zinc-400 mt-1">
-              {data.totalCount} roles in pipeline · filtered to {filtered.length}
-              {!useGroupedView && flatSorted.length !== filtered.length && (
-                <> · showing {flatSorted.length}</>
-              )}
-            </p>
+      <header className="mb-8 border-b border-slate-700 pb-6">
+        {/* Per VP design system: title absolute-centered between left controls
+            and right context. Search bar lives on the left (Ctrl+K), last
+            scan timestamp on the right. */}
+        <div className="flex items-center relative gap-4">
+          <div className="shrink-0">
+            <SearchFilter initial={q} />
           </div>
-          <div className="text-xs text-zinc-500 font-mono">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <a href="/" className="pointer-events-auto text-2xl font-semibold tracking-tight">
+              Career Ops
+            </a>
+          </div>
+          <div className="shrink-0 ml-auto text-xs text-slate-500 font-mono text-right">
             last scan: {data.lastScannedAt ? data.lastScannedAt.toLocaleString() : "never"}
           </div>
         </div>
+        <p className="text-xs text-slate-500 mt-3 text-center">
+          {data.totalCount} roles in pipeline · filtered to {filtered.length}
+          {q && <> · matching “{q}”</>}
+          {!useGroupedView && flatSorted.length !== filtered.length && (
+            <> · showing {flatSorted.length}</>
+          )}
+        </p>
 
         <nav className="mt-6 flex flex-wrap gap-2">
           {TABS.map(t => {
             const count = data.rows.filter(t.match).length;
             const isActive = t.id === activeTab.id;
-            const href = sortParam ? `?tab=${t.id}&sort=${sortParam}` : `?tab=${t.id}`;
+            const params = new URLSearchParams();
+            params.set("tab", t.id);
+            if (sortParam) params.set("sort", sortParam);
+            if (q) params.set("q", q);
+            const href = `?${params.toString()}`;
             return (
               <Link
                 key={t.id}
@@ -309,21 +327,25 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
                 className={
                   "px-3 py-1.5 text-sm rounded-md border transition-colors " +
                   (isActive
-                    ? "border-sky-400/60 bg-sky-400/10 text-sky-200"
-                    : "border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200")
+                    ? "border-blue-400/60 bg-blue-400/10 text-blue-200"
+                    : "border-slate-800 text-slate-400 hover:border-slate-600 hover:text-slate-200")
                 }
               >
-                {t.label} <span className="text-zinc-600 ml-1">{count}</span>
+                {t.label} <span className="text-slate-600 ml-1">{count}</span>
               </Link>
             );
           })}
         </nav>
 
         <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
-          <span className="text-zinc-500 font-mono uppercase tracking-wider">Sort:</span>
+          <span className="text-slate-500 font-mono uppercase tracking-wider">Sort:</span>
           {SORTS.map(s => {
             const isActive = s.id === effectiveSort || (!sortParam && s.id === "default");
-            const href = s.id === "default" ? `?tab=${activeTab.id}` : `?tab=${activeTab.id}&sort=${s.id}`;
+            const params = new URLSearchParams();
+            params.set("tab", activeTab.id);
+            if (s.id !== "default") params.set("sort", s.id);
+            if (q) params.set("q", q);
+            const href = `?${params.toString()}`;
             return (
               <Link
                 key={s.id}
@@ -331,8 +353,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
                 className={
                   "px-2 py-1 rounded border font-mono transition-colors " +
                   (isActive
-                    ? "border-sky-400/60 bg-sky-400/10 text-sky-200"
-                    : "border-zinc-800 text-zinc-500 hover:border-zinc-600 hover:text-zinc-200")
+                    ? "border-blue-400/60 bg-blue-400/10 text-blue-200"
+                    : "border-slate-800 text-slate-500 hover:border-slate-600 hover:text-slate-200")
                 }
               >
                 {s.label}
@@ -343,7 +365,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
       </header>
 
       {filtered.length === 0 ? (
-        <p className="text-zinc-500 text-sm">Nothing here yet. Run a scan to populate.</p>
+        <p className="text-slate-500 text-sm">Nothing here yet. Run a scan to populate.</p>
       ) : !useGroupedView ? (
         <ul className="space-y-2">
           {flatSorted.map(r => <RoleRow key={r.url} r={r} showCompany />)}
@@ -352,8 +374,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
         <div className="space-y-8">
           {companyGroups.map(([company, rows]) => (
             <section key={company}>
-              <h2 className="text-xs font-mono uppercase tracking-wider text-zinc-500 mb-3 border-b border-zinc-800 pb-2">
-                {company} <span className="text-zinc-600">({rows.length})</span>
+              <h2 className="text-xs font-mono uppercase tracking-wider text-slate-500 mb-3 border-b border-slate-800 pb-2">
+                {company} <span className="text-slate-600">({rows.length})</span>
               </h2>
               <ul className="space-y-2">
                 {rows.map(r => <RoleRow key={r.url} r={r} showCompany={false} />)}
@@ -363,10 +385,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
         </div>
       )}
 
-      <footer className="mt-12 pt-6 border-t border-zinc-800 text-xs text-zinc-600 font-mono">
+      <footer className="mt-12 pt-6 border-t border-slate-800 text-xs text-slate-600 font-mono">
         <p>
-          Status changes write to <code className="text-zinc-400">data/applications.md</code> via the UI,
-          or edit the file directly. Reports live in <code className="text-zinc-400">reports/</code>.
+          Status changes write to <code className="text-slate-400">data/applications.md</code> via the UI,
+          or edit the file directly. Reports live in <code className="text-slate-400">reports/</code>.
         </p>
       </footer>
     </main>

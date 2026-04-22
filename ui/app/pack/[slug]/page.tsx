@@ -59,30 +59,30 @@ export default async function PackPage({ params }: { params: Promise<{ slug: str
 
   return (
     <main className="min-h-screen px-6 py-8 md:px-12 md:py-10 max-w-5xl mx-auto">
-      <header className="mb-8 border-b border-zinc-800 pb-6">
-        <Link href="/?tab=staged" className="text-xs text-zinc-500 hover:text-sky-300 font-mono">
+      <header className="mb-8 border-b border-slate-800 pb-6">
+        <Link href="/?tab=staged" className="text-xs text-slate-500 hover:text-blue-300 font-mono">
           ← back to dashboard
         </Link>
         <h1 className="text-2xl font-semibold mt-2">{pack.company}</h1>
-        <h2 className="text-lg text-zinc-300 mt-1">{pack.role}</h2>
+        <h2 className="text-lg text-slate-300 mt-1">{pack.role}</h2>
         <a
           href={pack.url}
           target="_blank"
           rel="noopener"
-          className="text-sky-300 hover:text-sky-200 underline-offset-4 hover:underline text-sm font-mono break-all mt-2 inline-block"
+          className="text-blue-300 hover:text-blue-200 underline-offset-4 hover:underline text-sm font-mono break-all mt-2 inline-block"
         >
           {pack.url} ↗
         </a>
       </header>
 
       <section className="mb-8">
-        <h3 className="text-xs uppercase tracking-wider text-zinc-500 font-mono mb-3">Materials</h3>
+        <h3 className="text-xs uppercase tracking-wider text-slate-500 font-mono mb-3">Materials</h3>
         <div className="flex flex-wrap gap-3">
           <a
             href={`/api/files/${pack.slug}/cv.pdf`}
             target="_blank"
             rel="noopener"
-            className="px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-md hover:border-sky-400/60 hover:bg-zinc-900/60 transition text-sm"
+            className="px-4 py-2 bg-slate-900 border border-slate-700 rounded-md hover:border-blue-400/60 hover:bg-slate-900/60 transition text-sm"
           >
             📄 cv.pdf
           </a>
@@ -90,7 +90,7 @@ export default async function PackPage({ params }: { params: Promise<{ slug: str
             href={`/api/files/${pack.slug}/cover-letter.pdf`}
             target="_blank"
             rel="noopener"
-            className="px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-md hover:border-sky-400/60 hover:bg-zinc-900/60 transition text-sm"
+            className="px-4 py-2 bg-slate-900 border border-slate-700 rounded-md hover:border-blue-400/60 hover:bg-slate-900/60 transition text-sm"
           >
             📄 cover-letter.pdf
           </a>
@@ -98,7 +98,7 @@ export default async function PackPage({ params }: { params: Promise<{ slug: str
             href={`/api/files/${pack.slug}/cover-letter.md`}
             target="_blank"
             rel="noopener"
-            className="px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-md hover:border-sky-400/60 hover:bg-zinc-900/60 transition text-sm"
+            className="px-4 py-2 bg-slate-900 border border-slate-700 rounded-md hover:border-blue-400/60 hover:bg-slate-900/60 transition text-sm"
           >
             📝 cover-letter.md
           </a>
@@ -106,7 +106,7 @@ export default async function PackPage({ params }: { params: Promise<{ slug: str
             href={pack.url}
             target="_blank"
             rel="noopener"
-            className="px-4 py-2 bg-sky-500/15 border border-sky-400/60 text-sky-200 rounded-md hover:bg-sky-500/25 transition text-sm font-medium"
+            className="px-4 py-2 bg-blue-500/15 border border-blue-400/60 text-blue-200 rounded-md hover:bg-blue-500/25 transition text-sm font-medium"
           >
             🌐 Open in ATS ↗
           </a>
@@ -114,48 +114,48 @@ export default async function PackPage({ params }: { params: Promise<{ slug: str
       </section>
 
       <section className="mb-8">
-        <h3 className="text-xs uppercase tracking-wider text-zinc-500 font-mono mb-3 flex items-center justify-between">
+        <h3 className="text-xs uppercase tracking-wider text-slate-500 font-mono mb-3 flex items-center justify-between">
           <span>Cover letter (copy-paste ready)</span>
-          <span className="text-zinc-600 text-[10px] normal-case">~{pack.coverLetterMd.split(/\s+/).filter(Boolean).length} words</span>
+          <span className="text-slate-600 text-[10px] normal-case">~{pack.coverLetterMd.split(/\s+/).filter(Boolean).length} words</span>
         </h3>
         <textarea
           readOnly
-          className="w-full h-72 px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-md font-mono text-sm leading-relaxed text-zinc-200 focus:outline-none focus:border-sky-400/60"
+          className="w-full h-72 px-4 py-3 bg-slate-950 border border-slate-800 rounded-md font-mono text-sm leading-relaxed text-slate-200 focus:outline-none focus:border-blue-400/60"
           value={pack.coverLetterMd}
         />
       </section>
 
       {pack.autofillReport ? (
         <section className="mb-8">
-          <h3 className="text-xs uppercase tracking-wider text-zinc-500 font-mono mb-3 flex items-center justify-between">
+          <h3 className="text-xs uppercase tracking-wider text-slate-500 font-mono mb-3 flex items-center justify-between">
             <span>Autofill (Level B)</span>
-            <span className="text-zinc-600 text-[10px] normal-case">/greenhouse only</span>
+            <span className="text-slate-600 text-[10px] normal-case">/greenhouse only</span>
           </h3>
-          <pre className="px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-md text-xs leading-relaxed text-zinc-300 overflow-x-auto whitespace-pre-wrap font-mono">
+          <pre className="px-4 py-3 bg-slate-950 border border-slate-800 rounded-md text-xs leading-relaxed text-slate-300 overflow-x-auto whitespace-pre-wrap font-mono">
             {pack.autofillReport}
           </pre>
           {pack.hasAutofillScreenshot && (
             <div className="mt-4">
-              <p className="text-xs text-zinc-500 font-mono mb-2">Screenshot of the headless browser session, after autofill ran:</p>
+              <p className="text-xs text-slate-500 font-mono mb-2">Screenshot of the headless browser session, after autofill ran:</p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={`/api/files/${pack.slug}/autofill-screenshot.png`}
                 alt="Autofill screenshot"
-                className="w-full border border-zinc-800 rounded-md"
+                className="w-full border border-slate-800 rounded-md"
               />
             </div>
           )}
         </section>
       ) : (
         <section className="mb-8">
-          <h3 className="text-xs uppercase tracking-wider text-zinc-500 font-mono mb-3">Autofill (Level B)</h3>
-          <p className="text-sm text-zinc-400">
+          <h3 className="text-xs uppercase tracking-wider text-slate-500 font-mono mb-3">Autofill (Level B)</h3>
+          <p className="text-sm text-slate-400">
             Not run yet for this role. To autofill the Greenhouse form, run on the VM:
           </p>
-          <pre className="mt-2 px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-md text-xs font-mono text-sky-300 overflow-x-auto">
+          <pre className="mt-2 px-4 py-3 bg-slate-950 border border-slate-800 rounded-md text-xs font-mono text-blue-300 overflow-x-auto">
             cd ~/career-ops && docker compose run --rm applier node prefill-greenhouse.mjs {pack.slug}
           </pre>
-          <p className="text-xs text-zinc-600 mt-2 font-mono">
+          <p className="text-xs text-slate-600 mt-2 font-mono">
             Result: standard fields filled (name/email/phone/resume), screenshot + report saved here.
             Open the URL in your own browser to finish + submit.
           </p>
@@ -164,17 +164,17 @@ export default async function PackPage({ params }: { params: Promise<{ slug: str
 
       {pack.defaults && (
         <section className="mb-8">
-          <h3 className="text-xs uppercase tracking-wider text-zinc-500 font-mono mb-3">
+          <h3 className="text-xs uppercase tracking-wider text-slate-500 font-mono mb-3">
             Standard application answers (from application-defaults.md)
           </h3>
-          <pre className="px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-md text-xs leading-relaxed text-zinc-300 overflow-x-auto whitespace-pre-wrap font-mono">
+          <pre className="px-4 py-3 bg-slate-950 border border-slate-800 rounded-md text-xs leading-relaxed text-slate-300 overflow-x-auto whitespace-pre-wrap font-mono">
             {pack.defaults}
           </pre>
         </section>
       )}
 
-      <footer className="mt-12 pt-6 border-t border-zinc-800 text-xs text-zinc-600 font-mono">
-        <p>Edit materials in <code className="text-zinc-400">output/{pack.slug}/</code> on the VM.</p>
+      <footer className="mt-12 pt-6 border-t border-slate-800 text-xs text-slate-600 font-mono">
+        <p>Edit materials in <code className="text-slate-400">output/{pack.slug}/</code> on the VM.</p>
       </footer>
     </main>
   );

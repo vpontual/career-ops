@@ -62,19 +62,19 @@ function renderMarkdown(md: string): string {
   let inList = false;
   for (const raw of lines) {
     const line = raw.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    if (/^#\s+/.test(line)) { if (inList) { out.push("</ul>"); inList = false; } out.push(`<h2 class="text-xl font-semibold mt-6 mb-2 text-zinc-100">${line.replace(/^#\s+/, "")}</h2>`); continue; }
-    if (/^##\s+/.test(line)) { if (inList) { out.push("</ul>"); inList = false; } out.push(`<h3 class="text-base font-semibold mt-5 mb-2 text-zinc-200">${line.replace(/^##\s+/, "")}</h3>`); continue; }
-    if (/^###\s+/.test(line)) { if (inList) { out.push("</ul>"); inList = false; } out.push(`<h4 class="text-sm font-semibold mt-4 mb-1 text-zinc-300 uppercase tracking-wide">${line.replace(/^###\s+/, "")}</h4>`); continue; }
+    if (/^#\s+/.test(line)) { if (inList) { out.push("</ul>"); inList = false; } out.push(`<h2 class="text-xl font-semibold mt-6 mb-2 text-slate-100">${line.replace(/^#\s+/, "")}</h2>`); continue; }
+    if (/^##\s+/.test(line)) { if (inList) { out.push("</ul>"); inList = false; } out.push(`<h3 class="text-base font-semibold mt-5 mb-2 text-slate-200">${line.replace(/^##\s+/, "")}</h3>`); continue; }
+    if (/^###\s+/.test(line)) { if (inList) { out.push("</ul>"); inList = false; } out.push(`<h4 class="text-sm font-semibold mt-4 mb-1 text-slate-300 uppercase tracking-wide">${line.replace(/^###\s+/, "")}</h4>`); continue; }
     if (/^\s*-\s+/.test(line)) {
-      if (!inList) { out.push(`<ul class="list-disc list-inside space-y-1 text-zinc-300 my-2">`); inList = true; }
-      const item = line.replace(/^\s*-\s+/, "").replace(/\*\*(.+?)\*\*/g, '<strong class="text-zinc-100">$1</strong>');
+      if (!inList) { out.push(`<ul class="list-disc list-inside space-y-1 text-slate-300 my-2">`); inList = true; }
+      const item = line.replace(/^\s*-\s+/, "").replace(/\*\*(.+?)\*\*/g, '<strong class="text-slate-100">$1</strong>');
       out.push(`<li>${item}</li>`);
       continue;
     }
     if (inList) { out.push("</ul>"); inList = false; }
     if (line.trim() === "") { out.push(""); continue; }
-    const para = line.replace(/\*\*(.+?)\*\*/g, '<strong class="text-zinc-100">$1</strong>');
-    out.push(`<p class="text-zinc-300 my-2 leading-relaxed">${para}</p>`);
+    const para = line.replace(/\*\*(.+?)\*\*/g, '<strong class="text-slate-100">$1</strong>');
+    out.push(`<p class="text-slate-300 my-2 leading-relaxed">${para}</p>`);
   }
   if (inList) out.push("</ul>");
   return out.join("\n");
@@ -91,15 +91,15 @@ export default async function RolePage({ params }: { params: Promise<{ encoded: 
 
   return (
     <main className="min-h-screen px-6 py-8 md:px-12 md:py-10 max-w-4xl mx-auto">
-      <header className="mb-6 border-b border-zinc-800 pb-6">
-        <Link href="/" className="text-xs text-zinc-500 hover:text-sky-300 font-mono">
+      <header className="mb-6 border-b border-slate-800 pb-6">
+        <Link href="/" className="text-xs text-slate-500 hover:text-blue-300 font-mono">
           ← back to dashboard
         </Link>
-        <div className="mt-2 text-xs font-mono uppercase tracking-wider text-zinc-500">{row.company}</div>
-        <h1 className="text-2xl font-semibold mt-1 text-zinc-100">{row.role}</h1>
+        <div className="mt-2 text-xs font-mono uppercase tracking-wider text-slate-500">{row.company}</div>
+        <h1 className="text-2xl font-semibold mt-1 text-slate-100">{row.role}</h1>
         <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
           {row.locations.length > 0 && (
-            <span className="text-zinc-500 font-mono">{row.locations.join(" · ")}</span>
+            <span className="text-slate-500 font-mono">{row.locations.join(" · ")}</span>
           )}
           {typeof row.score === "number" && (
             <span className={
@@ -112,18 +112,18 @@ export default async function RolePage({ params }: { params: Promise<{ encoded: 
             </span>
           )}
           {row.postedDaysAgo != null && (
-            <span className="font-mono text-zinc-500">{row.postedDaysAgo}d old</span>
+            <span className="font-mono text-slate-500">{row.postedDaysAgo}d old</span>
           )}
           {row.legitimacyTier && (
-            <span className="font-mono text-zinc-500">tier: {row.legitimacyTier}</span>
+            <span className="font-mono text-slate-500">tier: {row.legitimacyTier}</span>
           )}
-          <span className="font-mono text-zinc-600">status: {row.status}</span>
+          <span className="font-mono text-slate-600">status: {row.status}</span>
         </div>
         <a
           href={row.url}
           target="_blank"
           rel="noopener"
-          className="mt-3 inline-block text-sky-300 hover:text-sky-200 underline-offset-4 hover:underline text-sm font-mono break-all"
+          className="mt-3 inline-block text-blue-300 hover:text-blue-200 underline-offset-4 hover:underline text-sm font-mono break-all"
         >
           {row.url} ↗
         </a>
@@ -139,19 +139,19 @@ export default async function RolePage({ params }: { params: Promise<{ encoded: 
 
       {reportMd ? (
         <section className="mb-8">
-          <h2 className="text-xs uppercase tracking-wider text-zinc-500 font-mono mb-3">Scoring report</h2>
+          <h2 className="text-xs uppercase tracking-wider text-slate-500 font-mono mb-3">Scoring report</h2>
           <article
-            className="prose prose-invert max-w-none rounded-md border border-zinc-800 bg-zinc-900/40 px-5 py-4"
+            className="prose prose-invert max-w-none rounded-md border border-slate-800 bg-slate-900/40 px-5 py-4"
             dangerouslySetInnerHTML={{ __html: renderMarkdown(reportMd) }}
           />
         </section>
       ) : (
-        <section className="mb-8 rounded-md border border-zinc-800 bg-zinc-900/40 px-5 py-4">
-          <h2 className="text-xs uppercase tracking-wider text-zinc-500 font-mono mb-2">No scoring report yet</h2>
-          <p className="text-sm text-zinc-400">
+        <section className="mb-8 rounded-md border border-slate-800 bg-slate-900/40 px-5 py-4">
+          <h2 className="text-xs uppercase tracking-wider text-slate-500 font-mono mb-2">No scoring report yet</h2>
+          <p className="text-sm text-slate-400">
             This role hasn&apos;t been scored. To score it, run on the VM:
           </p>
-          <pre className="mt-2 px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-md text-xs font-mono text-sky-300 overflow-x-auto">
+          <pre className="mt-2 px-4 py-3 bg-slate-950 border border-slate-800 rounded-md text-xs font-mono text-blue-300 overflow-x-auto">
             cd ~/career-ops && docker compose run --rm scanner node gemini-eval.mjs --url {row.url}
           </pre>
         </section>
@@ -159,8 +159,8 @@ export default async function RolePage({ params }: { params: Promise<{ encoded: 
 
       {jdPreview && (
         <section className="mb-8">
-          <h2 className="text-xs uppercase tracking-wider text-zinc-500 font-mono mb-3">JD preview</h2>
-          <pre className="rounded-md border border-zinc-800 bg-zinc-950 px-5 py-4 text-xs leading-relaxed text-zinc-300 overflow-x-auto whitespace-pre-wrap font-mono max-h-[40rem] overflow-y-auto">
+          <h2 className="text-xs uppercase tracking-wider text-slate-500 font-mono mb-3">JD preview</h2>
+          <pre className="rounded-md border border-slate-800 bg-slate-950 px-5 py-4 text-xs leading-relaxed text-slate-300 overflow-x-auto whitespace-pre-wrap font-mono max-h-[40rem] overflow-y-auto">
             {jdPreview}
           </pre>
         </section>

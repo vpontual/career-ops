@@ -2,18 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* VP design-system standard palette: Tailwind slate + blue-500 accent.
+   See /home/vp/design-system docs/components/color-palette */
+
 :root {
   color-scheme: dark;
-  --bg: #0b0b0d;
-  --surface: #141418;
-  --surface-hover: #1a1a20;
-  --border: #2a2a32;
-  --text: #e8e8ec;
-  --text-dim: #9a9aa4;
-  --accent: #7dd3fc;
-  --green: #86efac;
-  --red: #fca5a5;
-  --amber: #fcd34d;
+  --bg: #0f172a;            /* slate-900 - page background */
+  --surface: #1e293b;       /* slate-800 - cards / raised */
+  --surface-hover: #334155; /* slate-700 - hover / overlay */
+  --border: #475569;        /* slate-600 */
+  --text: #f1f5f9;          /* slate-100 */
+  --text-dim: #94a3b8;      /* slate-400 */
+  --text-muted: #64748b;    /* slate-500 */
+  --accent: #3b82f6;        /* blue-500 */
+  --green: #22c55e;         /* success */
+  --red: #ef4444;           /* danger */
+  --amber: #f59e0b;         /* warning */
 }
 
 html, body {
