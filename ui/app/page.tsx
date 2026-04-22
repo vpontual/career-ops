@@ -38,32 +38,43 @@ function locationBadge(row: PipelineRow) {
   return tags;
 }
 
-// Freshness scale informed by the JD's Posted AND Updated dates. A
-// 200-day-old listing that was updated last week is reposted, not ghost.
-function ageBadge(row: PipelineRow) {
+// Color for an age value based on Vitor's freshness scale (≤5d goal,
+// ≤30d possible, >30d unlikely, >90d ghost).
+function ageColor(days: number): string {
+  if (days <= 5)  return "text-green-300 border-green-400/40 bg-green-500/15";
+  if (days <= 30) return "text-amber-300 border-amber-400/40 bg-amber-500/10";
+  if (days <= 90) return "text-orange-300 border-orange-400/40 bg-orange-500/10";
+  return "text-red-300 border-red-400/40 bg-red-500/10";
+}
+
+// Returns 1 or 2 pills depending on whether the listing has a meaningful
+// Updated date. When Updated is materially more recent than Posted, both
+// pills show: the updated one in bold tier color (the "is this listing
+// alive?" signal), the posted one muted as background context.
+//
+// When there's no updated info or updated == posted, just one pill in
+// the standard tier color.
+function ageBadges(row: PipelineRow): { label: string; color: string; title: string }[] {
   const d = row.postedDaysAgo;
-  if (d == null) return null;
+  if (d == null) return [];
   const u = row.updatedDaysAgo;
-  const tip = u != null ? `Posted ${d}d ago · Updated ${u}d ago` : `Posted ${d}d ago`;
-  switch (row.computedLegitimacy) {
-    case "fresh":
-      return { label: `${d}d`, color: "text-green-300 border-green-400/40 bg-green-500/15", title: tip };
-    case "mature":
-      return { label: `${d}d`, color: "text-amber-300 border-amber-400/40 bg-amber-500/10", title: tip };
-    case "stale":
-      return { label: `${d}d`, color: "text-orange-300 border-orange-400/40 bg-orange-500/10", title: tip };
-    case "reposted":
-      return { label: `${d}d ↻${u}d`, color: "text-amber-300 border-amber-400/40 bg-amber-500/10", title: tip + " (recently re-touched)" };
-    case "ancient":
-      return { label: `${d}d`, color: "text-red-300 border-red-400/40 bg-red-500/10", title: tip };
-    case "ghost-likely":
-      return { label: `${d}d 👻`, color: "text-red-400 border-red-500/50 bg-red-600/15", title: tip + " (likely ghost)" };
-    default:
-      if (d <= 5)  return { label: `${d}d`, color: "text-green-300 border-green-400/40 bg-green-500/15", title: tip };
-      if (d <= 30) return { label: `${d}d`, color: "text-amber-300 border-amber-400/40 bg-amber-500/10", title: tip };
-      if (d <= 90) return { label: `${d}d`, color: "text-red-300 border-red-400/40 bg-red-500/10", title: tip };
-      return { label: `${d}d 👻`, color: "text-red-400 border-red-500/50 bg-red-600/15", title: tip };
+  const ghost = row.computedLegitimacy === "ghost-likely";
+
+  // No meaningful update info, or update is basically the same as posted
+  if (u == null || u >= d - 2) {
+    const label = ghost ? `${d}d 👻` : `${d}d`;
+    const color = ghost
+      ? "text-red-400 border-red-500/50 bg-red-600/15"
+      : ageColor(d);
+    return [{ label, color, title: `Posted ${d}d ago` }];
   }
+
+  // Updated is materially more recent → show both, lead with updated
+  const mutedColor = "text-zinc-500 border-zinc-700 bg-zinc-800/40";
+  return [
+    { label: `↻ ${u}d`, color: ageColor(u), title: `Updated ${u}d ago — recent activity` },
+    { label: `${d}d`, color: mutedColor, title: `Originally posted ${d}d ago` }
+  ];
 }
 
 function encodeRoleSlug(url: string): string {
@@ -129,7 +140,7 @@ function applySort(rows: PipelineRow[], sort: string): PipelineRow[] {
 }
 
 function RoleRow({ r, showCompany }: { r: PipelineRow; showCompany: boolean }) {
-  const age = ageBadge(r);
+  const ageItems = ageBadges(r);
   const detailsHref = `/role/${encodeRoleSlug(r.url)}`;
   return (
     <li className="flex items-start gap-4 px-4 py-3 rounded-md border border-zinc-800/60 bg-zinc-900/40 hover:bg-zinc-900/80 transition-colors">
@@ -171,14 +182,15 @@ function RoleRow({ r, showCompany }: { r: PipelineRow; showCompany: boolean }) {
             {tag.label}
           </span>
         ))}
-        {age && (
+        {ageItems.map((a, i) => (
           <span
-            className={`text-[10px] font-mono border rounded px-1.5 py-0.5 ${age.color}`}
-            title={age.title}
+            key={i}
+            className={`text-[10px] font-mono border rounded px-1.5 py-0.5 ${a.color}`}
+            title={a.title}
           >
-            {age.label}
+            {a.label}
           </span>
-        )}
+        ))}
         {r.stagedSlug && (
           <Link
             href={`/pack/${r.stagedSlug}`}
