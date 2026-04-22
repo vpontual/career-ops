@@ -9,6 +9,7 @@ const TABS: { id: string; label: string; match: (r: PipelineRow) => boolean }[] 
   { id: "new", label: "New", match: r => r.status === "new" },
   { id: "scored", label: "Scored", match: r => typeof r.score === "number" },
   { id: "high", label: "High fit (≥4.0)", match: r => typeof r.score === "number" && r.score >= 4.0 },
+  { id: "highactive", label: "High + active", match: r => typeof r.score === "number" && r.score >= 4.0 && r.computedLegitimacy !== "ghost-likely" && r.computedLegitimacy !== "ancient" },
   { id: "highfresh", label: "High + fresh (≤5d)", match: r => typeof r.score === "number" && r.score >= 4.0 && (r.postedDaysAgo ?? 999) <= 5 },
   { id: "highrecent", label: "High + recent (≤30d)", match: r => typeof r.score === "number" && r.score >= 4.0 && (r.postedDaysAgo ?? 999) <= 30 },
   { id: "staged", label: "Auto-staged", match: r => Boolean(r.stagedSlug) },
@@ -37,14 +38,32 @@ function locationBadge(row: PipelineRow) {
   return tags;
 }
 
-// Vitor's freshness scale: ≤5d = goal, ≤30d = old-but-possible, >30d = irrelevant, >90d = ghost.
+// Freshness scale informed by the JD's Posted AND Updated dates. A
+// 200-day-old listing that was updated last week is reposted, not ghost.
 function ageBadge(row: PipelineRow) {
   const d = row.postedDaysAgo;
   if (d == null) return null;
-  if (d <= 5)  return { label: `${d}d`,    color: "text-green-300 border-green-400/40 bg-green-500/15" };
-  if (d <= 30) return { label: `${d}d`,    color: "text-amber-300 border-amber-400/40 bg-amber-500/10" };
-  if (d <= 90) return { label: `${d}d`,    color: "text-red-300 border-red-400/40 bg-red-500/10" };
-  return { label: `${d}d 👻`, color: "text-red-400 border-red-500/50 bg-red-600/15" };
+  const u = row.updatedDaysAgo;
+  const tip = u != null ? `Posted ${d}d ago · Updated ${u}d ago` : `Posted ${d}d ago`;
+  switch (row.computedLegitimacy) {
+    case "fresh":
+      return { label: `${d}d`, color: "text-green-300 border-green-400/40 bg-green-500/15", title: tip };
+    case "mature":
+      return { label: `${d}d`, color: "text-amber-300 border-amber-400/40 bg-amber-500/10", title: tip };
+    case "stale":
+      return { label: `${d}d`, color: "text-orange-300 border-orange-400/40 bg-orange-500/10", title: tip };
+    case "reposted":
+      return { label: `${d}d ↻${u}d`, color: "text-amber-300 border-amber-400/40 bg-amber-500/10", title: tip + " (recently re-touched)" };
+    case "ancient":
+      return { label: `${d}d`, color: "text-red-300 border-red-400/40 bg-red-500/10", title: tip };
+    case "ghost-likely":
+      return { label: `${d}d 👻`, color: "text-red-400 border-red-500/50 bg-red-600/15", title: tip + " (likely ghost)" };
+    default:
+      if (d <= 5)  return { label: `${d}d`, color: "text-green-300 border-green-400/40 bg-green-500/15", title: tip };
+      if (d <= 30) return { label: `${d}d`, color: "text-amber-300 border-amber-400/40 bg-amber-500/10", title: tip };
+      if (d <= 90) return { label: `${d}d`, color: "text-red-300 border-red-400/40 bg-red-500/10", title: tip };
+      return { label: `${d}d 👻`, color: "text-red-400 border-red-500/50 bg-red-600/15", title: tip };
+  }
 }
 
 function encodeRoleSlug(url: string): string {
@@ -155,7 +174,7 @@ function RoleRow({ r, showCompany }: { r: PipelineRow; showCompany: boolean }) {
         {age && (
           <span
             className={`text-[10px] font-mono border rounded px-1.5 py-0.5 ${age.color}`}
-            title={r.legitimacyTier ? `Legitimacy: ${r.legitimacyTier}` : undefined}
+            title={age.title}
           >
             {age.label}
           </span>

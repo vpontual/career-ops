@@ -16,8 +16,10 @@ export interface PipelineRow {
   checked: boolean;
   score?: number; // present once a report has been written
   reportPath?: string;
-  postedDaysAgo?: number;       // parsed from the linked report
-  legitimacyTier?: string;      // Fresh / Mature / Stale / Ancient / Ghost-Likely
+  postedDaysAgo?: number;       // from the JD's Posted line (or report if no JD)
+  updatedDaysAgo?: number;      // from the JD's Updated line, when present
+  legitimacyTier?: string;      // legacy field (from scoring report when present)
+  computedLegitimacy?: "fresh" | "mature" | "stale" | "ancient" | "reposted" | "ghost-likely";
   stagedSlug?: string;          // present if output/{slug}/cover-letter.md exists for this URL
   ats?: "greenhouse" | "ashby" | "lever" | "other";
 }
@@ -119,6 +121,54 @@ function detectAts(url: string): "greenhouse" | "ashby" | "lever" | "other" {
   return "other";
 }
 
+// Cache JD lookups across rows in one request so we only walk jds/ once.
+let jdMetaCache: Map<string, { posted?: number; updated?: number; locations?: string[] }> | null = null;
+async function loadJdMetaIndex(): Promise<Map<string, { posted?: number; updated?: number; locations?: string[] }>> {
+  if (jdMetaCache) return jdMetaCache;
+  const map = new Map<string, { posted?: number; updated?: number; locations?: string[] }>();
+  try {
+    const jdsDir = path.join(DATA_ROOT, "jds");
+    const files = await readdir(jdsDir);
+    for (const f of files) {
+      if (!f.endsWith(".md")) continue;
+      const text = await readFile(path.join(jdsDir, f), "utf-8");
+      const urlM = text.match(/\*\*URL:\*\*\s+(\S+)/);
+      if (!urlM) continue;
+      const postedM = text.match(/\*\*Posted:\*\*[^(]*\((\d+)\s+days?\s+ago\)/i);
+      const updatedM = text.match(/\*\*Updated:\*\*[^(]*\((\d+)\s+days?\s+ago\)/i);
+      const locationM = text.match(/\*\*Location:\*\*\s+(.+)/);
+      const locations = locationM
+        ? locationM[1].split(/[|;•]/).map(s => s.trim()).filter(Boolean)
+        : undefined;
+      map.set(urlM[1], {
+        posted: postedM ? parseInt(postedM[1], 10) : undefined,
+        updated: updatedM ? parseInt(updatedM[1], 10) : undefined,
+        locations
+      });
+    }
+  } catch {}
+  jdMetaCache = map;
+  return map;
+}
+
+// Compute a legitimacy tier from posted + updated days. Updated date matters
+// because a 200-day-old listing that was updated last week is almost certainly
+// still active, while one that was last touched 200 days ago is dead.
+function computeLegitimacy(posted: number | undefined, updated: number | undefined): PipelineRow["computedLegitimacy"] {
+  if (posted == null) return undefined;
+  // Fresh / mature / stale based on whichever signal is most recent
+  const effective = updated != null && updated < posted ? updated : posted;
+  if (posted > 90 && (updated == null || updated > 30)) {
+    return posted > 180 ? "ghost-likely" : "ancient";
+  }
+  if (posted > 30 && updated != null && updated <= 30) {
+    return "reposted"; // old original posting but recently re-touched
+  }
+  if (effective <= 5) return "fresh";
+  if (effective <= 30) return "mature";
+  return "stale";
+}
+
 async function findReportForUrl(url: string): Promise<{
   path: string;
   score?: number;
@@ -173,7 +223,9 @@ export async function loadPipeline(): Promise<PipelineData> {
 
   const manualStatuses = await readApplicationsMd();
   stagedCache = null; // reset per-request
+  jdMetaCache = null; // reset per-request
   const stagedIndex = await loadStagedIndex();
+  const jdMetaIndex = await loadJdMetaIndex();
 
   const rows: PipelineRow[] = [];
   for (const line of raw.split("\n")) {
@@ -184,14 +236,26 @@ export async function loadPipeline(): Promise<PipelineData> {
     const manual = manualStatuses.get(row.url);
     if (manual) row.status = manual;
 
-    // Find a matching report if one exists
+    // JD-derived metadata: posted/updated dates and locations. Available even
+    // when no scoring report has been generated yet.
+    const jdMeta = jdMetaIndex.get(row.url);
+    if (jdMeta) {
+      row.postedDaysAgo = jdMeta.posted;
+      row.updatedDaysAgo = jdMeta.updated;
+      if (jdMeta.locations && jdMeta.locations.length > 0) {
+        row.locations = jdMeta.locations;
+      }
+    }
+    row.computedLegitimacy = computeLegitimacy(row.postedDaysAgo, row.updatedDaysAgo);
+
+    // Find a matching scoring report if one exists (provides score + tier text)
     const report = await findReportForUrl(row.url);
     if (report) {
       row.reportPath = report.path;
       row.score = report.score;
-      row.postedDaysAgo = report.postedDaysAgo;
-      row.legitimacyTier = report.legitimacyTier;
-      // Locations live in the JD/report, not in pipeline.md, so backfill here.
+      // Report's posted/legitimacy override JD-only values when available
+      if (report.postedDaysAgo != null) row.postedDaysAgo = report.postedDaysAgo;
+      if (report.legitimacyTier) row.legitimacyTier = report.legitimacyTier;
       if (report.locations && report.locations.length > 0) {
         row.locations = report.locations;
       }
