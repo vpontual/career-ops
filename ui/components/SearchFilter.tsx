@@ -77,7 +77,7 @@ export default function SearchFilter({ initial = "" }: { initial?: string }) {
         className="w-full px-3 py-1.5 pr-14 text-sm rounded-md bg-slate-800 border border-slate-600 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
       />
       {showBadge && (
-        <kbd className="absolute right-2 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-1 text-[10px] font-mono text-slate-400 border border-slate-600 rounded px-1.5 py-0.5 bg-slate-900">
+        <kbd className="absolute right-2 top-1/2 -translate-y-1/2 hidden md:inline-flex items-center text-[10px] font-mono text-slate-400 border border-slate-600 rounded px-1.5 py-0.5 bg-slate-900 whitespace-nowrap leading-none">
           Ctrl K
         </kbd>
       )}
