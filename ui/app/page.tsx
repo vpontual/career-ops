@@ -51,6 +51,64 @@ function encodeRoleSlug(url: string): string {
   return Buffer.from(url, "utf-8").toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
+const SORTS: { id: string; label: string }[] = [
+  { id: "default", label: "Default" },
+  { id: "score", label: "Score" },
+  { id: "days", label: "Days (newest)" },
+  { id: "city", label: "City" },
+  { id: "title", label: "Title" },
+  { id: "company", label: "Company" }
+];
+
+// Pull the most relevant city out of the locations array for sorting.
+// Prefer NYC > LA > Remote > first listed, so a row with multiple offices
+// like "SF · NYC · Remote" sorts under "New York" for someone NYC-based.
+function primaryCity(locs: string[]): string {
+  if (locs.length === 0) return "~"; // sort empties last
+  const nyc = locs.find(l => /new york|nyc|manhattan|brooklyn|queens|jersey city|hoboken|stamford/i.test(l));
+  if (nyc) return "0_New York";
+  const la = locs.find(l => /los angeles|\bLA\b|santa monica|culver|pasadena|el segundo/i.test(l));
+  if (la) return "1_Los Angeles";
+  const remote = locs.find(l => /remote|anywhere|distributed/i.test(l));
+  if (remote) return "2_Remote";
+  return "3_" + locs[0];
+}
+
+function applySort(rows: PipelineRow[], sort: string): PipelineRow[] {
+  const out = rows.slice();
+  switch (sort) {
+    case "score":
+      return out.sort((a, b) => {
+        const d = (b.score ?? -1) - (a.score ?? -1);
+        if (d !== 0) return d;
+        return (a.postedDaysAgo ?? 9999) - (b.postedDaysAgo ?? 9999);
+      });
+    case "days":
+      return out.sort((a, b) => {
+        const da = a.postedDaysAgo ?? 9999;
+        const db = b.postedDaysAgo ?? 9999;
+        if (da !== db) return da - db;
+        return (b.score ?? -1) - (a.score ?? -1);
+      });
+    case "city":
+      return out.sort((a, b) => {
+        const c = primaryCity(a.locations).localeCompare(primaryCity(b.locations));
+        if (c !== 0) return c;
+        return a.company.localeCompare(b.company);
+      });
+    case "title":
+      return out.sort((a, b) => a.role.localeCompare(b.role));
+    case "company":
+      return out.sort((a, b) => {
+        const c = a.company.localeCompare(b.company);
+        if (c !== 0) return c;
+        return (b.score ?? -1) - (a.score ?? -1);
+      });
+    default:
+      return out;
+  }
+}
+
 function RoleRow({ r, showCompany }: { r: PipelineRow; showCompany: boolean }) {
   const age = ageBadge(r);
   const detailsHref = `/role/${encodeRoleSlug(r.url)}`;
@@ -133,27 +191,28 @@ function RoleRow({ r, showCompany }: { r: PipelineRow; showCompany: boolean }) {
   );
 }
 
-export default async function Home({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+export default async function Home({ searchParams }: { searchParams: Promise<{ tab?: string; sort?: string }> }) {
   const data = await loadPipeline();
-  const { tab = "all" } = await searchParams;
+  const { tab = "all", sort: sortParam } = await searchParams;
 
   const activeTab = TABS.find(t => t.id === tab) ?? TABS[0];
   const filtered = data.rows.filter(activeTab.match);
 
-  // For score-based tabs, show a flat list sorted by score DESC then age ASC
-  // rather than grouping by company. Group-by-company for other views.
-  const isScoredView = activeTab.id === "scored" || activeTab.id === "high" || activeTab.id === "highfresh" || activeTab.id === "highrecent" || activeTab.id === "staged";
+  // Defaults per tab type when ?sort isn't set:
+  //   scored-style tabs → sort by score DESC (then age ASC) in a flat list
+  //   everything else  → group by company
+  const isScoredTab = activeTab.id === "scored" || activeTab.id === "high" || activeTab.id === "highfresh" || activeTab.id === "highrecent" || activeTab.id === "staged";
+  const effectiveSort = sortParam && SORTS.some(s => s.id === sortParam) ? sortParam : (isScoredTab ? "score" : "default");
 
-  const flatSorted = isScoredView
-    ? filtered.slice().sort((a, b) => {
-        const scoreDiff = (b.score ?? 0) - (a.score ?? 0);
-        if (scoreDiff !== 0) return scoreDiff;
-        return (a.postedDaysAgo ?? 9999) - (b.postedDaysAgo ?? 9999);
-      })
-    : [];
+  // "default" on a non-scored tab means grouped by company. Any explicit sort
+  // (including "company") flips to flat-list mode so user always gets a single
+  // ordered view when they ask for one.
+  const useGroupedView = effectiveSort === "default";
+
+  const flatSorted = useGroupedView ? [] : applySort(filtered, effectiveSort);
 
   const byCompany = new Map<string, PipelineRow[]>();
-  if (!isScoredView) {
+  if (useGroupedView) {
     for (const r of filtered) {
       const arr = byCompany.get(r.company) ?? [];
       arr.push(r);
@@ -181,10 +240,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
           {TABS.map(t => {
             const count = data.rows.filter(t.match).length;
             const isActive = t.id === activeTab.id;
+            const href = sortParam ? `?tab=${t.id}&sort=${sortParam}` : `?tab=${t.id}`;
             return (
               <Link
                 key={t.id}
-                href={`?tab=${t.id}`}
+                href={href}
                 className={
                   "px-3 py-1.5 text-sm rounded-md border transition-colors " +
                   (isActive
@@ -197,11 +257,33 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
             );
           })}
         </nav>
+
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+          <span className="text-zinc-500 font-mono uppercase tracking-wider">Sort:</span>
+          {SORTS.map(s => {
+            const isActive = s.id === effectiveSort || (!sortParam && s.id === "default");
+            const href = s.id === "default" ? `?tab=${activeTab.id}` : `?tab=${activeTab.id}&sort=${s.id}`;
+            return (
+              <Link
+                key={s.id}
+                href={href}
+                className={
+                  "px-2 py-1 rounded border font-mono transition-colors " +
+                  (isActive
+                    ? "border-sky-400/60 bg-sky-400/10 text-sky-200"
+                    : "border-zinc-800 text-zinc-500 hover:border-zinc-600 hover:text-zinc-200")
+                }
+              >
+                {s.label}
+              </Link>
+            );
+          })}
+        </div>
       </header>
 
       {filtered.length === 0 ? (
         <p className="text-zinc-500 text-sm">Nothing here yet. Run a scan to populate.</p>
-      ) : isScoredView ? (
+      ) : !useGroupedView ? (
         <ul className="space-y-2">
           {flatSorted.map(r => <RoleRow key={r.url} r={r} showCompany />)}
         </ul>
