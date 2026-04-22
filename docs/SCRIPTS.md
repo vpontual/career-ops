@@ -187,3 +187,63 @@ npm run scan
 ```
 
 **Exit codes:** `0` scan completed, `1` configuration error or no portals.yml found.
+
+---
+
+## probe-portals (fork)
+
+Probes a list of (name, [slug-candidates]) against Greenhouse/Ashby/Lever APIs and prints YAML-ready entries for the working ones to stdout. Misses go to stderr. Used to grow `portals.yml` without polluting scans with 404s.
+
+```bash
+docker compose run --rm scanner node probe-portals.mjs > /tmp/new-portals.yml
+```
+
+Edit the `CANDIDATES` array at the top of the script before running.
+
+---
+
+## tailor-cv (fork)
+
+Per-role CV variant selection. For each staged role (or a specific slug), reads `cv-variants/cv-{archetype}.md`, auto-classifies the archetype from JD keywords (override via `output/{slug}/cv-variant.txt`), and renders `output/{slug}/cv.pdf`.
+
+```bash
+docker compose run --rm applier node tailor-cv.mjs --all
+docker compose run --rm applier node tailor-cv.mjs <slug>
+docker compose run --rm applier node tailor-cv.mjs <slug> --variant ai-infra
+docker compose run --rm applier node tailor-cv.mjs --all --dry-run
+```
+
+Default archetypes: `ai-product` (default), `ai-infra`, `ai-enterprise`, `ai-consumer`. Add more by dropping `cv-{name}.md` into `cv-variants/` and extending the `ARCHETYPES` keyword map in the script.
+
+---
+
+## rerender-cover (fork)
+
+Re-renders one role's `cover-letter.md` + `cover-letter.pdf` from a plain-text input file. Used when a cover letter is hand-edited rather than generated. Preserves the original metadata header. Copies the shared `cv.pdf` into the role dir if present.
+
+```bash
+docker compose run --rm applier node rerender-cover.mjs <slug> <text-file>
+docker compose run --rm applier node rerender-cover.mjs <slug> <text-file> <company> <role> <url> <score> <days>  # for new dirs
+```
+
+---
+
+## batch-stage (fork)
+
+Bulk-stages many roles from a JSON manifest of pre-written cover letters. Each entry: `{slug, url, company, role, score, days, text}`. For each entry creates `output/{slug}/`, writes `cover-letter.md` with the standard header, copies the shared `cv.pdf` in, and renders `cover-letter.pdf`.
+
+```bash
+docker compose run --rm applier node batch-stage.mjs cover-batch.json
+```
+
+Used when cover letters are written by hand (e.g., by Claude in a chat session) rather than per-role-Gemini.
+
+---
+
+## inspect-form (fork)
+
+Debug helper. Opens a URL in headless Chromium and dumps every input/textarea/select with id, name, type, aria-label, autocomplete, and the closest `<label>` text. Used when a new employer's application form refuses to autofill — the inspector reveals the actual field selectors so they can be added to `prefill-greenhouse.mjs`.
+
+```bash
+docker compose run --rm applier node inspect-form.mjs <url>
+```
