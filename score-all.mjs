@@ -13,6 +13,7 @@
 
 import { readFile, writeFile, readdir } from 'fs/promises';
 import path from 'path';
+import { SCORING_TIER1 } from './scoring-tier1.mjs';
 
 // scoring[filename] = { score, verdict, archetype, geo, comp, match, compScore, geoScore, cultural, redFlags }
 const SCORING = {
@@ -615,7 +616,7 @@ async function main() {
     const postedDays = daysMatch ? parseInt(daysMatch[1], 10) : null;
     const leg = legitimacyTier(postedDays);
 
-    const s = SCORING[filename];
+    const s = SCORING[filename] || SCORING_TIER1[filename];
     if (!s) {
       unscored.push(filename);
       missing++;

@@ -48,12 +48,30 @@ async function fetchJson(url) {
   return res.json();
 }
 
+// Companies that wrap their Greenhouse postings behind a branded careers
+// URL but expose the canonical job ID as gh_jid in the query string.
+const BRANDED_GREENHOUSE = {
+  'stripe.com': 'stripe',
+  'databricks.com': 'databricks',
+  'careers.datadoghq.com': 'datadog',
+  'www.brex.com': 'brex',
+  'brex.com': 'brex',
+  'jobs.elastic.co': 'elastic'
+};
+
 function detectAts(url) {
   if (/job-boards\.greenhouse\.io|boards\.greenhouse\.io/.test(url)) {
     const m = url.match(/greenhouse\.io\/([a-z0-9-]+)\/jobs\/(\d+)/i);
     if (!m) return null;
     return { type: 'greenhouse', slug: m[1], id: m[2] };
   }
+  // Branded careers URL with gh_jid query param
+  try {
+    const u = new URL(url);
+    const slug = BRANDED_GREENHOUSE[u.host];
+    const id = u.searchParams.get('gh_jid');
+    if (slug && id) return { type: 'greenhouse', slug, id };
+  } catch {}
   if (/jobs\.ashbyhq\.com/.test(url)) {
     const m = url.match(/jobs\.ashbyhq\.com\/([^/]+)\/([a-f0-9-]+)/);
     if (!m) return null;
