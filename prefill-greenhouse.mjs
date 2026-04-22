@@ -205,10 +205,26 @@ async function processOne(browser, slug, defaults) {
 
     // Location - LA by default, NYC for NYC-located roles
     const cityForThisRole = await pickCityForRole(slug, defaults);
-    await tryFill(page, 'location',
-      ['#candidate-location', 'input[name*="location" i][type="text"]',
-       'input[autocomplete="address-level2"]', 'input[name*="city" i]'],
-      cityForThisRole, filled, missed);
+    await tryFill(page, 'location', [
+      // Greenhouse standard
+      '#candidate-location',
+      'input[name*="location" i][type="text"]',
+      'input[autocomplete="address-level2"]',
+      'input[name*="city" i]',
+      // Anthropic-style: dynamic question_NNN inputs identified by aria-label
+      'input[aria-label*="address from which" i]',
+      'input[aria-label*="plan on working" i]',
+      // Other common phrasings used across Greenhouse forms
+      'input[aria-label*="where you live" i]',
+      'input[aria-label*="where do you live" i]',
+      'input[aria-label*="current location" i]',
+      'input[aria-label*="current city" i]',
+      'input[aria-label*="hometown" i]',
+      'input[aria-label*="where are you based" i]',
+      'input[aria-label*="reside" i]',
+      // Generic - placed last so more specific selectors win
+      'input[aria-label*="city" i]'
+    ], cityForThisRole, filled, missed);
 
     // Personal site
     await tryFill(page, 'website',
