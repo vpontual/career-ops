@@ -18,6 +18,8 @@ export interface PipelineRow {
   reportPath?: string;
   postedDaysAgo?: number;       // parsed from the linked report
   legitimacyTier?: string;      // Fresh / Mature / Stale / Ancient / Ghost-Likely
+  stagedSlug?: string;          // present if output/{slug}/cover-letter.md exists for this URL
+  ats?: "greenhouse" | "ashby" | "lever" | "other";
 }
 
 export interface PipelineData {
@@ -86,6 +88,37 @@ async function readApplicationsMd(): Promise<Map<string, PipelineStatus>> {
   return statusMap;
 }
 
+// Cache: maps URL -> staged slug so we only walk output/ once per request.
+let stagedCache: Map<string, string> | null = null;
+async function loadStagedIndex(): Promise<Map<string, string>> {
+  if (stagedCache) return stagedCache;
+  const map = new Map<string, string>();
+  try {
+    const outputDir = path.join(DATA_ROOT, "output");
+    const dirs = await readdir(outputDir, { withFileTypes: true });
+    for (const d of dirs) {
+      if (!d.isDirectory()) continue;
+      const mdPath = path.join(outputDir, d.name, "cover-letter.md");
+      try {
+        const content = await readFile(mdPath, "utf-8");
+        const m = content.match(/\*\*URL:\*\*\s+(\S+)/);
+        if (m) map.set(m[1], d.name);
+      } catch {
+        // no cover letter in this dir
+      }
+    }
+  } catch {}
+  stagedCache = map;
+  return map;
+}
+
+function detectAts(url: string): "greenhouse" | "ashby" | "lever" | "other" {
+  if (/greenhouse\.io/.test(url)) return "greenhouse";
+  if (/ashbyhq\.com/.test(url)) return "ashby";
+  if (/lever\.co/.test(url)) return "lever";
+  return "other";
+}
+
 async function findReportForUrl(url: string): Promise<{
   path: string;
   score?: number;
@@ -139,6 +172,8 @@ export async function loadPipeline(): Promise<PipelineData> {
   }
 
   const manualStatuses = await readApplicationsMd();
+  stagedCache = null; // reset per-request
+  const stagedIndex = await loadStagedIndex();
 
   const rows: PipelineRow[] = [];
   for (const line of raw.split("\n")) {
@@ -161,6 +196,11 @@ export async function loadPipeline(): Promise<PipelineData> {
         row.locations = report.locations;
       }
     }
+
+    // Match staged application pack
+    const slug = stagedIndex.get(row.url);
+    if (slug) row.stagedSlug = slug;
+    row.ats = detectAts(row.url);
 
     rows.push(row);
   }

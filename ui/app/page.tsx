@@ -10,6 +10,7 @@ const TABS: { id: string; label: string; match: (r: PipelineRow) => boolean }[] 
   { id: "high", label: "High fit (≥4.0)", match: r => typeof r.score === "number" && r.score >= 4.0 },
   { id: "highfresh", label: "High + fresh (≤5d)", match: r => typeof r.score === "number" && r.score >= 4.0 && (r.postedDaysAgo ?? 999) <= 5 },
   { id: "highrecent", label: "High + recent (≤30d)", match: r => typeof r.score === "number" && r.score >= 4.0 && (r.postedDaysAgo ?? 999) <= 30 },
+  { id: "staged", label: "Auto-staged", match: r => Boolean(r.stagedSlug) },
   { id: "review", label: "Under review", match: r => r.status === "under_review" },
   { id: "applied", label: "Applied", match: r => r.status === "applied" },
   { id: "rejected", label: "Rejected", match: r => r.status === "rejected" }
@@ -53,7 +54,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
 
   // For score-based tabs, show a flat list sorted by score DESC then age ASC
   // rather than grouping by company. Group-by-company for other views.
-  const isScoredView = activeTab.id === "scored" || activeTab.id === "high" || activeTab.id === "highfresh" || activeTab.id === "highrecent";
+  const isScoredView = activeTab.id === "scored" || activeTab.id === "high" || activeTab.id === "highfresh" || activeTab.id === "highrecent" || activeTab.id === "staged";
 
   const flatSorted = isScoredView
     ? filtered.slice().sort((a, b) => {
@@ -155,6 +156,15 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
                     >
                       {age.label}
                     </span>
+                  )}
+                  {r.stagedSlug && (
+                    <Link
+                      href={`/pack/${r.stagedSlug}`}
+                      className="text-[10px] font-mono border rounded px-1.5 py-0.5 text-purple-300 border-purple-400/50 bg-purple-500/15 hover:bg-purple-500/25"
+                      title="Open application pack"
+                    >
+                      📦 PACK
+                    </Link>
                   )}
                   {typeof r.score === "number" ? (
                     <span
