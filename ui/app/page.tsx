@@ -299,8 +299,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
               Career Ops
             </a>
           </div>
-          <div className="shrink-0 ml-auto text-xs text-slate-500 font-mono text-right">
-            last scan: {data.lastScannedAt ? data.lastScannedAt.toLocaleString() : "never"}
+          <div className="shrink-0 ml-auto flex items-center gap-3 text-xs text-slate-500 font-mono text-right"><Link href="/ranked" className="text-blue-400 hover:text-blue-300 underline underline-offset-4">ranked leads →</Link><span>
+            last scan: {data.lastScannedAt ? data.lastScannedAt.toLocaleString() : "never"}</span>
           </div>
         </div>
         <p className="text-xs text-slate-500 mt-3 text-center">
