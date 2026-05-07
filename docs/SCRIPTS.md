@@ -247,3 +247,34 @@ Debug helper. Opens a URL in headless Chromium and dumps every input/textarea/se
 ```bash
 docker compose run --rm applier node inspect-form.mjs <url>
 ```
+
+---
+
+## fetch-gmail-leads (fork)
+
+IMAP poller. Scans `[Gmail]/All Mail` for messages from senders matched in `config/gmail-sources.yml`. Extracts URLs, resolves redirects, drops noise (CDNs, unsubscribe links, asset URLs), canonicalizes tracking params (utm_*, token, position, count, JWT-bearing welcometothejungle URLs), and appends survivors to `data/pipeline.md` so `fetch-jds.mjs` enriches them. Cursor at `data/.gmail-cursor` so reruns skip already-processed messages.
+
+```bash
+node fetch-gmail-leads.mjs              # live
+node fetch-gmail-leads.mjs --dry-run    # log what would change, write nothing
+DEBUG_URLS=1 node fetch-gmail-leads.mjs # log every URL resolution
+```
+
+Required env (in `.env`): `GMAIL_USER`, `GMAIL_APP_PASSWORD` (myaccount.google.com/apppasswords).
+
+---
+
+## rank-leads (fork)
+
+Reads every JD in `jds/`, applies title filter (positive/negative substring lists in `portals.yml`) + freshness filter (drop posted_at > MAX_AGE_DAYS, default 30), scores each survivor against `cv.md` via an Ollama-compatible LLM endpoint, dedups by title+company, writes `data/inbox-leads.md` sorted by fit-score desc and grouped by tier (5/4/3/2/1).
+
+Per-JD scores are cached in `data/lead-scores.json` (keyed by JD filename) so reruns only re-score new JDs. Use `--rescore` to ignore cache.
+
+```bash
+node rank-leads.mjs              # full run, write inbox-leads.md
+node rank-leads.mjs --dry-run    # score, log summary, no write
+node rank-leads.mjs --rescore    # ignore cache
+node rank-leads.mjs --limit 25   # only score top N (by recency)
+```
+
+Required env (in `.env`): `OLLAMA_URL` (e.g. `http://your-ollama-host:11434`). Optional: `RANK_MODEL` (default `Qwen/Qwen3.6-35B-A3B-FP8`), `MAX_AGE_DAYS` (default 30).

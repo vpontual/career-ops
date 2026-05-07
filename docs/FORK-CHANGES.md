@@ -19,6 +19,9 @@ service in `docker-compose.yml`.
 - Tabs: All / New / Scored / High fit (≥4.0) / High + active / High + fresh
   (≤5d) / High + recent (≤30d) / Auto-staged / Under review / Applied /
   Rejected / Archived.
+- `/ranked` page (header link "ranked leads →") reads `data/inbox-leads.md`
+  and renders the LLM-scored output of `rank-leads.mjs` grouped by tier
+  with verdict + red-flag callouts.
 - Sort options: Default (grouped by company) / Score / Days (newest, uses
   `min(posted, updated)`) / Updated (filters out non-updated, newest first) /
   City (NYC > LA > Remote > first listed) / Title / Company.
@@ -70,8 +73,48 @@ ballooning `score-all.mjs`.
 | `batch-stage.mjs` | Bulk-stages many roles from a JSON manifest of pre-written cover letters. |
 | `inspect-form.mjs` | Debug helper that dumps every input/select/textarea on a URL with id/name/aria-label/closest-label. Used to find new ATS field selectors. |
 | `scoring-tier1.mjs` | Exports `SCORING_TIER1`, the Claude-curated scoring table for the 2026-04-22 portal expansion (125 JDs). Imported by `score-all.mjs`. |
+| `fetch-gmail-leads.mjs` | IMAP poller for `[Gmail]/All Mail`. Curated sender allowlist in `config/gmail-sources.yml`. Strips tracking query params at write time so digest URLs (Lensa/Idealist/LinkedIn position=1/2/3) collapse to one row in `pipeline.md`. Cursor at `data/.gmail-cursor`. |
+| `rank-leads.mjs` | Reads `jds/`, applies title filter (`portals.yml` positive/negative) + freshness filter (≤30d default), scores each survivor against `cv.md` via an Ollama-compatible endpoint (`OLLAMA_URL` env), dedups by title+company, writes `data/inbox-leads.md` grouped by tier. Per-JD scores cached in `data/lead-scores.json`. |
 
 See `docs/SCRIPTS.md` for invocation details.
+
+## Gmail → ranked-leads pipeline
+
+End-to-end auto-ingest of jobs received by email, added 2026-05-07.
+
+**Flow:**
+
+1. `fetch-gmail-leads.mjs` scans Gmail All Mail for messages from curated
+   senders (LinkedIn job alerts, Lensa, Idealist, ZipRecruiter, Welcome to
+   the Jungle, etc.). Resolves redirects, drops noise URLs, canonicalizes
+   tracking params, appends survivors to `pipeline.md`.
+2. `fetch-jds.mjs` enriches each URL. Known ATS hosts use their APIs;
+   everything else falls back to scraping `<script type="application/ld+json">`
+   blocks for `JobPosting` schema. A `UNSCRAPEABLE_HOSTS` allowlist skips
+   guaranteed-failure hosts (Lensa Cloudflare-gated, LinkedIn login-gated,
+   Indeed/Glassdoor bot-detected). A `QUERY_STRIP_HOSTS` allowlist
+   canonicalizes URLs that ship with email tracking JWTs (Welcome to the
+   Jungle).
+3. `rank-leads.mjs` filters by title and freshness, scores each survivor
+   against `cv.md` via an Ollama-compatible LLM endpoint, dedups by
+   title+company, writes `data/inbox-leads.md` grouped by tier.
+4. UI at `/ranked` reads `inbox-leads.md` and renders the tier-grouped
+   view. Header link from `/`.
+
+**Required env (in `.env`):**
+
+```
+GMAIL_USER=
+GMAIL_APP_PASSWORD=
+OLLAMA_URL=
+RANK_MODEL=    # optional, default Qwen/Qwen3.6-35B-A3B-FP8
+```
+
+**Geo override:** `rank-leads.mjs` injects a fixed `Geo policy: open to LA,
+NYC, or remote-US` line into the LLM prompt instead of using `profile.yml`'s
+raw `location` string. Without this the LLM read "Los Angeles (relocating
+to NYC by July 2026)" and flagged every NYC-friendly role as a "geo
+mismatch."
 
 ## Modified upstream scripts
 
@@ -131,7 +174,8 @@ extension when a new employer's form refuses to autofill — use
 ## Infrastructure on the host
 
 - Repo at `/home/vp/career-ops` on `vp@<host>`
-- Cron: `0 4 * * *` runs `scan.mjs` then `fetch-jds.mjs`, logs to
+- Cron: `0 4 * * *` runs `scan.mjs` → `fetch-gmail-leads.mjs` →
+  `fetch-jds.mjs` → `rank-leads.mjs`, logs to
   `/home/vp/career-ops/logs/scanner.log` (gitignored). Weekly Sunday 3am
   log rotation (`tail -c 1M`).
 - UI at `http://<host>:3340`
