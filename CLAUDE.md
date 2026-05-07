@@ -289,6 +289,24 @@ Default modes are in `modes/` (English). Additional language-specific modes are 
 
 ---
 
+
+## MCP Server (agent integration)
+
+`mcp-server.mjs` at the repo root exposes the pipeline as agent-queryable state via the MCP stdio protocol. Acts as a thin adapter over the UI's HTTP API, so the UI is the only source of truth for parsing.
+
+**Tools:**
+- `list_roles({status?, min_score?, fresh_days?, company?, query?, staged_only?, limit?})` — filtered pipeline rows
+- `get_role({url})` — full pack: row + scoring report + JD + cover letter (when staged)
+- `pipeline_stats()` — counts by status, score bucket, freshness, top companies, scored/staged totals
+- `set_role_status({url, status, company?, role?, note?})` — mutate via existing `/api/status` endpoint. Statuses: `under_review`, `applied`, `rejected`, `archived`, `clear`
+
+**Run:** `npm run mcp` (stdio). Configure via `CAREER_OPS_UI_URL` (default `http://localhost:3340`).
+
+**Underlying HTTP API** (also useful to non-MCP agents):
+- `GET /api/roles?status=…&min_score=…&fresh_days=…&company=…&q=…&staged_only=true&limit=…`
+- `GET /api/roles/{base64url(url)}` — single role with full detail
+- `POST /api/status` — pre-existing mutation endpoint (unchanged)
+
 ## CI/CD and Quality
 
 - **GitHub Actions** run on every PR: `test-all.mjs` (63+ checks), auto-labeler (risk-based: 🔴 core-architecture, ⚠️ agent-behavior, 📄 docs), welcome bot for first-time contributors
