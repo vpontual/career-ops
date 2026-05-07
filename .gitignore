@@ -62,3 +62,11 @@ modes/_profile.md
 application-defaults.md
 logs/
 cv-variants/
+
+# Gmail poller / rank-leads outputs (generated)
+data/.gmail-cursor
+data/inbox-leads.md
+data/lead-scores.json
+data/pipeline.md.bak-*
+logs/gmail-fetch.log
+logs/rank-leads.log

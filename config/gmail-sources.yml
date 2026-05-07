@@ -1,0 +1,124 @@
+# Gmail lead-source sender list — VEEPEE / vpontual personalization.
+#
+# Curated empirically from 18 months of mail in the `Jobs` Gmail label
+# (4,863 messages, 115 unique senders). Edit this file to grow or trim
+# the source list — the poller (fetch-gmail-leads.mjs) reads it on every run.
+#
+# `from_substring` matches anywhere in the From header (case-insensitive).
+# Pattern matching, not exact-match, so `lensa.com` catches every Lensa alias.
+
+leads:
+  # Aggregators / job boards
+  - lensa.com
+  - ziprecruiter.com
+  - welcometothejungle.com
+  - idealist.org
+  - mail.idealist.org
+  - alerts.jobot.com
+  - neuvoo.com
+  - glassdoor.com
+  - sites.careerbuilder.com
+  - jobalerts-noreply@linkedin.com
+  - jobs-listings@linkedin.com
+  - jobs-noreply@linkedin.com
+  - donotreply@match.indeed.com
+  - ripplematch.net
+  - ripplematch.com
+  - getripplematch.com
+  - support@builtin.com
+  - jobs2web.com
+  # Recruiter aliases (may add more as the user encounters them)
+  - mike@mccarthysearch.com
+  - kimble@kimblegroup.com
+  - jennie@jenniejohnson.com
+  - kandiksh@amazon.jobs
+  - summaiti@amazon.jobs
+  - sanbala@amazon.com
+  # Government job portals
+  - oasys@dcas.nyc.gov
+  - notification@cityjobsupport.nyc.gov
+  # Direct-from-company subscribers
+  - "@waymo.com"
+
+# URL hostname/path patterns that count as actual job leads. Final URL
+# (after redirect resolution) must match one of these as a substring.
+ats_hosts:
+  # Direct ATS systems — canonical and dedupable
+  - greenhouse.io
+  - boards.greenhouse.io
+  - job-boards.greenhouse.io
+  - ashbyhq.com
+  - jobs.lever.co
+  - myworkdayjobs.com
+  - myworkday.com/recruiting
+  - icims.com/jobs
+  - smartrecruiters.com/jobs
+  - jobvite.com/job
+  - workable.com/j
+  - bamboohr.com/jobs
+  - dover.io/jobs
+  # Direct company career portals
+  - amazon.jobs
+  - jobs.netflix.com
+  - careers.google.com
+  - apple.com/careers
+  - microsoft.com/jobs
+  - careers.facebook.com
+  - careers.meta.com
+  # Aggregator job pages (less canonical, but still actionable leads)
+  - lensa.com/cgw
+  - lensa.com/jobs
+  - linkedin.com/jobs/view
+  - linkedin.com/comm/jobs
+  - ziprecruiter.com/jobs
+  - ziprecruiter.com/c/
+  - ziprecruiter.com/k/
+  - welcometothejungle.com/companies
+  - welcometothejungle.com/jobs
+  - idealist.org/en/job
+  - idealist.org/listing
+  - glassdoor.com/job-listing
+  - glassdoor.com/Job
+  - indeed.com/viewjob
+  - indeed.com/cmp
+  - builtin.com/job
+  - jobot.com/details
+  - careerbuilder.com/job
+  - neuvoo.com/view
+  - jobs2web.com
+  - workforcenow.adp.com
+
+# URL patterns to reject before any redirect resolution. Saves the
+# expensive HTTP roundtrip on logos, unsubscribe, profile pages, etc.
+url_noise_patterns:
+  - cdn.lensa.com
+  - lensa.com/profile-settings
+  - lensa.com/unsubscribe
+  - lensa.com/talent/job-opportunities
+  - /unsubscribe
+  - /privacy
+  - /terms
+  - /static/
+  - /assets/
+  - /img/
+  - /image/
+  - /images/
+  - /cdn/
+  - /favicon
+  - email.linkedin.com/manage
+  - linkedin.com/legal
+  - linkedin.com/help
+  - linkedin.com/feed
+  - email.welcometothejungle.com/c/eJ
+  - email.idealist.org/c/
+  - mailtrack.io
+  - cmail
+  - utm_emailprefs
+
+# How many days back to scan on first run (no cursor yet). Subsequent runs
+# only look at messages newer than the saved cursor.
+first_run_lookback_days: 14
+
+# Cap concurrent HEAD requests when resolving aggregator-wrapped URLs.
+redirect_concurrency: 5
+redirect_timeout_ms: 8000
