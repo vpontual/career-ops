@@ -95,9 +95,9 @@ function effectiveDays(r: PipelineRow): number {
 }
 
 const SORTS: { id: string; label: string }[] = [
-  { id: "default", label: "Default" },
+  { id: "days", label: "Newest" },
   { id: "score", label: "Score" },
-  { id: "days", label: "Days (newest)" },
+  { id: "default", label: "Grouped" },
   { id: "updated", label: "Updated" },
   { id: "city", label: "City" },
   { id: "title", label: "Title" },
@@ -265,7 +265,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
   //   scored-style tabs → sort by score DESC (then age ASC) in a flat list
   //   everything else  → group by company
   const isScoredTab = activeTab.id === "scored" || activeTab.id === "high" || activeTab.id === "highfresh" || activeTab.id === "highrecent" || activeTab.id === "staged";
-  const effectiveSort = sortParam && SORTS.some(s => s.id === sortParam) ? sortParam : (isScoredTab ? "score" : "default");
+  // Default sort: scored tabs → by score, everything else → newest JDs first.
+  // Surfacing what's new at the top is the whole point of this view; the old
+  // "default" (grouped alphabetically by company) hid the daily delta. The
+  // grouped view is still available via the "Grouped" sort button.
+  const effectiveSort = sortParam && SORTS.some(s => s.id === sortParam) ? sortParam : (isScoredTab ? "score" : "days");
 
   // "default" on a non-scored tab means grouped by company. Any explicit sort
   // (including "company") flips to flat-list mode so user always gets a single
@@ -340,7 +344,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
         <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
           <span className="text-slate-500 font-mono uppercase tracking-wider">Sort:</span>
           {SORTS.map(s => {
-            const isActive = s.id === effectiveSort || (!sortParam && s.id === "default");
+            const isActive = s.id === effectiveSort;
             const params = new URLSearchParams();
             params.set("tab", activeTab.id);
             if (s.id !== "default") params.set("sort", s.id);
