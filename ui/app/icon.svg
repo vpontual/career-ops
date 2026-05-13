@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- background tile -->
+  <rect x="0" y="0" width="256" height="256" rx="48" fill="#0f172a"/>
+
+  <!-- briefcase handle -->
+  <path d="M 98 76 Q 98 56, 128 56 Q 158 56, 158 76"
+        fill="none" stroke="#f59e0b" stroke-width="10" stroke-linecap="round"/>
+
+  <!-- briefcase body -->
+  <rect x="40" y="84" width="176" height="128" rx="14" fill="#f59e0b"/>
+
+  <!-- darker band across the middle (suggests lid seam) -->
+  <rect x="40" y="118" width="176" height="6" fill="#b45309"/>
+
+  <!-- center clasp -->
+  <rect x="118" y="114" width="20" height="14" rx="3" fill="#7c2d12"/>
+
+  <!-- three ascending bars on the face, sharing a baseline at y=196 -->
+  <rect x="70"  y="174" width="26" height="22" rx="3" fill="#10b981"/>
+  <rect x="106" y="158" width="26" height="38" rx="3" fill="#10b981"/>
+  <rect x="142" y="138" width="26" height="58" rx="3" fill="#34d399"/>
+
+  <!-- trend arrow tip on tallest bar for "career growth" cue -->
+  <path d="M 155 138 L 168 138 L 161 128 Z" fill="#34d399"/>
+</svg>
