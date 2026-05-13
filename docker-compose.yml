@@ -5,7 +5,8 @@
 #   ui       — TODO P1: Next.js reader UI at :3340.
 #   pdf      — TODO P1: Playwright + Chromium for generate-pdf.mjs (on-demand).
 #
-# Resource caps are non-negotiable per ~/Dev/career-ops-plan.md invariants.
+# Resource caps sized so the homepage renders within HAProxy's timeout — ui
+# was at cpus:0.5 / mem:256m and caused 504s on the public UI hostname (2026-05-12).
 
 services:
 
@@ -48,8 +49,8 @@ services:
     environment:
       - CAREER_OPS_ROOT=/data
       - NODE_ENV=production
-    cpus: 0.5
-    mem_limit: 256m
+    cpus: 2.0
+    mem_limit: 1g
     restart: unless-stopped
 
   applier:
