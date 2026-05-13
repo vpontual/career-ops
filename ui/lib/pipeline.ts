@@ -121,10 +121,48 @@ function detectAts(url: string): "greenhouse" | "ashby" | "lever" | "other" {
   return "other";
 }
 
-// Cache JD lookups across rows in one request so we only walk jds/ once.
+// Cross-request pipeline cache. Invalidated by:
+//   - mtime of pipeline.md (rewritten by scan/rank 4am cron + /api/leads)
+//   - mtime of applications.md (manual status edits via /api/status)
+//   - the local date string — because rows hold computed `postedDaysAgo` /
+//     `updatedDaysAgo` values that need to advance at midnight even when no
+//     underlying file has changed. Without this, a cache built at 11pm would
+//     keep serving yesterday's age numbers all of today.
+let pipelineCache: {
+  data: PipelineData;
+  pipelineMtime: number;
+  appsMtime: number;
+  dayKey: string;
+} | null = null;
+
+function todayKey(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+async function fileMtime(p: string): Promise<number> {
+  try { return (await stat(p)).mtimeMs; } catch { return 0; }
+}
+
+// Cache JD lookups so we don't walk jds/ on every request. Day-keyed so
+// `posted`/`updated` (computed from Date.now()) advance at midnight even if
+// loadPipeline's per-request reset never fires (e.g. /ranked only call site).
 let jdMetaCache: Map<string, { posted?: number; updated?: number; locations?: string[] }> | null = null;
-async function loadJdMetaIndex(): Promise<Map<string, { posted?: number; updated?: number; locations?: string[] }>> {
-  if (jdMetaCache) return jdMetaCache;
+let jdMetaCacheDay: string | null = null;
+
+// Compute days between an ISO timestamp and now. Returns undefined if the
+// string isn't a valid date. Floored, never negative.
+function daysAgo(iso: string | undefined): number | undefined {
+  if (!iso) return undefined;
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return undefined;
+  const ms = Date.now() - t;
+  if (ms < 0) return 0;
+  return Math.floor(ms / 86400000);
+}
+
+export async function loadJdMetaIndex(): Promise<Map<string, { posted?: number; updated?: number; locations?: string[] }>> {
+  const today = todayKey();
+  if (jdMetaCache && jdMetaCacheDay === today) return jdMetaCache;
   const map = new Map<string, { posted?: number; updated?: number; locations?: string[] }>();
   try {
     const jdsDir = path.join(DATA_ROOT, "jds");
@@ -134,20 +172,31 @@ async function loadJdMetaIndex(): Promise<Map<string, { posted?: number; updated
       const text = await readFile(path.join(jdsDir, f), "utf-8");
       const urlM = text.match(/\*\*URL:\*\*\s+(\S+)/);
       if (!urlM) continue;
-      const postedM = text.match(/\*\*Posted:\*\*[^(]*\((\d+)\s+days?\s+ago\)/i);
-      const updatedM = text.match(/\*\*Updated:\*\*[^(]*\((\d+)\s+days?\s+ago\)/i);
+
+      // Prefer the ISO timestamp in `**Posted:** 2025-11-14T13:25:57-05:00 (158 days ago)`
+      // and recompute days against today. The parenthetical was frozen at fetch
+      // time and is wrong by 1 day for every day since first fetch.
+      const postedIsoM = text.match(/\*\*Posted:\*\*\s+(\d{4}-\d{2}-\d{2}(?:T\S+)?)/);
+      const updatedIsoM = text.match(/\*\*Updated:\*\*\s+(\d{4}-\d{2}-\d{2}(?:T\S+)?)/);
+      const postedFrozenM = text.match(/\*\*Posted:\*\*[^(]*\((\d+)\s+days?\s+ago\)/i);
+      const updatedFrozenM = text.match(/\*\*Updated:\*\*[^(]*\((\d+)\s+days?\s+ago\)/i);
+
+      const posted =
+        daysAgo(postedIsoM?.[1]) ??
+        (postedFrozenM ? parseInt(postedFrozenM[1], 10) : undefined);
+      const updated =
+        daysAgo(updatedIsoM?.[1]) ??
+        (updatedFrozenM ? parseInt(updatedFrozenM[1], 10) : undefined);
+
       const locationM = text.match(/\*\*Location:\*\*\s+(.+)/);
       const locations = locationM
         ? locationM[1].split(/[|;•]/).map(s => s.trim()).filter(Boolean)
         : undefined;
-      map.set(urlM[1], {
-        posted: postedM ? parseInt(postedM[1], 10) : undefined,
-        updated: updatedM ? parseInt(updatedM[1], 10) : undefined,
-        locations
-      });
+      map.set(urlM[1], { posted, updated, locations });
     }
   } catch {}
   jdMetaCache = map;
+  jdMetaCacheDay = today;
   return map;
 }
 
@@ -209,6 +258,24 @@ async function findReportForUrl(url: string): Promise<{
 
 export async function loadPipeline(): Promise<PipelineData> {
   const pipelinePath = path.join(DATA_ROOT, "data", "pipeline.md");
+  const appsPath = path.join(DATA_ROOT, "data", "applications.md");
+
+  const [pipelineMtime, appsMtime] = await Promise.all([
+    fileMtime(pipelinePath),
+    fileMtime(appsPath)
+  ]);
+  const dayKey = todayKey();
+
+  if (
+    pipelineCache &&
+    pipelineCache.pipelineMtime === pipelineMtime &&
+    pipelineCache.appsMtime === appsMtime &&
+    pipelineCache.dayKey === dayKey &&
+    pipelineMtime !== 0
+  ) {
+    return pipelineCache.data;
+  }
+
   let raw = "";
   try {
     raw = await readFile(pipelinePath, "utf-8");
@@ -253,8 +320,11 @@ export async function loadPipeline(): Promise<PipelineData> {
     if (report) {
       row.reportPath = report.path;
       row.score = report.score;
-      // Report's posted/legitimacy override JD-only values when available
-      if (report.postedDaysAgo != null) row.postedDaysAgo = report.postedDaysAgo;
+      // Report's legitimacy tier text is authoritative when present, but we
+      // intentionally do NOT take report.postedDaysAgo — that field is parsed
+      // from a frozen "(X days ago)" parenthetical written at scoring time and
+      // would freeze ages permanently. Always prefer the JD-meta value which
+      // is recomputed from the Posted ISO timestamp on every request.
       if (report.legitimacyTier) row.legitimacyTier = report.legitimacyTier;
       if (report.locations && report.locations.length > 0) {
         row.locations = report.locations;
@@ -278,10 +348,12 @@ export async function loadPipeline(): Promise<PipelineData> {
   };
   for (const r of rows) byStatus[r.status]++;
 
-  return {
+  const data: PipelineData = {
     rows,
     lastScannedAt: await maybeStat(pipelinePath),
     totalCount: rows.length,
     byStatus
   };
+  pipelineCache = { data, pipelineMtime, appsMtime, dayKey };
+  return data;
 }
