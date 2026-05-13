@@ -1,5 +1,6 @@
 import { readFile, stat, readdir } from "fs/promises";
 import path from "path";
+import { loadInboxLeads } from "./inbox-leads";
 
 // Path to the career-ops repo root, mounted from docker-compose.
 // Inside the container we see it at /data (compose bind-mount).
@@ -22,6 +23,14 @@ export interface PipelineRow {
   computedLegitimacy?: "fresh" | "mature" | "stale" | "ancient" | "reposted" | "ghost-likely";
   stagedSlug?: string;          // present if output/{slug}/cover-letter.md exists for this URL
   ats?: "greenhouse" | "ashby" | "lever" | "other";
+
+  // Fields joined from inbox-leads.md (rank-leads.mjs output). Present only on
+  // rows the ranker has decided to include — the "Ranked" tab on the home
+  // page renders these inline so /ranked doesn't need to be a separate route.
+  tier?: number;        // 1-5 from the markdown's "## Score N" section
+  archetype?: string;   // e.g. "Senior PM" / "AI Product PM"
+  verdict?: string;     // one-sentence fit summary
+  redFlags?: string;    // text after the "— ⚠" split, when present
 }
 
 export interface PipelineData {
@@ -74,7 +83,7 @@ async function readApplicationsMd(): Promise<Map<string, PipelineStatus>> {
   try {
     const content = await readFile(path.join(DATA_ROOT, "data", "applications.md"), "utf-8");
     for (const line of content.split("\n")) {
-      const m = line.match(/(\S+?career\S+|\S+?(ashby|greenhouse|lever)\S+)/i);
+      const m = line.match(/(https?:\/\/\S+)/);
       if (!m) continue;
       const url = m[1];
       const lower = line.toLowerCase();
@@ -132,6 +141,7 @@ let pipelineCache: {
   data: PipelineData;
   pipelineMtime: number;
   appsMtime: number;
+  inboxMtime: number;
   dayKey: string;
 } | null = null;
 
@@ -259,10 +269,12 @@ async function findReportForUrl(url: string): Promise<{
 export async function loadPipeline(): Promise<PipelineData> {
   const pipelinePath = path.join(DATA_ROOT, "data", "pipeline.md");
   const appsPath = path.join(DATA_ROOT, "data", "applications.md");
+  const inboxPath = path.join(DATA_ROOT, "data", "inbox-leads.md");
 
-  const [pipelineMtime, appsMtime] = await Promise.all([
+  const [pipelineMtime, appsMtime, inboxMtime] = await Promise.all([
     fileMtime(pipelinePath),
-    fileMtime(appsPath)
+    fileMtime(appsPath),
+    fileMtime(inboxPath)
   ]);
   const dayKey = todayKey();
 
@@ -270,6 +282,7 @@ export async function loadPipeline(): Promise<PipelineData> {
     pipelineCache &&
     pipelineCache.pipelineMtime === pipelineMtime &&
     pipelineCache.appsMtime === appsMtime &&
+    pipelineCache.inboxMtime === inboxMtime &&
     pipelineCache.dayKey === dayKey &&
     pipelineMtime !== 0
   ) {
@@ -339,6 +352,23 @@ export async function loadPipeline(): Promise<PipelineData> {
     rows.push(row);
   }
 
+  // Join rank-leads.mjs output (data/inbox-leads.md) onto matching rows. The
+  // "Ranked" tab on the home page renders these fields inline so we no longer
+  // need a separate /ranked route. Failures are swallowed — inbox-leads.md
+  // may not exist on a fresh install or before the first rank-leads run.
+  try {
+    const inbox = await loadInboxLeads();
+    const byUrl = new Map(inbox.leads.map(l => [l.url, l]));
+    for (const row of rows) {
+      const lead = byUrl.get(row.url);
+      if (!lead) continue;
+      row.tier = lead.tier;
+      if (lead.archetype) row.archetype = lead.archetype;
+      if (lead.verdict) row.verdict = lead.verdict;
+      if (lead.redFlags) row.redFlags = lead.redFlags;
+    }
+  } catch { /* inbox-leads.md unavailable — ranked tab will simply be empty */ }
+
   const byStatus: Record<PipelineStatus, number> = {
     new: 0,
     under_review: 0,
@@ -354,6 +384,6 @@ export async function loadPipeline(): Promise<PipelineData> {
     totalCount: rows.length,
     byStatus
   };
-  pipelineCache = { data, pipelineMtime, appsMtime, dayKey };
+  pipelineCache = { data, pipelineMtime, appsMtime, inboxMtime, dayKey };
   return data;
 }

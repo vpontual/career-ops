@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 
 const OPTIONS: { value: string; label: string; color: string }[] = [
   { value: "under_review", label: "Under review", color: "text-amber-300 border-amber-400/40 bg-amber-500/10" },
@@ -34,6 +35,7 @@ const CURRENT_LABEL: Record<string, string> = {
 };
 
 export default function StatusControl({ url, company, role, current }: Props) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -53,8 +55,7 @@ export default function StatusControl({ url, company, role, current }: Props) {
           setError(j.error || `HTTP ${res.status}`);
           return;
         }
-        // Server revalidates "/" so a soft refresh shows updated state.
-        window.location.reload();
+        router.refresh();
       } catch (e) {
         setError(e instanceof Error ? e.message : "Network error");
       }

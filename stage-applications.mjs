@@ -2,7 +2,7 @@
 /**
  * stage-applications.mjs — Level A automation.
  *
- * For every role scored >= MIN_SCORE that is older than MIN_AGE_DAYS,
+ * For every role scored >= MIN_SCORE posted within MAX_AGE_DAYS days,
  * generate:
  *   1. A tailored cover letter (Gemini call against profile.yml + cv.md + JD)
  *   2. A CV PDF (uses career-ops' cv-template.html + cv.md, no per-JD tailoring in v1)
@@ -13,7 +13,7 @@
  *
  * Tunables (env overrides):
  *   MIN_SCORE=4.0
- *   MIN_AGE_DAYS=30
+ *   MAX_AGE_DAYS=14
  *   MAX_CONCURRENT=2
  *   GEMINI_MODEL=gemini-2.5-flash
  */
@@ -31,7 +31,7 @@ try {
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const MIN_SCORE = parseFloat(process.env.MIN_SCORE || '4.0');
-const MIN_AGE_DAYS = parseInt(process.env.MIN_AGE_DAYS || '30', 10);
+const MAX_AGE_DAYS = parseInt(process.env.MAX_AGE_DAYS || '14', 10);
 const MAX_CONCURRENT = parseInt(process.env.MAX_CONCURRENT || '1', 10);  // free tier = 5 RPM
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -84,12 +84,24 @@ async function loadCandidates() {
     const company = (content.match(/\*\*Company:\*\*\s+(.+)/) || [])[1];
     const role = (content.match(/^# .+ — (.+)$/m) || [])[1];
     const score = parseFloat((content.match(/\*\*Score:\*\*\s+([\d.]+)/) || [])[1] || '0');
-    const daysMatch = content.match(/\((\d+)\s+days\s+ago\)/);
-    const days = daysMatch ? parseInt(daysMatch[1], 10) : null;
     const jdSlug = rf.replace(/^v-/, '').replace(/\.md$/, '');
     const jdPath = path.join(JDS_DIR, jdSlug + '.md');
     let jdContent = '';
     try { jdContent = await readFile(jdPath, 'utf-8'); } catch {}
+
+    // Prefer the ISO timestamp from the JD file (recomputed against today)
+    // over the frozen "(N days ago)" parenthetical in the report (stale since scoring time).
+    let days = null;
+    const jdIsoM = jdContent.match(/\*\*Posted:\*\*\s+(\d{4}-\d{2}-\d{2}(?:T\S+)?)/);
+    if (jdIsoM) {
+      const t = Date.parse(jdIsoM[1]);
+      if (!Number.isNaN(t)) days = Math.floor((Date.now() - t) / 86400000);
+    }
+    if (days === null) {
+      const frozenM = content.match(/\((\d+)\s+days\s+ago\)/);
+      if (frozenM) days = parseInt(frozenM[1], 10);
+    }
+
     out.push({
       reportFile: rf,
       jdPath,
@@ -98,7 +110,7 @@ async function loadCandidates() {
       slug: slugify(`${company}-${role}`),
     });
   }
-  return out.filter(r => r.score >= MIN_SCORE && r.days != null && r.days >= MIN_AGE_DAYS);
+  return out.filter(r => r.score >= MIN_SCORE && r.days != null && r.days <= MAX_AGE_DAYS);
 }
 
 async function callGeminiWithRetry(prompt, maxAttempts = 6) {
@@ -231,7 +243,7 @@ async function main() {
   try { profileOverrides = await readFile(PROFILE_OVERRIDES, 'utf-8'); } catch {}
 
   const candidates = await loadCandidates();
-  console.log(`\nstage-applications: score>=${MIN_SCORE}, age>=${MIN_AGE_DAYS}d → ${candidates.length} candidates\n`);
+  console.log(`\nstage-applications: score>=${MIN_SCORE}, age<=${MAX_AGE_DAYS}d → ${candidates.length} candidates\n`);
 
   if (!candidates.length) {
     console.log('Nothing to stage.');
