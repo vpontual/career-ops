@@ -120,14 +120,17 @@ function parseJdFile(content, filename) {
 }
 
 function freshnessOf(jd) {
-  if (jd.posted_days != null) return jd.posted_days;
+  // Prefer recomputing from the ISO timestamp so day counts advance as the
+  // calendar moves. `posted_days` is parsed from a frozen `(N days ago)`
+  // parenthetical written when fetch-jds.mjs first wrote the file and would
+  // otherwise be wrong by one day for every day since.
   if (jd.posted_at) {
     const d = new Date(jd.posted_at);
     if (!isNaN(d.getTime())) {
       return Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
     }
   }
-  return null;
+  return jd.posted_days; // fallback when ISO is missing or unparsable
 }
 
 // ── Score cache ───────────────────────────────────────────────────────────
