@@ -23,6 +23,7 @@ export interface PipelineRow {
   computedLegitimacy?: "fresh" | "mature" | "stale" | "ancient" | "reposted" | "ghost-likely";
   stagedSlug?: string;          // present if output/{slug}/cover-letter.md exists for this URL
   ats?: "greenhouse" | "ashby" | "lever" | "other";
+  appliedAt?: string;           // ISO date parsed from applications.md (e.g. "2026-05-13")
 
   // Fields joined from inbox-leads.md (rank-leads.mjs output). Present only on
   // rows the ranker has decided to include — the "Ranked" tab on the home
@@ -76,10 +77,8 @@ async function maybeStat(p: string): Promise<Date | null> {
   }
 }
 
-async function readApplicationsMd(): Promise<Map<string, PipelineStatus>> {
-  // applications.md is the user's manual tracker. Format is free-form markdown
-  // but typically has lines like: "- [x] URL | Company | Role | Applied"
-  const statusMap = new Map<string, PipelineStatus>();
+async function readApplicationsMd(): Promise<Map<string, { status: PipelineStatus; appliedAt?: string }>> {
+  const map = new Map<string, { status: PipelineStatus; appliedAt?: string }>();
   try {
     const content = await readFile(path.join(DATA_ROOT, "data", "applications.md"), "utf-8");
     for (const line of content.split("\n")) {
@@ -87,16 +86,19 @@ async function readApplicationsMd(): Promise<Map<string, PipelineStatus>> {
       if (!m) continue;
       const url = m[1];
       const lower = line.toLowerCase();
-      let s: PipelineStatus = "under_review";
-      if (lower.includes("rejected") || lower.includes("pass")) s = "rejected";
-      else if (lower.includes("applied") || lower.includes("submitted")) s = "applied";
-      else if (lower.includes("archived") || lower.includes("ignore")) s = "archived";
-      statusMap.set(url, s);
+      let status: PipelineStatus = "under_review";
+      if (lower.includes("rejected") || lower.includes("pass")) status = "rejected";
+      else if (lower.includes("applied") || lower.includes("submitted")) status = "applied";
+      else if (lower.includes("archived") || lower.includes("ignore")) status = "archived";
+      // Parse the date appended by /api/status: "Applied 2026-05-13" or "Applied 2026-05-13 — note"
+      const dateM = line.match(/(\d{4}-\d{2}-\d{2})/);
+      const appliedAt = status === "applied" && dateM ? dateM[1] : undefined;
+      map.set(url, { status, appliedAt });
     }
   } catch {
-    // no applications.md yet — everything stays in "new"
+    // no applications.md yet
   }
-  return statusMap;
+  return map;
 }
 
 // Cache: maps URL -> staged slug so we only walk output/ once per request.
@@ -314,7 +316,10 @@ export async function loadPipeline(): Promise<PipelineData> {
 
     // Overlay manual status from applications.md if present
     const manual = manualStatuses.get(row.url);
-    if (manual) row.status = manual;
+    if (manual) {
+      row.status = manual.status;
+      if (manual.appliedAt) row.appliedAt = manual.appliedAt;
+    }
 
     // JD-derived metadata: posted/updated dates and locations. Available even
     // when no scoring report has been generated yet.

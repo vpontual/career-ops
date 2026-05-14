@@ -2,6 +2,7 @@ import { readFile } from "fs/promises";
 import path from "path";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import ApplyButton from "@/components/ApplyButton";
 
 const DATA_ROOT = process.env.CAREER_OPS_ROOT ?? "/data";
 
@@ -110,6 +111,7 @@ export default async function PackPage({ params }: { params: Promise<{ slug: str
           >
             🌐 Open in ATS ↗
           </a>
+          <ApplyButton url={pack.url} company={pack.company} role={pack.role} />
         </div>
       </section>
 

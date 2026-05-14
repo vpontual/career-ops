@@ -89,6 +89,23 @@ async function loadProfileTargets() {
   // with a clean geo policy. The relocation hedge confuses the LLM into
   // flagging every NYC-friendly role as a "geo mismatch".
   lines.push(`\nGeo policy: open to LA, NYC, or remote-US. Treat any of those (or hybrid in those metros) as full match. Penalize only SF-only / Seattle-only / international.`);
+
+  // Load user-specific scoring overrides from modes/_profile.md (gitignored).
+  // Extract the "Scoring Rules" section and inject it so the model applies
+  // the candidate's preferences — not just generic PM fit.
+  const profileMdPath = path.join(ROOT, 'modes', '_profile.md');
+  if (existsSync(profileMdPath)) {
+    const md = await readFile(profileMdPath, 'utf-8');
+    const scoringMatch = md.match(/## Your Scoring Rules \(Override\)([\s\S]*?)(?=^## |\z)/m);
+    if (scoringMatch) {
+      lines.push('\nScoring rules — apply these strictly on top of the base scale:');
+      // Trim to ~2500 chars to stay well within token budget
+      lines.push(scoringMatch[1].trim().slice(0, 2500));
+    }
+    // Language capability not in profile.yml — inject explicitly
+    lines.push('\nLanguage note: candidate is fluent in French, Spanish, and Portuguese. Uprank roles that require or benefit from these languages.');
+  }
+
   return lines.join('\n');
 }
 

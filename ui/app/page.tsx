@@ -1,4 +1,5 @@
 import { loadPipeline, PipelineRow, PipelineStatus } from "@/lib/pipeline";
+import { tierColor } from "@/lib/inbox-leads";
 import StatusControl from "@/components/StatusControl";
 import SearchFilter from "@/components/SearchFilter";
 import Link from "next/link";
@@ -8,10 +9,11 @@ export const dynamic = "force-dynamic";
 const TABS: { id: string; label: string; match: (r: PipelineRow) => boolean }[] = [
   { id: "all", label: "All", match: () => true },
   { id: "new", label: "New", match: r => r.status === "new" },
+  { id: "ranked", label: "Ranked", match: r => typeof r.tier === "number" && r.tier >= 1 },
   { id: "scored", label: "Scored", match: r => typeof r.score === "number" },
   { id: "high", label: "High fit (≥4.0)", match: r => typeof r.score === "number" && r.score >= 4.0 },
   { id: "highactive", label: "High + active", match: r => typeof r.score === "number" && r.score >= 4.0 && r.computedLegitimacy !== "ghost-likely" && r.computedLegitimacy !== "ancient" },
-  { id: "highfresh", label: "High + fresh (≤5d)", match: r => typeof r.score === "number" && r.score >= 4.0 && effectiveDays(r) <= 5 },
+  { id: "followup", label: "Needs follow-up", match: r => r.status === "applied" && daysApplied(r) >= 7 },
   { id: "highrecent", label: "High + recent (≤30d)", match: r => typeof r.score === "number" && r.score >= 4.0 && effectiveDays(r) <= 30 },
   { id: "staged", label: "Auto-staged", match: r => Boolean(r.stagedSlug) },
   { id: "review", label: "Under review", match: r => r.status === "under_review" },
@@ -94,6 +96,13 @@ function effectiveDays(r: PipelineRow): number {
   return Math.min(p, u);
 }
 
+function daysApplied(r: PipelineRow): number {
+  if (!r.appliedAt) return 0;
+  const t = Date.parse(r.appliedAt);
+  if (isNaN(t)) return 0;
+  return Math.max(0, Math.floor((Date.now() - t) / 86400000));
+}
+
 const SORTS: { id: string; label: string }[] = [
   { id: "days", label: "Newest" },
   { id: "score", label: "Score" },
@@ -167,7 +176,7 @@ function applySort(rows: PipelineRow[], sort: string): PipelineRow[] {
   }
 }
 
-function RoleRow({ r, showCompany }: { r: PipelineRow; showCompany: boolean }) {
+function RoleRow({ r, showCompany, showVerdict }: { r: PipelineRow; showCompany: boolean; showVerdict?: boolean }) {
   const ageItems = ageBadges(r);
   const detailsHref = `/role/${encodeRoleSlug(r.url)}`;
   return (
@@ -187,6 +196,11 @@ function RoleRow({ r, showCompany }: { r: PipelineRow; showCompany: boolean }) {
           >
             {r.role}
           </a>
+          {r.archetype && (
+            <span className="text-[10px] uppercase tracking-wide font-mono text-slate-500 border border-slate-700 rounded px-1.5 py-0.5">
+              {r.archetype}
+            </span>
+          )}
           <Link
             href={detailsHref}
             className="text-[10px] font-mono text-slate-500 hover:text-blue-300 border border-slate-700 hover:border-blue-400/60 rounded px-1.5 py-0.5"
@@ -195,6 +209,12 @@ function RoleRow({ r, showCompany }: { r: PipelineRow; showCompany: boolean }) {
             details →
           </Link>
         </div>
+        {showVerdict && r.verdict && (
+          <p className="mt-1.5 text-sm text-slate-300 leading-relaxed">{r.verdict}</p>
+        )}
+        {showVerdict && r.redFlags && (
+          <p className="mt-1 text-xs text-amber-300/90 leading-relaxed">⚠ {r.redFlags}</p>
+        )}
         {r.locations.length > 0 && (
           <div className="mt-1 text-xs text-slate-500 font-mono">
             {r.locations.join(" · ")}
@@ -227,6 +247,18 @@ function RoleRow({ r, showCompany }: { r: PipelineRow; showCompany: boolean }) {
           >
             📦 PACK
           </Link>
+        )}
+        {r.status === "applied" && (
+          <span
+            className={`text-[10px] font-mono border rounded px-1.5 py-0.5 ${
+              daysApplied(r) >= 7
+                ? "text-amber-300 border-amber-400/40 bg-amber-500/10"
+                : "text-blue-300 border-blue-400/40 bg-blue-500/10"
+            }`}
+            title={r.appliedAt ? `Applied ${r.appliedAt}` : "Applied"}
+          >
+            {daysApplied(r) >= 7 ? `↑ follow up (${daysApplied(r)}d)` : `applied ${daysApplied(r)}d ago`}
+          </span>
         )}
         {typeof r.score === "number" ? (
           <span
@@ -262,21 +294,21 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
     : tabFiltered;
 
   // Defaults per tab type when ?sort isn't set:
+  //   ranked tab        → group by score tier (5..1, then unscored)
   //   scored-style tabs → sort by score DESC (then age ASC) in a flat list
-  //   everything else  → group by company
-  const isScoredTab = activeTab.id === "scored" || activeTab.id === "high" || activeTab.id === "highfresh" || activeTab.id === "highrecent" || activeTab.id === "staged";
-  // Default sort: scored tabs → by score, everything else → newest JDs first.
-  // Surfacing what's new at the top is the whole point of this view; the old
-  // "default" (grouped alphabetically by company) hid the daily delta. The
-  // grouped view is still available via the "Grouped" sort button.
-  const effectiveSort = sortParam && SORTS.some(s => s.id === sortParam) ? sortParam : (isScoredTab ? "score" : "days");
+  //   everything else   → newest JDs first in a flat list (grouped-by-company
+  //                       is opt-in via the Grouped sort button)
+  const isRankedTab = activeTab.id === "ranked";
+  const isScoredTab = activeTab.id === "scored" || activeTab.id === "high" || activeTab.id === "highrecent" || activeTab.id === "staged";
+  const effectiveSort = sortParam && SORTS.some(s => s.id === sortParam) ? sortParam
+    : (isRankedTab ? "tier" : (isScoredTab ? "score" : "days"));
 
-  // "default" on a non-scored tab means grouped by company. Any explicit sort
-  // (including "company") flips to flat-list mode so user always gets a single
-  // ordered view when they ask for one.
+  // "default" sort → group by company. "tier" → group by score tier. Both
+  // group modes ignore the flat-list sorter.
   const useGroupedView = effectiveSort === "default";
+  const useTierView = isRankedTab && effectiveSort === "tier";
 
-  const flatSorted = useGroupedView ? [] : applySort(filtered, effectiveSort);
+  const flatSorted = (useGroupedView || useTierView) ? [] : applySort(filtered, effectiveSort);
 
   const byCompany = new Map<string, PipelineRow[]>();
   if (useGroupedView) {
@@ -288,13 +320,29 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
   }
   const companyGroups = [...byCompany.entries()].sort((a, b) => a[0].localeCompare(b[0]));
 
+  // Group by tier (5..1) for the ranked view. Within a tier, sort by score
+  // desc then by recency, mirroring the old /ranked page's order.
+  const byTier = new Map<number, PipelineRow[]>();
+  if (useTierView) {
+    for (const r of filtered) {
+      const t = r.tier ?? 0;
+      const arr = byTier.get(t) ?? [];
+      arr.push(r);
+      byTier.set(t, arr);
+    }
+    for (const arr of byTier.values()) {
+      arr.sort((a, b) => {
+        const d = (b.score ?? -1) - (a.score ?? -1);
+        if (d !== 0) return d;
+        return effectiveDays(a) - effectiveDays(b);
+      });
+    }
+  }
+  const tierGroups: [number, PipelineRow[]][] = [5, 4, 3, 2, 1].map(t => [t, byTier.get(t) ?? []]);
+
   return (
-    <main className="min-h-screen px-6 py-8 md:px-12 md:py-10 max-w-6xl mx-auto">
-      <header className="mb-8 border-b border-slate-700 pb-6">
-        {/* Per VP design system: title absolute-centered between left controls
-            and right context. Search bar lives on the left (Ctrl+K), last
-            scan timestamp on the right. */}
-        <div className="flex items-center relative gap-4">
+    <main className="min-h-screen max-w-6xl mx-auto">
+      <header className="sticky top-0 z-50 bg-slate-950 px-6 pt-6 pb-4 md:px-12 md:pt-8 border-b border-slate-800">        <div className="flex items-center relative gap-4">
           <div className="shrink-0">
             <SearchFilter initial={q} />
           </div>
@@ -303,8 +351,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
               Career Ops
             </a>
           </div>
-          <div className="shrink-0 ml-auto flex items-center gap-3 text-xs text-slate-500 font-mono text-right"><Link href="/ranked" className="text-blue-400 hover:text-blue-300 underline underline-offset-4">ranked leads →</Link><span>
-            last scan: {data.lastScannedAt ? data.lastScannedAt.toLocaleString() : "never"}</span>
+          <div className="shrink-0 ml-auto text-xs text-slate-500 font-mono text-right">
+            last scan: {data.lastScannedAt ? data.lastScannedAt.toLocaleString() : "never"}
           </div>
         </div>
         <p className="text-xs text-slate-500 mt-3 text-center">
@@ -368,8 +416,31 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
         </div>
       </header>
 
+      <div className="px-6 py-8 md:px-12 md:py-10">
+
       {filtered.length === 0 ? (
-        <p className="text-slate-500 text-sm">Nothing here yet. Run a scan to populate.</p>
+        <p className="text-slate-500 text-sm">
+          {isRankedTab
+            ? <>No ranked leads yet. Run <code className="text-slate-300">node rank-leads.mjs</code> after fetching JDs.</>
+            : <>Nothing here yet. Run a scan to populate.</>}
+        </p>
+      ) : useTierView ? (
+        <div className="space-y-8">
+          {tierGroups.filter(([, rows]) => rows.length > 0).map(([tier, rows]) => {
+            const col = tierColor(tier);
+            return (
+              <section key={tier}>
+                <h2 className={`text-lg font-semibold mb-3 ${col.fg}`}>
+                  Score {tier}
+                  <span className="ml-2 text-slate-500 font-normal text-sm">— {col.label} ({rows.length})</span>
+                </h2>
+                <ul className="space-y-2">
+                  {rows.map(r => <RoleRow key={r.url} r={r} showCompany showVerdict />)}
+                </ul>
+              </section>
+            );
+          })}
+        </div>
       ) : !useGroupedView ? (
         <ul className="space-y-2">
           {flatSorted.map(r => <RoleRow key={r.url} r={r} showCompany />)}
@@ -395,6 +466,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
           or edit the file directly. Reports live in <code className="text-slate-400">reports/</code>.
         </p>
       </footer>
+
+      </div>
     </main>
   );
 }
