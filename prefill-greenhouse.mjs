@@ -89,7 +89,7 @@ async function trySelect(page, label, selectors, value, filled, missed) {
 
 
 // Read the JD's Location line and pick which 'Current city' value to use.
-// Rule: NYC role -> NYC value; everything else (LA, remote, SF, hybrid-without-NYC) -> default LA.
+// Rule: all roles -> New York (NYC-based). Both default and NYC values resolve to NY.
 async function pickCityForRole(slug, defaults) {
   try {
     const coverMd = await readFile(path.join(OUTPUT_DIR, slug, 'cover-letter.md'), 'utf-8');
@@ -203,7 +203,7 @@ async function processOne(browser, slug, defaults) {
       ['input[name*="linkedin" i]', 'input[id*="linkedin" i]'],
       defaults.linkedin, filled, missed);
 
-    // Location - LA by default, NYC for NYC-located roles
+    // Location - New York for all roles (NYC-based)
     const cityForThisRole = await pickCityForRole(slug, defaults);
     await tryFill(page, 'location', [
       // Greenhouse standard

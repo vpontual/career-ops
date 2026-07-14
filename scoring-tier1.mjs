@@ -171,7 +171,7 @@ export const SCORING_TIER1 = {
   'stripe-7834628.md': { score: 1.0, verdict: "PM SEA Singapore.", archetype: 'PM (regional)', geo: 'Singapore (excluded)', comp: 'not stated', match: 3, compScore: 4, geoScore: 1, cultural: 5, redFlags: 'international', rec: 'Skip' },
 
   // ===== Suno =====
-  'suno-0740427c-6afa-4f.md': { score: 4.6, verdict: "PM Artists & Creators LA, $180-280K. LA + consumer AI music + great comp + 6+ yrs PM. Top pick.", archetype: 'Consumer AI PM', geo: 'LA', comp: '$180K-$280K', match: 5, compScore: 5, geoScore: 5, cultural: 5, redFlags: 'none', rec: 'APPLY' },
+  'suno-0740427c-6afa-4f.md': { score: 3.2, verdict: "PM Artists & Creators, LA-only, $180-280K. Strong consumer AI music role + great comp + 6+ yrs PM, but LA-only in-office — excluded per NYC/remote-only geo policy (dropped 2026-07-14). Would be a top pick if remote or NYC.", archetype: 'Consumer AI PM', geo: 'LA', comp: '$180K-$280K', match: 5, compScore: 5, geoScore: 1, cultural: 5, redFlags: 'LA-only, no remote option', rec: 'Skip — geo' },
   'suno-275eaa39-e1d5-40.md': { score: 3.5, verdict: "Sr PM Payments Platform NYC, $200-240K. NYC OK but role requires 3+ yrs payments-specific (Vitor lacks).", archetype: 'PM (payments)', geo: 'NYC', comp: '$200K-$240K', match: 3, compScore: 5, geoScore: 5, cultural: 4, redFlags: '3+ yrs payments-platform required (Vitor lacks)', rec: 'Skip per voice rule' },
 
   // ===== Tavus =====

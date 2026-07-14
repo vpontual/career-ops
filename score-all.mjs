@@ -7,7 +7,7 @@
  *   - PRIMARY archetypes: AI Product (IC), Founding/Early PM, Senior hands-on Director
  *   - Hard downranks: Growth/acquisition, PMM-sales-disguised, engineering-coded
  *   - Comp: $150-200K+ sweet spot, below OK only for startups with concrete equity
- *   - Geo: LA/NYC/remote US/remote+travel all equal-weight primary
+ *   - Geo: NYC / NYC-commutable / remote US / remote+travel primary (LA dropped 2026-07-14)
  *   - Axis: closeness-to-product > title height
  */
 
@@ -660,7 +660,7 @@ ${leg.tier === 'Old' || leg.tier === 'Irrelevant' || leg.tier === 'Ghost-Likely'
 | CV match | ${s.match}/5 | How well Vitor's 10+ yrs PM + AI prototyping maps to the JD |
 | Archetype fit | ${['', '1/5','2/5','3/5','4/5','5/5'][Math.max(1,Math.round((s.score+s.match)/2))]} | ${s.archetype} vs target list (AI Product IC / Founding PM / Senior hands-on Director) |
 | Compensation | ${s.compScore}/5 | Vitor's sweet spot is $150K-$200K base; $200K+ = 5/5; below $150K requires concrete equity |
-| Geography | ${s.geoScore}/5 | Equal-weight primary: LA / NYC / NYC-commutable / remote US / remote+HQ travel |
+| Geography | ${s.geoScore}/5 | Primary: NYC / NYC-commutable / remote US / remote+HQ travel (LA no longer targeted) |
 | Cultural signals | ${s.cultural}/5 | Company stage, team quality, mission, work style |
 | Posting legitimacy | ${leg.tier} | ${leg.note} (independent of 1-5 global score per career-ops Block G design) |
 

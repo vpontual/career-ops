@@ -85,10 +85,9 @@ async function loadProfileTargets() {
       lines.push(`  - ${a.name} (${a.fit}): ${a.level}`);
     }
   }
-  // Override the raw "Los Angeles (relocating to NYC by July 2026)" string
-  // with a clean geo policy. The relocation hedge confuses the LLM into
-  // flagging every NYC-friendly role as a "geo mismatch".
-  lines.push(`\nGeo policy: open to LA, NYC, or remote-US. Treat any of those (or hybrid in those metros) as full match. Penalize only SF-only / Seattle-only / international.`);
+  // Override the raw candidate location string with a clean geo policy so the
+  // LLM ranks purely on NYC / remote-US fit (LA is no longer a target).
+  lines.push(`\nGeo policy: open to NYC or remote-US only. Treat NYC (incl. NYC-commutable metro: Brooklyn/Queens/JC/Hoboken/Stamford) or fully-remote US as full match. Penalize LA-only, SF-only, Seattle-only, and international / other in-office-only locations.`);
 
   // Load user-specific scoring overrides from modes/_profile.md (gitignored).
   // Extract the "Scoring Rules" section and inject it so the model applies
@@ -179,7 +178,7 @@ const SYSTEM_PROMPT = `You are a job-fit scorer. Given a candidate's resume and 
 }
 
 Scoring scale:
-  5 = perfect match: AI/product PM role, senior IC level, NYC/LA/remote-US, comp likely ≥$150K
+  5 = perfect match: AI/product PM role, senior IC level, NYC/remote-US, comp likely ≥$150K
   4 = strong match: PM role in target archetype with one secondary concern (geo, comp, niche)
   3 = workable: senior PM but adjacent domain or unclear fit
   2 = weak: title matches but role/level/geo wrong
