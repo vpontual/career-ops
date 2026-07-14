@@ -21,6 +21,7 @@ import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
 import dotenv from 'dotenv';
+import { loadBlacklist, blacklistEntry } from './blacklist.mjs';
 
 dotenv.config();
 
@@ -377,8 +378,11 @@ async function main() {
   const files = (await readdir(JDS_DIR).catch(() => [])).filter(f => f.endsWith('.md'));
   console.log(`JDs found:    ${files.length}`);
 
+  const blacklist = await loadBlacklist(); // opt-in data/blacklist.md; empty = no filtering
+
   let titleDropped = 0;
   let staleDropped = 0;
+  let blacklistDropped = 0;
   let unparsedDate = 0;
 
   const candidates = [];
@@ -388,6 +392,7 @@ async function main() {
     const jd = parseJdFile(raw, f);
     const tf = titleFilter(jd.title);
     if (!tf.passes) { titleDropped++; continue; }
+    if (blacklist.size && blacklistEntry(jd.company, blacklist)) { blacklistDropped++; continue; }
     const days = freshnessOf(jd);
     if (days != null && days > MAX_AGE_DAYS) { staleDropped++; continue; }
     if (days == null) unparsedDate++;
@@ -395,6 +400,7 @@ async function main() {
   }
 
   console.log(`After title:  ${candidates.length + titleDropped} → ${candidates.length} (-${titleDropped})`);
+  if (blacklistDropped) console.log(`Blacklisted:  ${blacklistDropped} dropped (data/blacklist.md)`);
   console.log(`After stale:  ${candidates.length + staleDropped} → ${candidates.length} (-${staleDropped} >${MAX_AGE_DAYS}d)`);
   console.log(`No date:      ${unparsedDate} (kept, ranked at bottom)`);
 

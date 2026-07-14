@@ -360,6 +360,20 @@ export async function loadPipeline(): Promise<PipelineData> {
   const stagedIndex = await loadStagedIndex();
   const jdMetaIndex = await loadJdMetaIndex();
 
+  // Opt-in do-not-apply list (data/blacklist.md, ported from upstream #1748).
+  // Absent file = no filtering. Blacklisted companies are hidden from the UI.
+  // (A TS reader here mirrors blacklist.mjs — see ROADMAP lib/ consolidation.)
+  const blacklist = new Set<string>();
+  try {
+    const bl = await readFile(path.join(DATA_ROOT, "data", "blacklist.md"), "utf-8");
+    for (const line of bl.replace(/\r/g, "").split("\n")) {
+      if (!line.trim().startsWith("|")) continue;
+      const company = (line.split("|")[1] || "").trim();
+      if (!company || /^[-: ]+$/.test(company) || company.toLowerCase() === "company") continue;
+      blacklist.add(normalizeCompany(company));
+    }
+  } catch { /* no blacklist */ }
+
   const rows: PipelineRow[] = [];
   for (const line of raw.split("\n")) {
     const row = parsePipelineLine(line);
@@ -469,6 +483,10 @@ export async function loadPipeline(): Promise<PipelineData> {
     }
   }
 
+  const visibleRows = blacklist.size
+    ? dedupedRows.filter(r => !blacklist.has(normalizeCompany(r.company)))
+    : dedupedRows;
+
   const byStatus: Record<PipelineStatus, number> = {
     new: 0,
     under_review: 0,
@@ -476,12 +494,12 @@ export async function loadPipeline(): Promise<PipelineData> {
     rejected: 0,
     archived: 0
   };
-  for (const r of dedupedRows) byStatus[r.status]++;
+  for (const r of visibleRows) byStatus[r.status]++;
 
   const data: PipelineData = {
-    rows: dedupedRows,
+    rows: visibleRows,
     lastScannedAt: await maybeStat(pipelinePath),
-    totalCount: dedupedRows.length,
+    totalCount: visibleRows.length,
     byStatus
   };
   pipelineCache = { data, pipelineMtime, appsMtime, inboxMtime, dayKey };

@@ -74,3 +74,4 @@ logs/rank-leads.log
 __pycache__/
 *.pyc
 config/cv-facts.json
+data/blacklist.md
