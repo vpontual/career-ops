@@ -158,7 +158,8 @@ async function fileMtime(p: string): Promise<number> {
 // Cache JD lookups so we don't walk jds/ on every request. Day-keyed so
 // `posted`/`updated` (computed from Date.now()) advance at midnight even if
 // loadPipeline's per-request reset never fires (e.g. /ranked only call site).
-let jdMetaCache: Map<string, { posted?: number; updated?: number; locations?: string[] }> | null = null;
+type JdMeta = { posted?: number; updated?: number; locations?: string[]; score?: number; verdict?: string; redFlags?: string };
+let jdMetaCache: Map<string, JdMeta> | null = null;
 let jdMetaCacheDay: string | null = null;
 
 // Compute days between an ISO timestamp and now. Returns undefined if the
@@ -172,10 +173,19 @@ function daysAgo(iso: string | undefined): number | undefined {
   return Math.floor(ms / 86400000);
 }
 
-export async function loadJdMetaIndex(): Promise<Map<string, { posted?: number; updated?: number; locations?: string[] }>> {
+export async function loadJdMetaIndex(): Promise<Map<string, JdMeta>> {
   const today = todayKey();
   if (jdMetaCache && jdMetaCacheDay === today) return jdMetaCache;
-  const map = new Map<string, { posted?: number; updated?: number; locations?: string[] }>();
+  const map = new Map<string, JdMeta>();
+
+  // rank-leads.mjs's score cache, keyed by JD filename. This is the single
+  // scoring authority (score-all.mjs and its reports/ dir were retired); the
+  // UI must read scores from here or every freshly-scored role shows "unscored".
+  let leadScores: Record<string, { score?: number; verdict?: string; redFlags?: string }> = {};
+  try {
+    leadScores = JSON.parse(await readFile(path.join(DATA_ROOT, "data", "lead-scores.json"), "utf-8"));
+  } catch { /* no scores yet */ }
+
   try {
     const jdsDir = path.join(DATA_ROOT, "jds");
     const files = await readdir(jdsDir);
@@ -184,6 +194,7 @@ export async function loadJdMetaIndex(): Promise<Map<string, { posted?: number; 
       const text = await readFile(path.join(jdsDir, f), "utf-8");
       const urlM = text.match(/\*\*URL:\*\*\s+(\S+)/);
       if (!urlM) continue;
+      const sc = leadScores[f];
 
       // Prefer the ISO timestamp in `**Posted:** 2025-11-14T13:25:57-05:00 (158 days ago)`
       // and recompute days against today. The parenthetical was frozen at fetch
@@ -204,7 +215,12 @@ export async function loadJdMetaIndex(): Promise<Map<string, { posted?: number; 
       const locations = locationM
         ? locationM[1].split(/[|;•]/).map(s => s.trim()).filter(Boolean)
         : undefined;
-      map.set(urlM[1], { posted, updated, locations });
+      map.set(urlM[1], {
+        posted, updated, locations,
+        score: typeof sc?.score === "number" ? sc.score : undefined,
+        verdict: sc?.verdict,
+        redFlags: sc?.redFlags
+      });
     }
   } catch {}
   jdMetaCache = map;
@@ -330,14 +346,23 @@ export async function loadPipeline(): Promise<PipelineData> {
       if (jdMeta.locations && jdMeta.locations.length > 0) {
         row.locations = jdMeta.locations;
       }
+      // Score from the live scorer (lead-scores.json). This is the authoritative
+      // source now that score-all.mjs/reports/ are retired.
+      if (typeof jdMeta.score === "number") {
+        row.score = jdMeta.score;
+        row.tier = jdMeta.score;
+        if (jdMeta.verdict) row.verdict = jdMeta.verdict;
+        if (jdMeta.redFlags) row.redFlags = jdMeta.redFlags;
+      }
     }
     row.computedLegitimacy = computeLegitimacy(row.postedDaysAgo, row.updatedDaysAgo);
 
-    // Find a matching scoring report if one exists (provides score + tier text)
+    // Legacy fallback: a matching score-all report (reports/) if this row wasn't
+    // scored by rank-leads. Only fills score when jdMeta didn't already.
     const report = await findReportForUrl(row.url);
     if (report) {
       row.reportPath = report.path;
-      row.score = report.score;
+      if (row.score == null) row.score = report.score;
       // Report's legitimacy tier text is authoritative when present, but we
       // intentionally do NOT take report.postedDaysAgo — that field is parsed
       // from a frozen "(X days ago)" parenthetical written at scoring time and
