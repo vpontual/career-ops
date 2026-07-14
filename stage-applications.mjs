@@ -18,11 +18,12 @@
  *   GEMINI_MODEL=gemini-2.5-flash
  */
 
-import { readFile, writeFile, mkdir, readdir, stat, copyFile } from 'fs/promises';
+import { readFile, writeFile, mkdir, stat, copyFile } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { chromium } from 'playwright';
+import { checkUrl } from './check-liveness.mjs';
 
 try {
   const { config } = await import('dotenv');
@@ -44,7 +45,9 @@ if (!GEMINI_API_KEY) {
 const ai = new GoogleGenerativeAI(GEMINI_API_KEY);
 const model = ai.getGenerativeModel({ model: GEMINI_MODEL });
 
-const REPORTS_DIR = path.join(ROOT, 'reports');
+// Candidate scores now come from rank-leads.mjs's nightly cache (the single
+// scoring authority) rather than the retired score-all.mjs report snapshots.
+const SCORES_PATH = path.join(ROOT, 'data', 'lead-scores.json');
 const JDS_DIR = path.join(ROOT, 'jds');
 const OUTPUT_DIR = path.join(ROOT, 'output');
 const CV_PATH = path.join(ROOT, 'cv.md');
@@ -54,6 +57,21 @@ const PROFILE_OVERRIDES = path.join(ROOT, 'modes', '_profile.md');
 
 function slugify(s) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
+}
+
+// Strip non-ASCII typography an ATS parser can garble (em/en dashes, smart
+// quotes, ellipsis, zero-width spaces, nbsp) out of LLM-generated prose before
+// it lands in a shipped PDF/.md. Mirrors generate-pdf.mjs's normalizeTextForATS
+// pass, applied at the plain-text level (safer than regexing rendered HTML).
+function sanitizeAtsText(text) {
+  if (!text) return text;
+  return text
+    .replace(/[\u2014\u2013]/g, '-')                    // em / en dash
+    .replace(/[\u201C\u201D\u201E\u201F]/g, '"')       // smart double quotes
+    .replace(/[\u2018\u2019\u201A\u201B]/g, "'")       // smart single quotes
+    .replace(/\u2026/g, '...')                          // ellipsis
+    .replace(/[\u200B\u200C\u200D\u2060\uFEFF]/g, '')  // zero-width / BOM
+    .replace(/\u00A0/g, ' ');                           // non-breaking space
 }
 
 async function pLimit(items, n, fn) {
@@ -75,42 +93,64 @@ async function pLimit(items, n, fn) {
   return results;
 }
 
-async function loadCandidates() {
-  const reportFiles = (await readdir(REPORTS_DIR)).filter(f => f.startsWith('v-') && f.endsWith('.md'));
-  const out = [];
-  for (const rf of reportFiles) {
-    const content = await readFile(path.join(REPORTS_DIR, rf), 'utf-8');
-    const url = (content.match(/\*\*URL:\*\*\s+(\S+)/) || [])[1];
-    const company = (content.match(/\*\*Company:\*\*\s+(.+)/) || [])[1];
-    const role = (content.match(/^# .+ — (.+)$/m) || [])[1];
-    const score = parseFloat((content.match(/\*\*Score:\*\*\s+([\d.]+)/) || [])[1] || '0');
-    const jdSlug = rf.replace(/^v-/, '').replace(/\.md$/, '');
-    const jdPath = path.join(JDS_DIR, jdSlug + '.md');
-    let jdContent = '';
-    try { jdContent = await readFile(jdPath, 'utf-8'); } catch {}
+// Parse the front-matter that fetch-jds.mjs writes at the top of every jds/*.md.
+function parseJdMeta(jdContent) {
+  const lines = jdContent.split('\n');
+  const title = (lines[0] || '').replace(/^#\s*/, '').trim();
+  let url = '', company = '', postedIso = null, postedDays = null;
+  for (const line of lines.slice(0, 20)) {
+    let m;
+    if ((m = line.match(/^\*\*URL:\*\*\s*(.+)/i))) url = m[1].trim();
+    else if ((m = line.match(/^\*\*Company:\*\*\s*(.+)/i))) company = m[1].trim();
+    else if ((m = line.match(/^\*\*Posted:\*\*\s*([^\s(]+)\s*\((\d+)\s*days/i))) { postedIso = m[1]; postedDays = parseInt(m[2], 10); }
+    else if ((m = line.match(/^\*\*Posted:\*\*\s*([^\s(]+)/i))) { postedIso = m[1]; }
+  }
+  return { title, url, company, postedIso, postedDays };
+}
 
-    // Prefer the ISO timestamp from the JD file (recomputed against today)
-    // over the frozen "(N days ago)" parenthetical in the report (stale since scoring time).
+async function loadCandidates() {
+  // rank-leads.mjs is the single scoring authority. Its cache is keyed by JD
+  // filename → { score, verdict, ... }. Join it to the live jds/*.md files so
+  // freshness is recomputed against today (not frozen at scoring time).
+  let scores;
+  try {
+    scores = JSON.parse(await readFile(SCORES_PATH, 'utf-8'));
+  } catch (e) {
+    throw new Error(`Cannot read scores at ${SCORES_PATH} (run rank-leads.mjs first): ${e.message}`);
+  }
+
+  const out = [];
+  for (const [filename, rec] of Object.entries(scores)) {
+    const score = Number(rec?.score) || 0;
+    if (score < MIN_SCORE) continue;              // tier gate up front — skip cheaply
+
+    const jdPath = path.join(JDS_DIR, filename);
+    let jdContent = '';
+    try { jdContent = await readFile(jdPath, 'utf-8'); }
+    catch { continue; }                           // JD pruned/gone → drop silently
+    const meta = parseJdMeta(jdContent);
+
     let days = null;
-    const jdIsoM = jdContent.match(/\*\*Posted:\*\*\s+(\d{4}-\d{2}-\d{2}(?:T\S+)?)/);
-    if (jdIsoM) {
-      const t = Date.parse(jdIsoM[1]);
+    if (meta.postedIso) {
+      const t = Date.parse(meta.postedIso);
       if (!Number.isNaN(t)) days = Math.floor((Date.now() - t) / 86400000);
     }
-    if (days === null) {
-      const frozenM = content.match(/\((\d+)\s+days\s+ago\)/);
-      if (frozenM) days = parseInt(frozenM[1], 10);
-    }
+    if (days === null) days = meta.postedDays;
 
     out.push({
-      reportFile: rf,
+      reportFile: filename,
       jdPath,
       jdContent,
-      url, company, role, score, days,
-      slug: slugify(`${company}-${role}`),
+      url: meta.url,
+      company: meta.company,
+      role: meta.title,
+      score,
+      days,
+      verdict: rec?.verdict || '',
+      slug: slugify(`${meta.company}-${meta.title}`),
     });
   }
-  return out.filter(r => r.score >= MIN_SCORE && r.days != null && r.days <= MAX_AGE_DAYS);
+  return out.filter(r => r.days != null && r.days <= MAX_AGE_DAYS);
 }
 
 async function callGeminiWithRetry(prompt, maxAttempts = 6) {
@@ -245,6 +285,15 @@ async function main() {
   const candidates = await loadCandidates();
   console.log(`\nstage-applications: score>=${MIN_SCORE}, age<=${MAX_AGE_DAYS}d → ${candidates.length} candidates\n`);
 
+  // --list / --dry-run: show what WOULD be staged and exit (no Gemini, no PDFs).
+  if (process.argv.includes('--list') || process.argv.includes('--dry-run')) {
+    for (const c of candidates.sort((a, b) => b.score - a.score || (a.days ?? 999) - (b.days ?? 999))) {
+      console.log(`  [${c.score}] ${c.days ?? '?'}d  ${c.company} | ${c.role}  → output/${c.slug}/`);
+    }
+    console.log('\n(dry run — nothing generated)');
+    return;
+  }
+
   if (!candidates.length) {
     console.log('Nothing to stage.');
     return;
@@ -252,13 +301,40 @@ async function main() {
 
   const browser = await chromium.launch({ args: ['--no-sandbox'] });
 
+  // Liveness prune — skip only CONFIDENTLY expired roles (HTTP error, expired
+  // redirect, hard "posting closed" copy) before spending Gemini calls. Never
+  // drop 'uncertain'/'active', nor a role we simply couldn't reach (transient
+  // network blips) — those keep flowing through to staging.
+  const liveCandidates = [];
+  {
+    const probe = await browser.newPage();
+    for (const c of candidates) {          // sequential — never Playwright in parallel
+      if (!c.url) { liveCandidates.push(c); continue; }
+      try {
+        const { result, reason } = await checkUrl(probe, c.url);
+        if (result === 'expired') {
+          console.log(`  prune (expired): ${c.company} | ${c.role} — ${reason}`);
+          continue;
+        }
+      } catch { /* unreachable right now → keep, don't silently drop */ }
+      liveCandidates.push(c);
+    }
+    await probe.close();
+  }
+  console.log(`Liveness: ${liveCandidates.length}/${candidates.length} still live\n`);
+  if (!liveCandidates.length) {
+    console.log('Nothing live to stage.');
+    await browser.close();
+    return;
+  }
+
   // Render the CV PDF once (no per-JD tailoring in v1)
   const sharedCvPdf = path.join(OUTPUT_DIR, 'cv.pdf');
   console.log(`Rendering shared CV PDF → ${sharedCvPdf}`);
   await renderPdf(htmlForCv(cv, profile), sharedCvPdf, browser);
 
-  let staged = 0, failed = 0;
-  await pLimit(candidates, MAX_CONCURRENT, async (c, idx) => {
+  let staged = 0;
+  const results = await pLimit(liveCandidates, MAX_CONCURRENT, async (c, idx) => {
     const dir = path.join(OUTPUT_DIR, c.slug);
     await mkdir(dir, { recursive: true });
 
@@ -272,7 +348,7 @@ async function main() {
     } catch {}
 
     console.log(`[${idx}] generating cover letter for ${c.company} | ${c.role} (${c.days}d, score ${c.score})`);
-    const letterText = await generateCoverLetter(c, profile, cv, profileOverrides);
+    const letterText = sanitizeAtsText(await generateCoverLetter(c, profile, cv, profileOverrides));
     await writeFile(coverMdPath, `# Cover letter — ${c.company}: ${c.role}\n\n**URL:** ${c.url}\n**Generated:** ${new Date().toISOString()}\n**Days old at staging:** ${c.days}\n**Score:** ${c.score}\n\n---\n\n${letterText}\n`);
 
     const coverPdfPath = path.join(dir, 'cover-letter.pdf');
@@ -287,6 +363,7 @@ async function main() {
   });
 
   await browser.close();
+  const failed = results.filter(r => r && r.error).length;
   console.log(`\nDone. staged=${staged} failed=${failed}`);
   console.log(`\nReview: ls -la ${OUTPUT_DIR}/`);
 }

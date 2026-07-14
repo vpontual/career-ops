@@ -57,11 +57,16 @@ Use `rerender-cover.mjs` for one-off hand-edits to a single cover letter.
 
 ### Scoring
 
-`score-all.mjs` still has its inline `SCORING` table from upstream, but is
-extended with `import { SCORING_TIER1 } from './scoring-tier1.mjs'`. The
-lookup falls back to `SCORING_TIER1` when a JD is not in the inline table.
-This keeps the curated scoring auditable in a separate file rather than
-ballooning `score-all.mjs`.
+`rank-leads.mjs` is the **single scoring authority**. It scores every JD in
+`jds/` against `cv.md` via the local LLM gateway nightly and caches results in
+`data/lead-scores.json`.
+
+`score-all.mjs` + `scoring-tier1.mjs` were **retired to `_archive/` (2026-07-14)**.
+They were hand-curated static `SCORING` tables (a one-time LLM snapshot from
+2026-04-21) that did not score new JDs, hardcoded a frozen "Evaluated" date, and
+contradicted `rank-leads.mjs`. Nothing in cron/UI ran them. `stage-applications.mjs`
+now reads candidate scores from `data/lead-scores.json` instead of the old
+`reports/v-*.md` snapshots. Kept in `_archive/` for reference, not run.
 
 ## New scripts
 
@@ -72,7 +77,8 @@ ballooning `score-all.mjs`.
 | `rerender-cover.mjs` | Re-renders one role's `cover-letter.md` + `cover-letter.pdf` from a plain-text input. |
 | `batch-stage.mjs` | Bulk-stages many roles from a JSON manifest of pre-written cover letters. |
 | `inspect-form.mjs` | Debug helper that dumps every input/select/textarea on a URL with id/name/aria-label/closest-label. Used to find new ATS field selectors. |
-| `scoring-tier1.mjs` | Exports `SCORING_TIER1`, the Claude-curated scoring table for the 2026-04-22 portal expansion (125 JDs). Imported by `score-all.mjs`. |
+| `_archive/scoring-tier1.mjs` | **Retired 2026-07-14.** Was a hand-curated static `SCORING_TIER1` table imported by `score-all.mjs`. Superseded by `rank-leads.mjs`. |
+| `_archive/score-all.mjs` | **Retired 2026-07-14.** Was a static report renderer over a hardcoded scoring table. Superseded by `rank-leads.mjs`; `stage-applications.mjs` now reads `data/lead-scores.json`. |
 | `fetch-gmail-leads.mjs` | IMAP poller for `[Gmail]/All Mail`. Curated sender allowlist in `config/gmail-sources.yml`. Strips tracking query params at write time so digest URLs (Lensa/Idealist/LinkedIn position=1/2/3) collapse to one row in `pipeline.md`. Cursor at `data/.gmail-cursor`. |
 | `rank-leads.mjs` | Reads `jds/`, applies title filter (`portals.yml` positive/negative) + freshness filter (≤30d default), scores each survivor against `cv.md` via an Ollama-compatible endpoint (`OLLAMA_URL` env), dedups by title+company, writes `data/inbox-leads.md` grouped by tier. Per-JD scores cached in `data/lead-scores.json`. |
 

@@ -16,9 +16,10 @@
 
 import { chromium } from 'playwright';
 import { readFile } from 'fs/promises';
+import { pathToFileURL } from 'url';
 import { classifyLiveness } from './liveness-core.mjs';
 
-async function checkUrl(page, url) {
+export async function checkUrl(page, url) {
   try {
     const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 });
 
@@ -110,7 +111,11 @@ async function main() {
   if (expired > 0 || uncertain > 0) process.exit(1);
 }
 
-main().catch(err => {
-  console.error('Fatal:', err.message);
-  process.exit(1);
-});
+// Only run the CLI when invoked directly (node check-liveness.mjs ...), so this
+// module can also be imported (e.g. by stage-applications.mjs) without firing main().
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch(err => {
+    console.error('Fatal:', err.message);
+    process.exit(1);
+  });
+}
