@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "career-ops autofill",
+  "version": "0.1.0",
+  "description": "Fills Greenhouse/Ashby/Lever job applications with your career-ops defaults. Fills and highlights — never submits.",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "background": { "service_worker": "background.js" },
+  "options_page": "options.html",
+  "action": { "default_title": "career-ops autofill" },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://boards.greenhouse.io/*",
+        "*://job-boards.greenhouse.io/*",
+        "*://*.greenhouse.io/*",
+        "*://jobs.ashbyhq.com/*",
+        "*://jobs.lever.co/*",
+        "*://*.lever.co/*"
+      ],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}
