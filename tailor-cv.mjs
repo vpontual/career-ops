@@ -15,7 +15,7 @@
 
 import { readFile, readdir, writeFile, mkdir, stat } from 'fs/promises';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 import { chromium } from 'playwright';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -57,7 +57,7 @@ const ARCHETYPES = [
   // Default fallback handled below as 'ai-product'
 ];
 
-function classifyArchetype(jdContent) {
+export function classifyArchetype(jdContent) {
   const text = jdContent.toLowerCase();
   // Score each archetype by keyword hits, pick the highest non-zero score.
   const scores = ARCHETYPES.map(a => ({
@@ -197,4 +197,8 @@ async function main() {
   if (browser) await browser.close();
 }
 
-main().catch(e => { console.error(e); process.exit(1); });
+// Only run the CLI when invoked directly, so stage-applications.mjs can import
+// classifyArchetype without firing main().
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch(e => { console.error(e); process.exit(1); });
+}

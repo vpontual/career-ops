@@ -18,13 +18,14 @@
  *   GEMINI_MODEL=gemini-2.5-flash
  */
 
-import { readFile, writeFile, mkdir, stat, copyFile } from 'fs/promises';
+import { readFile, writeFile, mkdir, stat } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { chromium } from 'playwright';
 import { checkUrl } from './check-liveness.mjs';
 import { checkFacts } from './verify-cv-facts.mjs';
+import { classifyArchetype } from './tailor-cv.mjs';
 
 try {
   const { config } = await import('dotenv');
@@ -52,6 +53,7 @@ const SCORES_PATH = path.join(ROOT, 'data', 'lead-scores.json');
 const JDS_DIR = path.join(ROOT, 'jds');
 const OUTPUT_DIR = path.join(ROOT, 'output');
 const CV_PATH = path.join(ROOT, 'cv.md');
+const VARIANTS_DIR = path.join(ROOT, 'cv-variants');
 const PROFILE_PATH = path.join(ROOT, 'config', 'profile.yml');
 const CV_TEMPLATE = path.join(ROOT, 'templates', 'cv-template.html');
 const PROFILE_OVERRIDES = path.join(ROOT, 'modes', '_profile.md');
@@ -384,9 +386,15 @@ async function main() {
     const coverPdfPath = path.join(dir, 'cover-letter.pdf');
     await renderPdf(htmlForCoverLetter(letterText, c, profile), coverPdfPath, browser);
 
-    // Symlink CV PDF rather than rerender
-    const cvLink = path.join(dir, 'cv.pdf');
-    try { await copyFile(sharedCvPdf, cvLink); } catch {}
+    // Per-role tailored CV: classify the JD's archetype (tailor-cv.mjs) and render
+    // the matching cv-variants/cv-{variant}.md into this packet instead of copying
+    // the generic CV. Falls back to cv.md if the variant file is missing.
+    const variant = classifyArchetype(c.jdContent || '');
+    let cvMd = cv, variantUsed = 'cv.md';
+    try { cvMd = await readFile(path.join(VARIANTS_DIR, `cv-${variant}.md`), 'utf-8'); variantUsed = variant; } catch {}
+    await renderPdf(htmlForCv(cvMd, profile), path.join(dir, 'cv.pdf'), browser);
+    await writeFile(path.join(dir, 'cv-variant.txt'), variantUsed + '\n');
+    console.log(`  [${idx}] CV variant: ${variantUsed}`);
 
     staged++;
     console.log(`[${idx}] staged: ${dir}`);
