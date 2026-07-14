@@ -14,17 +14,17 @@ find their bearings.
 Replaces upstream's Go TUI dashboard. Lives in `ui/` and runs as the `ui`
 service in `docker-compose.yml`.
 
-- Server-rendered. Reads `data/pipeline.md`, `reports/*.md`, `data/applications.md`,
-  and `jds/*.md` directly from the bind-mounted repo. No database.
-- Tabs: All / New / Scored / High fit (≥4.0) / High + active / High + fresh
-  (≤5d) / High + recent (≤30d) / Auto-staged / Under review / Applied /
-  Rejected / Archived.
-- `/ranked` page (header link "ranked leads →") reads `data/inbox-leads.md`
-  and renders the LLM-scored output of `rank-leads.mjs` grouped by tier
-  with verdict + red-flag callouts.
-- Sort options: Default (grouped by company) / Score / Days (newest, uses
-  `min(posted, updated)`) / Updated (filters out non-updated, newest first) /
-  City (NYC > LA > Remote > first listed) / Title / Company.
+- Server-rendered. Reads `data/pipeline.md`, `data/lead-scores.json`,
+  `data/applications.md`, and `jds/*.md` directly from the bind-mounted repo. No database.
+- **Score join (fixed 2026-07-14):** each row's score comes from `data/lead-scores.json`
+  (matched via the JD URL index), NOT the retired `reports/` dir. Reading `reports/`
+  made every freshly-scored role show "unscored" and drop out of the Shortlist.
+- **Redesigned 2026-07-14.** 3 primary tabs — **Shortlist** (score ≥4, the default) /
+  **Ready to apply** (staged) / **All roles**; outcome tabs (Applied/Rejected/…) appear
+  only when non-empty. A single **Fresh ≤30d** toggle replaces the old
+  High+active/High+recent tabs. (Superseded the 13-tab bar + the `/ranked` page.)
+- Sort options: **Best fit** (score) / **Newest** (`min(posted, updated)`) / **Company**.
+  (Dropped City/Title/Updated/Grouped — NYC/remote-only makes City moot.)
 - Per-row controls: status dropdown writes to `data/applications.md` via
   `POST /api/status`; `details →` link opens `/role/[base64url(url)]` for
   the scoring report + JD preview; `📦 PACK` link opens `/pack/{slug}` if
@@ -80,9 +80,24 @@ now reads candidate scores from `data/lead-scores.json` instead of the old
 | `_archive/scoring-tier1.mjs` | **Retired 2026-07-14.** Was a hand-curated static `SCORING_TIER1` table imported by `score-all.mjs`. Superseded by `rank-leads.mjs`. |
 | `_archive/score-all.mjs` | **Retired 2026-07-14.** Was a static report renderer over a hardcoded scoring table. Superseded by `rank-leads.mjs`; `stage-applications.mjs` now reads `data/lead-scores.json`. |
 | `fetch-gmail-leads.mjs` | IMAP poller for `[Gmail]/All Mail`. Curated sender allowlist in `config/gmail-sources.yml`. Strips tracking query params at write time so digest URLs (Lensa/Idealist/LinkedIn position=1/2/3) collapse to one row in `pipeline.md`. Cursor at `data/.gmail-cursor`. |
-| `rank-leads.mjs` | Reads `jds/`, applies title filter (`portals.yml` positive/negative) + freshness filter (≤30d default), scores each survivor against `cv.md` via an Ollama-compatible endpoint (`OLLAMA_URL` env), dedups by title+company, writes `data/inbox-leads.md` grouped by tier. Per-JD scores cached in `data/lead-scores.json`. |
+| `rank-leads.mjs` | Reads `jds/`, applies title filter (`portals.yml` positive/negative) + freshness filter (≤30d default), scores each survivor against `cv.md` via an Ollama-compatible endpoint (`OLLAMA_URL` env), dedups by title+company, writes `data/inbox-leads.md` grouped by tier. Per-JD scores cached in `data/lead-scores.json`. Each scoring call is bounded by an `AbortController` timeout (`SCORE_TIMEOUT_MS`, default 90s) + in-run retries so a wedged gateway can't hang the run; `--rescore` preserves the existing cache (never wipes out-of-scope entries). |
+| `stage-applications.mjs` | **(2026-07-14)** Reads `data/lead-scores.json` for roles scored ≥4 & ≤14d (deduped by company+title), liveness-prunes confidently-expired URLs, then generates a Gemini cover letter + ATS-normalized CV/cover PDFs into `output/{slug}/`. `--list` = dry run. Chained into the nightly cron; **never submits**. |
+| `fetch-indeed.py` | **(2026-07-14)** Indeed source via JobSpy (no login — public search API). Applies `portals.yml` title_filter, dedups vs `scan-history.tsv`, writes `pipeline.md` + `jds/*.md` (with descriptions). Runs from a gitignored `.venv-jobspy`; forces IPv4-only DNS. Wired into cron before `rank-leads`. |
 
 See `docs/SCRIPTS.md` for invocation details.
+
+## Browser autofill extension (`extension/`)
+
+MV3 Chromium/Chrome extension (added 2026-07-14) that fills Greenhouse / Ashby /
+Lever application forms with the candidate's standard answers, highlights every
+touched field, and **never submits** — the human reviews and submits. It fetches
+answers live from the UI endpoint `GET /api/application-defaults` (parses
+`application-defaults.md`) via the background worker; the VM base URL is set once
+in the extension's Options (no internal host is committed to this public repo).
+See `extension/README.md`. Fills name/email/phone/location/links, work-auth, EEO,
+years-of-experience, and a generic "why interested" essay; handles Ashby's
+button-based Yes/No widgets and flags autocomplete (Location) fields for manual
+dropdown selection. Skips file uploads and salary on purpose.
 
 ## Gmail → ranked-leads pipeline
 
