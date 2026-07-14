@@ -37,6 +37,12 @@ const MAX_AGE_DAYS = parseInt(process.env.MAX_AGE_DAYS ?? '30', 10);
 const STALE_AGE_DAYS = parseInt(process.env.STALE_AGE_DAYS ?? '5', 10);
 const OLLAMA_URL = process.env.OLLAMA_URL;
 const OLLAMA_MODEL = process.env.RANK_MODEL ?? 'Qwen/Qwen3.6-35B-A3B-FP8';
+// Bound every scorer call: a wedged gateway (green /health, 504s or a silent
+// hang — see the DGX-wedge history) must not hang the whole nightly run. On
+// timeout/error we retry a few times in-run, then throw so the caller skips
+// that JD (uncached → retried next run).
+const SCORE_TIMEOUT_MS = parseInt(process.env.SCORE_TIMEOUT_MS ?? '90000', 10);
+const SCORE_RETRIES = parseInt(process.env.SCORE_RETRIES ?? '2', 10);
 
 if (!OLLAMA_URL) {
   console.error('ERROR: OLLAMA_URL not set. Add to .env, e.g. OLLAMA_URL=http://localhost:11434');
@@ -223,33 +229,56 @@ function parseLLMJson(text) {
 
 async function scoreOne(jd, resume, targets) {
   const userPrompt = buildUserPrompt(jd, resume, targets);
-  const res = await fetch(`${OLLAMA_URL}/api/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: OLLAMA_MODEL,
-      stream: false,
-      think: false,
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: userPrompt },
-      ],
-      options: { temperature: 0.1, num_predict: 400 },
-    }),
+  const payload = JSON.stringify({
+    model: OLLAMA_MODEL,
+    stream: false,
+    think: false,
+    messages: [
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'user', content: userPrompt },
+    ],
+    options: { temperature: 0.1, num_predict: 400 },
   });
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`Ollama HTTP ${res.status}: ${text.slice(0, 200)}`);
+
+  let lastErr;
+  for (let attempt = 1; attempt <= SCORE_RETRIES + 1; attempt++) {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), SCORE_TIMEOUT_MS);
+    try {
+      const res = await fetch(`${OLLAMA_URL}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload,
+        signal: ctl.signal,
+      });
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`Ollama HTTP ${res.status}: ${text.slice(0, 200)}`);
+      }
+      const data = await res.json();
+      const content = data?.message?.content ?? '';
+      const parsed = parseLLMJson(content);
+      return {
+        score: Number(parsed.score) || 0,
+        archetype: String(parsed.archetype || '').slice(0, 60),
+        verdict: String(parsed.verdict || '').slice(0, 240),
+        redFlags: String(parsed.redFlags || '').slice(0, 200),
+      };
+    } catch (e) {
+      lastErr = e;
+      const reason = e.name === 'AbortError' ? `timeout after ${SCORE_TIMEOUT_MS}ms` : e.message;
+      if (attempt <= SCORE_RETRIES) {
+        const backoff = 2000 * attempt;
+        console.log(`  retry ${attempt}/${SCORE_RETRIES} for ${jd.filename} (${reason}); waiting ${backoff}ms`);
+        await new Promise((r) => setTimeout(r, backoff));
+        continue;
+      }
+      throw new Error(reason);
+    } finally {
+      clearTimeout(timer);
+    }
   }
-  const data = await res.json();
-  const content = data?.message?.content ?? '';
-  const parsed = parseLLMJson(content);
-  return {
-    score: Number(parsed.score) || 0,
-    archetype: String(parsed.archetype || '').slice(0, 60),
-    verdict: String(parsed.verdict || '').slice(0, 240),
-    redFlags: String(parsed.redFlags || '').slice(0, 200),
-  };
+  throw lastErr; // unreachable, but keeps control-flow explicit
 }
 
 // ── Output ────────────────────────────────────────────────────────────────
