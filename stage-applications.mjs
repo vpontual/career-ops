@@ -150,7 +150,21 @@ async function loadCandidates() {
       slug: slugify(`${meta.company}-${meta.title}`),
     });
   }
-  return out.filter(r => r.days != null && r.days <= MAX_AGE_DAYS);
+
+  // Dedup by company+title — the same posting can appear under several JD
+  // filenames / URL variants (e.g. two Harvey "Staff PM, Vault" listings that
+  // slugify identically). Keep the highest score, then the freshest. Mirrors
+  // rank-leads.mjs's inbox dedup so staging never double-generates or races on
+  // one output dir (was a latent bug at MAX_CONCURRENT>1).
+  const best = new Map();
+  for (const r of out) {
+    const key = `${(r.company || '').toLowerCase()}|${(r.role || '').toLowerCase()}`;
+    const cur = best.get(key);
+    if (!cur || r.score > cur.score || (r.score === cur.score && (r.days ?? 999) < (cur.days ?? 999))) {
+      best.set(key, r);
+    }
+  }
+  return [...best.values()].filter(r => r.days != null && r.days <= MAX_AGE_DAYS);
 }
 
 async function callGeminiWithRetry(prompt, maxAttempts = 6) {
@@ -270,7 +284,7 @@ function htmlForCoverLetter(text, candidate, profile) {
       <div class="name">${candName}</div>
       <div class="contact">${[email, phone, linkedin].filter(Boolean).join(' · ')}</div>
     </div>
-    <div class="meta">${today}<br>Re: ${candidate.role} — ${candidate.company}</div>
+    <div class="meta">${today}<br>Re: ${candidate.role} - ${candidate.company}</div>
     <div class="body">${escaped}</div>
   </body></html>`;
 }
