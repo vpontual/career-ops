@@ -37,10 +37,30 @@
 #co-autofill-toast.co-warn { border-left-color: #d97706; }
 #co-autofill-toast.co-err { border-left-color: #dc2626; }
 #co-autofill-toast.co-info { border-left-color: #4f46e5; }
-#co-autofill-toast ul { margin: 6px 0; padding-left: 18px; }
-#co-autofill-toast li { margin: 2px 0; }
-#co-autofill-toast .co-notes { margin-top: 8px; padding-top: 8px; border-top: 1px solid #eef2f7; color: #475569; }
-#co-autofill-toast .co-notes div { margin: 3px 0; }
+
+/* Defensive: force normal block flow so the host page's global CSS (e.g.
+   `div { position: absolute }`) can't collapse or overlap the toast lines. */
+#co-autofill-toast, #co-autofill-toast * {
+  position: static !important;
+  float: none !important;
+  transform: none !important;
+  box-sizing: border-box !important;
+  line-height: 1.45 !important;
+  letter-spacing: normal !important;
+  text-align: left !important;
+}
+#co-autofill-toast div, #co-autofill-toast p, #co-autofill-toast b {
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 0 !important;
+  max-height: none !important;
+}
+#co-autofill-toast b { display: inline !important; font-weight: 600; }
+#co-autofill-toast ul { display: block !important; margin: 6px 0 !important; padding-left: 18px !important; }
+#co-autofill-toast li { display: list-item !important; margin: 2px 0 !important; }
+#co-autofill-toast .co-notes { margin-top: 8px !important; padding-top: 8px !important; border-top: 1px solid #eef2f7; color: #475569; }
+#co-autofill-toast .co-notes div { margin: 4px 0 !important; }
 
 .co-autofilled {
   outline: 2px solid #16a34a !important;
