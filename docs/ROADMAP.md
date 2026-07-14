@@ -11,7 +11,8 @@ public multi-user product on a different trajectory (see "Architecture" below).
 - **Indeed source** — `fetch-indeed.py` via JobSpy (no login, IPv4-only), title-filtered, in cron.
 - **UI redesign** — 3 primary tabs (Shortlist / Ready to apply / All), Fresh ≤30d toggle, score rail; **score join fixed** to read `lead-scores.json` (not the retired `reports/`).
 - **Browser autofill extension** (`extension/`) — fills Greenhouse/Ashby/Lever forms, highlights, never submits; fetches answers from `/api/application-defaults`.
-- **Ported from upstream** — canonical `company::title` dedup (#1750: URL-drift score join + row dedup) and the CV/cover **fact-validator** (#682: `verify-cv-facts.mjs`, flags invented metrics in generated letters).
+- **Per-role tailored CV in staging** — `stage-applications` now classifies each role's archetype and renders the matching `cv-variants/cv-{variant}.md` into the packet (not a shared copy).
+- **Ported from upstream** — canonical `company::title` dedup (#1750: URL-drift score join + row dedup), the CV/cover **fact-validator** (#682), and the **do-not-apply blacklist** (#1748). Ruled out with cause: provider-`postedAt` (#1578, redundant) and the skill-gap checker (#1559, 0/437 JDs fit it; scorer `redFlags` already cover PM gaps).
 
 ## Next — architecture consolidation (incremental, NOT a rewrite)
 Upstream did a ground-up `.mjs → web/src/lib/core` TS rewrite because it's a public

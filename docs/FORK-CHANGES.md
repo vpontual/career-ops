@@ -17,8 +17,12 @@ service in `docker-compose.yml`.
 - Server-rendered. Reads `data/pipeline.md`, `data/lead-scores.json`,
   `data/applications.md`, and `jds/*.md` directly from the bind-mounted repo. No database.
 - **Score join (fixed 2026-07-14):** each row's score comes from `data/lead-scores.json`
-  (matched via the JD URL index), NOT the retired `reports/` dir. Reading `reports/`
-  made every freshly-scored role show "unscored" and drop out of the Shortlist.
+  (matched via the JD URL index, with an **unambiguous canonical `company::title`
+  fallback** for URL-drifted roles — ported from upstream #1750), NOT the retired
+  `reports/` dir. Reading `reports/` made every freshly-scored role show "unscored".
+- **Row dedup (2026-07-14, #1750):** duplicate rows (same role under churned URLs /
+  per-location splits) collapse to the best survivor (staged > scored > actioned >
+  freshest). Tracked count 510→~287. Blacklisted companies are hidden.
 - **Redesigned 2026-07-14.** 3 primary tabs — **Shortlist** (score ≥4, the default) /
   **Ready to apply** (staged) / **All roles**; outcome tabs (Applied/Rejected/…) appear
   only when non-empty. A single **Fresh ≤30d** toggle replaces the old
@@ -81,7 +85,9 @@ now reads candidate scores from `data/lead-scores.json` instead of the old
 | `_archive/score-all.mjs` | **Retired 2026-07-14.** Was a static report renderer over a hardcoded scoring table. Superseded by `rank-leads.mjs`; `stage-applications.mjs` now reads `data/lead-scores.json`. |
 | `fetch-gmail-leads.mjs` | IMAP poller for `[Gmail]/All Mail`. Curated sender allowlist in `config/gmail-sources.yml`. Strips tracking query params at write time so digest URLs (Lensa/Idealist/LinkedIn position=1/2/3) collapse to one row in `pipeline.md`. Cursor at `data/.gmail-cursor`. |
 | `rank-leads.mjs` | Reads `jds/`, applies title filter (`portals.yml` positive/negative) + freshness filter (≤30d default), scores each survivor against `cv.md` via an Ollama-compatible endpoint (`OLLAMA_URL` env), dedups by title+company, writes `data/inbox-leads.md` grouped by tier. Per-JD scores cached in `data/lead-scores.json`. Each scoring call is bounded by an `AbortController` timeout (`SCORE_TIMEOUT_MS`, default 90s) + in-run retries so a wedged gateway can't hang the run; `--rescore` preserves the existing cache (never wipes out-of-scope entries). |
-| `stage-applications.mjs` | **(2026-07-14)** Reads `data/lead-scores.json` for roles scored ≥4 & ≤14d (deduped by company+title), liveness-prunes confidently-expired URLs, then generates a Gemini cover letter + ATS-normalized CV/cover PDFs into `output/{slug}/`. `--list` = dry run. Chained into the nightly cron; **never submits**. |
+| `stage-applications.mjs` | **(2026-07-14)** Reads `data/lead-scores.json` for roles scored ≥4 & ≤14d (deduped by company+title), liveness-prunes confidently-expired URLs, then generates a Gemini cover letter + **per-role tailored CV** (`classifyArchetype` picks the matching `cv-variants/cv-{variant}.md`) into `output/{slug}/`. Each cover letter is **fact-checked** (`verify-cv-facts.mjs`) — unverified metrics get a `⚠ FACT CHECK` banner. `--list` = dry run. Chained into the nightly cron; **never submits**. |
+| `verify-cv-facts.mjs` | **(2026-07-14, ported from upstream #682)** Zero-LLM guard: flags metric-like claims ($, %, Nx, "N users") in a generated CV/cover letter that are absent from `cv.md`/`profile.yml`. Exported `checkFacts()` used by staging; CLI `node verify-cv-facts.mjs <file>`. Config `config/cv-facts.json` (gitignored) = verified exceptions + forbidden phrases. |
+| `blacklist.mjs` | **(2026-07-14, ported from upstream #1748)** Parses the opt-in `data/blacklist.md` do-not-apply list (gitignored; `templates/blacklist.example.md`). `rank-leads.mjs` drops blacklisted companies before scoring; the UI hides them. A gate, never a score input. |
 | `fetch-indeed.py` | **(2026-07-14)** Indeed source via JobSpy (no login — public search API). Applies `portals.yml` title_filter, dedups vs `scan-history.tsv`, writes `pipeline.md` + `jds/*.md` (with descriptions). Runs from a gitignored `.venv-jobspy`; forces IPv4-only DNS. Wired into cron before `rank-leads`. |
 
 See `docs/SCRIPTS.md` for invocation details.
