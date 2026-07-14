@@ -25,9 +25,6 @@ const TABS: { id: string; label: string; match: (r: PipelineRow) => boolean }[] 
 function isNycCompatible(locs: string[]): boolean {
   return locs.some(l => /new york|nyc|manhattan|brooklyn|queens|jersey city|hoboken|stamford/i.test(l));
 }
-function isLaCompatible(locs: string[]): boolean {
-  return locs.some(l => /los angeles|\bLA\b|santa monica|culver|pasadena|el segundo/i.test(l));
-}
 function isRemote(locs: string[]): boolean {
   return locs.some(l => /remote|anywhere|distributed/i.test(l));
 }
@@ -35,7 +32,6 @@ function isRemote(locs: string[]): boolean {
 function locationBadge(row: PipelineRow) {
   const tags: { label: string; color: string }[] = [];
   if (isNycCompatible(row.locations)) tags.push({ label: "NYC", color: "text-blue-300 border-blue-400/40" });
-  if (isLaCompatible(row.locations)) tags.push({ label: "LA", color: "text-slate-500 border-slate-600" }); // LA no longer targeted (muted)
   if (isRemote(row.locations)) tags.push({ label: "REMOTE", color: "text-green-300 border-green-400/40" });
   if (tags.length === 0) tags.push({ label: "OTHER", color: "text-slate-500 border-slate-600" });
   return tags;
@@ -114,17 +110,15 @@ const SORTS: { id: string; label: string }[] = [
 ];
 
 // Pull the most relevant city out of the locations array for sorting.
-// Prefer NYC > Remote > LA > first listed. NYC and remote are the targets;
-// LA is no longer targeted (2026-07-14), so it sorts below remote.
+// Only NYC and remote are recognized targets; LA and every other non-target
+// city fall into the generic trailing bucket (no dedicated LA handling).
 function primaryCity(locs: string[]): string {
   if (locs.length === 0) return "~"; // sort empties last
   const nyc = locs.find(l => /new york|nyc|manhattan|brooklyn|queens|jersey city|hoboken|stamford/i.test(l));
   if (nyc) return "0_New York";
   const remote = locs.find(l => /remote|anywhere|distributed/i.test(l));
   if (remote) return "1_Remote";
-  const la = locs.find(l => /los angeles|\bLA\b|santa monica|culver|pasadena|el segundo/i.test(l));
-  if (la) return "2_Los Angeles";
-  return "3_" + locs[0];
+  return "2_" + locs[0];
 }
 
 function applySort(rows: PipelineRow[], sort: string): PipelineRow[] {
