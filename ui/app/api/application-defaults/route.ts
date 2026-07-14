@@ -19,6 +19,22 @@ function field(md: string, labelRe: string): string {
   return m ? m[1].trim() : "";
 }
 
+// Extract the short "why interested" fallback answer (the < 100-word version)
+// from the "### \"Why are you interested...\"" block, skipping its instruction lines.
+function whyInterested(md: string): string {
+  const m = md.match(/###\s+"?Why are you interested[^\n]*\n([\s\S]*?)(?=\n#{2,3}\s|\n---|\n##\s|$)/i);
+  if (!m) return "";
+  const block = m[1];
+  const idx = block.toLowerCase().indexOf("fallback:");
+  const rest = idx >= 0 ? block.slice(idx + "fallback:".length) : block;
+  return rest
+    .split("\n")
+    .map(l => l.replace(/^>\s?/, "").trim())
+    .filter(l => l && !/^(default|first:|framing|if the form|fallback)/i.test(l))
+    .join(" ")
+    .trim();
+}
+
 export async function GET() {
   let md: string;
   try {
@@ -46,6 +62,10 @@ export async function GET() {
       linkedin: field(md, "LinkedIn"),
       website: field(md, "Personal website / portfolio"),
       github: field(md, "GitHub"),
+      yearsExperience: field(md, "Years of experience"),
+    },
+    essays: {
+      whyInterested: whyInterested(md),
     },
     workAuth: {
       authorized: yesNo("Authorized to work in the United States\\?"),
