@@ -73,3 +73,4 @@ logs/rank-leads.log
 .venv-jobspy/
 __pycache__/
 *.pyc
+config/cv-facts.json

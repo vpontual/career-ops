@@ -1,0 +1,10 @@
+{
+  "_comment": "Copy to config/cv-facts.json (gitignored). Metrics in cv.md / profile.yml are auto-allowed; list here only verified exceptions NOT present in those sources. forbidden_phrases flags claims you must never make.",
+  "allow_metrics": [],
+  "forbidden_phrases": [
+    "Fortune 500",
+    "Fortune 100",
+    "patented",
+    "PhD"
+  ]
+}

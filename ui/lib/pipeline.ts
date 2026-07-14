@@ -162,6 +162,29 @@ type JdMeta = { posted?: number; updated?: number; locations?: string[]; score?:
 let jdMetaCache: Map<string, JdMeta> | null = null;
 let jdMetaCacheDay: string | null = null;
 
+// Canonical company+title key (ported from upstream santifer/career-ops #1750).
+// The SAME role can appear under different URLs (requisition-URL changes, per-
+// location title splits, tracking params), so a URL-only score join misses them
+// and duplicate rows survive. Keying on normalized company+title collapses those.
+function normalizeCompany(name: string): string {
+  return (name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+function normalizeTitle(title: string): string {
+  return (title || "")
+    .toLowerCase()
+    .replace(/\([^)]*\)/g, " ")          // drop "(Berlin)" / "(Remote)" splits
+    .replace(/[^a-z0-9]/g, "");
+}
+function canonKey(company: string, title: string): string {
+  return `${normalizeCompany(company)}::${normalizeTitle(title)}`;
+}
+
+// Score index keyed by canonKey, with a collision count so the join only falls
+// back to it when UNAMBIGUOUS (never mis-assigns a score across two distinct
+// same-titled roles at one company). Populated by loadJdMetaIndex.
+type CanonScore = { score?: number; verdict?: string; redFlags?: string; n: number };
+let canonScoreCache: Map<string, CanonScore> | null = null;
+
 // Compute days between an ISO timestamp and now. Returns undefined if the
 // string isn't a valid date. Floored, never negative.
 function daysAgo(iso: string | undefined): number | undefined {
@@ -177,6 +200,7 @@ export async function loadJdMetaIndex(): Promise<Map<string, JdMeta>> {
   const today = todayKey();
   if (jdMetaCache && jdMetaCacheDay === today) return jdMetaCache;
   const map = new Map<string, JdMeta>();
+  const canon = new Map<string, CanonScore>();
 
   // rank-leads.mjs's score cache, keyed by JD filename. This is the single
   // scoring authority (score-all.mjs and its reports/ dir were retired); the
@@ -221,10 +245,21 @@ export async function loadJdMetaIndex(): Promise<Map<string, JdMeta>> {
         verdict: sc?.verdict,
         redFlags: sc?.redFlags
       });
+
+      // Canonical company+title index (for the URL-drift score-join fallback).
+      if (typeof sc?.score === "number") {
+        const company = (text.match(/\*\*Company:\*\*\s+(.+)/)?.[1] || "").trim();
+        const title = ((text.split("\n")[0] || "").replace(/^#\s*/, "")).trim();
+        const key = canonKey(company, title);
+        const prev = canon.get(key);
+        if (prev) prev.n += 1; // collision → becomes ambiguous, join won't use it
+        else canon.set(key, { score: sc.score, verdict: sc.verdict, redFlags: sc.redFlags, n: 1 });
+      }
     }
   } catch {}
   jdMetaCache = map;
   jdMetaCacheDay = today;
+  canonScoreCache = canon;
   return map;
 }
 
@@ -355,19 +390,30 @@ export async function loadPipeline(): Promise<PipelineData> {
         if (jdMeta.redFlags) row.redFlags = jdMeta.redFlags;
       }
     }
+
+    // URL-drift fallback: the same role can sit in pipeline.md under a different
+    // URL than its scored JD. When the URL join found no score, borrow it from
+    // the canonical company+title index — but only if that key is UNAMBIGUOUS
+    // (one scored JD), never guessing across two distinct same-titled roles.
+    if (row.score == null) {
+      const cs = canonScoreCache?.get(canonKey(row.company, row.role));
+      if (cs && cs.n === 1 && typeof cs.score === "number") {
+        row.score = cs.score;
+        row.tier = cs.score;
+        if (cs.verdict && !row.verdict) row.verdict = cs.verdict;
+        if (cs.redFlags && !row.redFlags) row.redFlags = cs.redFlags;
+      }
+    }
     row.computedLegitimacy = computeLegitimacy(row.postedDaysAgo, row.updatedDaysAgo);
 
-    // Legacy fallback: a matching score-all report (reports/) if this row wasn't
-    // scored by rank-leads. Only fills score when jdMeta didn't already.
+    // Link a legacy score-all report if one exists (for the details page +
+    // legitimacy tier text), but do NOT let its frozen score into the shortlist —
+    // score-all is retired and its 2026-04 scores are stale (pre-geo-retarget).
+    // The current scorer (lead-scores.json, via URL or canonical join) is the
+    // only score source now.
     const report = await findReportForUrl(row.url);
     if (report) {
       row.reportPath = report.path;
-      if (row.score == null) row.score = report.score;
-      // Report's legitimacy tier text is authoritative when present, but we
-      // intentionally do NOT take report.postedDaysAgo — that field is parsed
-      // from a frozen "(X days ago)" parenthetical written at scoring time and
-      // would freeze ages permanently. Always prefer the JD-meta value which
-      // is recomputed from the Posted ISO timestamp on every request.
       if (report.legitimacyTier) row.legitimacyTier = report.legitimacyTier;
       if (report.locations && report.locations.length > 0) {
         row.locations = report.locations;
@@ -399,6 +445,30 @@ export async function loadPipeline(): Promise<PipelineData> {
     }
   } catch { /* inbox-leads.md unavailable — ranked tab will simply be empty */ }
 
+  // Collapse duplicate rows — the same role under multiple pipeline.md URLs
+  // (requisition-URL churn / per-location splits). Keep the "best" survivor per
+  // canonical company+title: prefer a staged pack, then a score, then an actioned
+  // status, then the freshest. Distinct same-titled roles differ in title text so
+  // they keep separate keys and are NOT merged. (Ported from upstream #1750.)
+  const rank = (r: PipelineRow) =>
+    (r.stagedSlug ? 1000 : 0) +
+    (typeof r.score === "number" ? r.score * 10 : 0) +
+    (r.status !== "new" ? 5 : 0) +
+    (r.postedDaysAgo != null ? Math.max(0, 100 - r.postedDaysAgo) / 100 : 0);
+  const bestByCanon = new Map<string, PipelineRow>();
+  const dedupedRows: PipelineRow[] = [];
+  for (const r of rows) {
+    if (!r.company || !r.role) { dedupedRows.push(r); continue; } // can't key → keep
+    const key = canonKey(r.company, r.role);
+    const cur = bestByCanon.get(key);
+    if (!cur) { bestByCanon.set(key, r); dedupedRows.push(r); continue; }
+    if (rank(r) > rank(cur)) {
+      const i = dedupedRows.indexOf(cur);
+      if (i >= 0) dedupedRows[i] = r;
+      bestByCanon.set(key, r);
+    }
+  }
+
   const byStatus: Record<PipelineStatus, number> = {
     new: 0,
     under_review: 0,
@@ -406,12 +476,12 @@ export async function loadPipeline(): Promise<PipelineData> {
     rejected: 0,
     archived: 0
   };
-  for (const r of rows) byStatus[r.status]++;
+  for (const r of dedupedRows) byStatus[r.status]++;
 
   const data: PipelineData = {
-    rows,
+    rows: dedupedRows,
     lastScannedAt: await maybeStat(pipelinePath),
-    totalCount: rows.length,
+    totalCount: dedupedRows.length,
     byStatus
   };
   pipelineCache = { data, pipelineMtime, appsMtime, inboxMtime, dayKey };

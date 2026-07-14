@@ -24,6 +24,7 @@ import { fileURLToPath } from 'url';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { chromium } from 'playwright';
 import { checkUrl } from './check-liveness.mjs';
+import { checkFacts } from './verify-cv-facts.mjs';
 
 try {
   const { config } = await import('dotenv');
@@ -293,6 +294,10 @@ async function main() {
   await mkdir(OUTPUT_DIR, { recursive: true });
   const profile = await readFile(PROFILE_PATH, 'utf-8');
   const cv = await readFile(CV_PATH, 'utf-8');
+  // Fact-check source of truth + optional allow/forbid config for cover letters.
+  const factSource = `${cv}\n${profile}`;
+  let cvFacts = { allow_metrics: [], forbidden_phrases: [] };
+  try { cvFacts = JSON.parse(await readFile(path.join(ROOT, 'config', 'cv-facts.json'), 'utf-8')); } catch {}
   let profileOverrides = '';
   try { profileOverrides = await readFile(PROFILE_OVERRIDES, 'utf-8'); } catch {}
 
@@ -363,7 +368,18 @@ async function main() {
 
     console.log(`[${idx}] generating cover letter for ${c.company} | ${c.role} (${c.days}d, score ${c.score})`);
     const letterText = sanitizeAtsText(await generateCoverLetter(c, profile, cv, profileOverrides));
-    await writeFile(coverMdPath, `# Cover letter — ${c.company}: ${c.role}\n\n**URL:** ${c.url}\n**Generated:** ${new Date().toISOString()}\n**Days old at staging:** ${c.days}\n**Score:** ${c.score}\n\n---\n\n${letterText}\n`);
+
+    // Fact check: flag metric-like claims in the letter that aren't in cv.md/
+    // profile.yml (Gemini invention guard, zero extra LLM calls). Warn, don't
+    // block — a human reviews every letter before submitting.
+    const fc = checkFacts(letterText, factSource, cvFacts);
+    let factNote = '';
+    if (!fc.ok) {
+      const bits = [...fc.invented.map(m => `unverified metric "${m}"`), ...fc.forbidden.map(p => `forbidden phrase "${p}"`)];
+      factNote = `\n> ⚠ **FACT CHECK — review before sending:** ${bits.join('; ')}\n`;
+      console.log(`  [${idx}] ⚠ fact check: ${bits.join('; ')}`);
+    }
+    await writeFile(coverMdPath, `# Cover letter — ${c.company}: ${c.role}\n\n**URL:** ${c.url}\n**Generated:** ${new Date().toISOString()}\n**Days old at staging:** ${c.days}\n**Score:** ${c.score}\n${factNote}\n---\n\n${letterText}\n`);
 
     const coverPdfPath = path.join(dir, 'cover-letter.pdf');
     await renderPdf(htmlForCoverLetter(letterText, c, profile), coverPdfPath, browser);
