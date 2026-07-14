@@ -70,3 +70,6 @@ data/lead-scores.json
 data/pipeline.md.bak-*
 logs/gmail-fetch.log
 logs/rank-leads.log
+.venv-jobspy/
+__pycache__/
+*.pyc
