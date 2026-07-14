@@ -368,7 +368,11 @@ async function main() {
   const titleFilter = loadTitleFilter();
   const resume = await loadResume();
   const targets = await loadProfileTargets();
-  const cache = RESCORE ? {} : await loadScores();
+  // Always load the existing cache as the persistence base so a scoped run
+  // (e.g. --rescore --limit 1) re-scores only what's in scope WITHOUT discarding
+  // the other cached entries. --rescore forces re-scoring (see the cache-hit
+  // check below); it must not wipe out-of-scope scores when combined with --limit.
+  const cache = await loadScores();
 
   const files = (await readdir(JDS_DIR).catch(() => [])).filter(f => f.endsWith('.md'));
   console.log(`JDs found:    ${files.length}`);
