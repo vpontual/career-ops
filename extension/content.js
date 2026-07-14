@@ -25,38 +25,43 @@
   }
 
   // ---- field/question introspection ----------------------------------------
+  const TITLE_SEL = "label, legend, [class*='label' i], [class*='title' i], [class*='question' i], h1, h2, h3, h4, h5";
+
   function labelFor(el) {
-    let parts = [];
+    const parts = [];
+    // aria-labelledby → referenced element text (Ashby/Workday use this)
+    const lb = el.getAttribute("aria-labelledby");
+    if (lb) for (const id of lb.split(/\s+/)) { const e = document.getElementById(id); if (e) parts.push(e.innerText); }
     if (el.id) {
       const l = document.querySelector(`label[for="${CSS.escape(el.id)}"]`);
       if (l) parts.push(l.innerText);
     }
     const wrapLabel = el.closest("label");
     if (wrapLabel) parts.push(wrapLabel.innerText);
-    const grp = el.closest("div,section,fieldset,[role='group']");
-    if (grp) {
-      const l = grp.querySelector("label, legend, .label, [class*='label' i]");
-      if (l && !l.contains(el)) parts.push(l.innerText);
+    // Walk up a few ancestors and grab the first field-title element found.
+    // Ashby renders the question as a sibling <label>/<div class="...Title...">
+    // that closest('label') doesn't reach.
+    let node = el.parentElement;
+    for (let i = 0; i < 4 && node; i++, node = node.parentElement) {
+      const t = node.querySelector(TITLE_SEL);
+      if (t && !t.contains(el)) { parts.push(t.innerText); break; }
     }
     parts.push(el.getAttribute("aria-label") || "");
     parts.push(el.getAttribute("placeholder") || "");
     parts.push(el.getAttribute("name") || "");
     parts.push(el.id || "");
-    return parts.join(" ").replace(/\s+/g, " ").trim().toLowerCase();
+    return parts.join(" ").replace(/\s+/g, " ").trim().toLowerCase().slice(0, 300);
   }
 
-  // Group-level question (for radios/selects): fieldset legend, or nearest
-  // preceding heading/label above the control's block.
+  // Group-level question (for choice widgets): fieldset legend, or the nearest
+  // ancestor's title element above the control's block.
   function groupQuestion(el) {
     const fs = el.closest("fieldset");
-    if (fs) {
-      const lg = fs.querySelector("legend");
-      if (lg) return lg.innerText.toLowerCase();
-    }
-    const grp = el.closest("[role='group'], .field, [class*='field' i], div");
-    if (grp) {
-      const l = grp.querySelector("label, legend, [class*='label' i], h1,h2,h3,h4");
-      if (l) return l.innerText.toLowerCase();
+    if (fs) { const lg = fs.querySelector("legend"); if (lg) return lg.innerText.toLowerCase().slice(0, 300); }
+    let node = el.parentElement;
+    for (let i = 0; i < 5 && node; i++, node = node.parentElement) {
+      const t = node.querySelector(TITLE_SEL);
+      if (t && !t.contains(el)) return t.innerText.toLowerCase().slice(0, 300);
     }
     return labelFor(el);
   }
@@ -157,6 +162,7 @@
     const filled = [];
     const skippedChoices = [];
     let files = 0;
+    let comboFilled = false;
 
     // Text inputs + textareas
     const textEls = document.querySelectorAll(
@@ -166,7 +172,16 @@
       if (el.disabled || el.readOnly || el.offsetParent === null) continue;
       if (el.value && el.value.trim()) continue; // don't clobber existing input
       const rule = firstRule(rules, labelFor(el), "text");
-      if (rule) { setValue(el, rule.v); markFilled(el); filled.push(labelSummary(el, rule.v)); }
+      if (rule) {
+        setValue(el, rule.v);
+        markFilled(el);
+        filled.push(labelSummary(el, rule.v));
+        // Autocomplete/combobox inputs need a dropdown selection to "commit".
+        if (el.getAttribute("role") === "combobox" || el.getAttribute("aria-autocomplete") ||
+            el.getAttribute("aria-expanded") != null || /start typing/i.test(el.placeholder || "")) {
+          comboFilled = true;
+        }
+      }
     }
 
     // Native selects
@@ -196,24 +211,43 @@
     }
 
     // Custom (non-native) choice widgets — Ashby/Workday render Yes/No + single
-    // selects as ARIA radiogroups/listboxes, not <select>/<radio>. For a group
-    // whose question matches a choice rule, click the option whose text matches.
-    const OPT_SEL = '[role="radio"], [role="option"], [role="menuitemradio"]';
+    // selects as button pairs / ARIA radiogroups (divs & buttons), NOT
+    // <select>/<radio>. Find a group holding >=2 short option-like elements,
+    // match its question to a choice rule, and click the option matching the value.
+    const OPT_SEL = '[role="radio"], [role="option"], [role="menuitemradio"], [role="switch"], button, [role="button"]';
+    const ACTION = /submit|upload|apply\b|cancel|back|next|save|continue|remove|delete|attach|browse|drag|drop|sign|log ?in|autofill/i;
+    const isOpt = (o) => {
+      if (o.offsetParent === null) return false;
+      if (o.id === "co-autofill-btn" || o.closest("#co-autofill-toast, #co-autofill-btn")) return false;
+      const t = (o.innerText || o.getAttribute("aria-label") || "").trim();
+      return t && t.length <= 40 && !ACTION.test(t);
+    };
+    const optText = (o) => (o.innerText || o.getAttribute("aria-label") || "").trim();
+    const findGroup = (opt) => {
+      let node = opt;
+      for (let i = 0; i < 5 && node.parentElement; i++) {
+        node = node.parentElement;
+        const opts = [...node.querySelectorAll(OPT_SEL)].filter(isOpt);
+        // A real choice group is small (Yes/No, a handful of options). Stop at the
+        // first tight ancestor; never treat a whole form/page (many buttons) as one.
+        if (opts.length >= 2 && opts.length <= 6) return { group: node, opts };
+        if (opts.length > 6) return null;
+      }
+      return null;
+    };
     const doneGroups = new Set();
     for (const opt of document.querySelectorAll(OPT_SEL)) {
-      if (opt.offsetParent === null) continue;
-      const groupEl = opt.closest('[role="radiogroup"], [role="listbox"], fieldset, [class*="field" i]') || opt.parentElement;
-      if (!groupEl || doneGroups.has(groupEl)) continue;
-      const q = groupQuestion(groupEl);
+      if (!isOpt(opt)) continue;
+      const g = findGroup(opt);
+      if (!g || doneGroups.has(g.group)) continue;
+      doneGroups.add(g.group);
+      const q = groupQuestion(opt);
       const rule = firstRule(rules, q, "choice");
       if (!rule) continue;
       let clicked = false;
-      for (const o of groupEl.querySelectorAll(OPT_SEL)) {
-        if (o.offsetParent === null) continue;
-        const t = (o.innerText || o.getAttribute("aria-label") || "").trim();
-        if (optionMatches(t, rule.v)) { o.click(); markFilled(o); clicked = true; break; }
+      for (const o of g.opts) {
+        if (optionMatches(optText(o), rule.v)) { o.click(); markFilled(o); clicked = true; break; }
       }
-      doneGroups.add(groupEl);
       if (clicked) filled.push(`${short(q)} → ${rule.v}`);
       else skippedChoices.push(short(q));
     }
@@ -225,6 +259,7 @@
     lines.push(`<b>Filled ${filled.length} field${filled.length === 1 ? "" : "s"}.</b>`);
     if (filled.length) lines.push(`<ul>${filled.slice(0, 14).map((x) => `<li>${escapeHtml(x)}</li>`).join("")}</ul>`);
     const notes = [];
+    if (comboFilled) notes.push("Location/autocomplete typed in — pick the matching suggestion from its dropdown.");
     if (files) notes.push(`${files} file upload${files === 1 ? "" : "s"} — attach your CV / cover-letter PDF manually.`);
     if (skippedChoices.length) notes.push(`Couldn't set: ${skippedChoices.slice(0, 6).map(escapeHtml).join(", ")} — do these by hand.`);
     notes.push("Review everything, then submit yourself.");
