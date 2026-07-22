@@ -268,6 +268,48 @@ try {
   fail(`Render tests crashed: ${e.message}`);
 }
 
+console.log('\n3f. URL canonicalization at ingest (lib/url-canonical.mjs)');
+
+try {
+  const { canonicalizeUrl } = await import(pathToFileURL(join(ROOT, 'lib', 'url-canonical.mjs')).href);
+
+  // Tracking params stripped (utm/click-ids/position); the drift-causing set.
+  if (canonicalizeUrl('https://x.example/job?utm_source=a&fbclid=b&position=2') === 'https://x.example/job') {
+    pass('strips utm_/fbclid/position tracking params');
+  } else {
+    fail(`tracking-strip wrong: ${canonicalizeUrl('https://x.example/job?utm_source=a&fbclid=b&position=2')}`);
+  }
+  // Identifying params KEPT (Greenhouse gh_jid selects the actual job).
+  const gh = canonicalizeUrl('https://boards.greenhouse.io/co/jobs/1?gh_jid=456&utm_source=x');
+  if (gh.includes('gh_jid=456') && !gh.includes('utm_source')) {
+    pass('keeps identifying gh_jid, drops tracking');
+  } else {
+    fail(`gh_jid handling wrong: ${gh}`);
+  }
+  // Strip-all-query host.
+  if (canonicalizeUrl('https://app.welcometothejungle.com/jobs/x?whatever=1&a=2') === 'https://app.welcometothejungle.com/jobs/x') {
+    pass('strips entire query for strip-all hosts');
+  } else {
+    fail('strip-all-query host wrong');
+  }
+  // THE POINT: two tracking variants of one posting collapse to one canonical.
+  const a = canonicalizeUrl('https://acme.com/careers/pm?utm_campaign=z&gclid=1');
+  const b = canonicalizeUrl('https://acme.com/careers/pm?ref=digest&position=3');
+  if (a === b && a === 'https://acme.com/careers/pm') {
+    pass('drift variants of one posting collapse to a single canonical URL');
+  } else {
+    fail(`drift did not collapse: "${a}" vs "${b}"`);
+  }
+  // Unparseable → unchanged (never throws).
+  if (canonicalizeUrl('not a url') === 'not a url') {
+    pass('unparseable input returned unchanged');
+  } else {
+    fail('unparseable handling wrong');
+  }
+} catch (e) {
+  fail(`URL canonicalization tests crashed: ${e.message}`);
+}
+
 // ── 4. DASHBOARD BUILD ──────────────────────────────────────────
 
 if (!QUICK) {

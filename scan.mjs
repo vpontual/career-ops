@@ -17,6 +17,7 @@
 
 import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync } from 'fs';
 import yaml from 'js-yaml';
+import { canonicalizeUrl } from './lib/url-canonical.mjs';
 const parseYaml = yaml.load;
 
 // ── Config ──────────────────────────────────────────────────────────
@@ -144,7 +145,7 @@ function loadSeenUrls() {
     const lines = readFileSync(SCAN_HISTORY_PATH, 'utf-8').split('\n');
     for (const line of lines.slice(1)) { // skip header
       const url = line.split('\t')[0];
-      if (url) seen.add(url);
+      if (url) seen.add(canonicalizeUrl(url));
     }
   }
 
@@ -152,7 +153,7 @@ function loadSeenUrls() {
   if (existsSync(PIPELINE_PATH)) {
     const text = readFileSync(PIPELINE_PATH, 'utf-8');
     for (const match of text.matchAll(/- \[[ x]\] (https?:\/\/\S+)/g)) {
-      seen.add(match[1]);
+      seen.add(canonicalizeUrl(match[1]));
     }
   }
 
@@ -160,7 +161,7 @@ function loadSeenUrls() {
   if (existsSync(APPLICATIONS_PATH)) {
     const text = readFileSync(APPLICATIONS_PATH, 'utf-8');
     for (const match of text.matchAll(/https?:\/\/[^\s|)]+/g)) {
-      seen.add(match[0]);
+      seen.add(canonicalizeUrl(match[0]));
     }
   }
 
@@ -297,6 +298,9 @@ async function main() {
       totalFound += jobs.length;
 
       for (const job of jobs) {
+        // Canonicalize at ingest so dedup + the written URL match every other
+        // appender (shared lib/url-canonical.mjs).
+        job.url = canonicalizeUrl(job.url);
         if (!titleFilter(job.title)) {
           totalFiltered++;
           continue;

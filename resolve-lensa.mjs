@@ -17,6 +17,7 @@ import { readFile, writeFile, appendFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 import { chromium } from 'playwright';
+import { canonicalizeUrl } from './lib/url-canonical.mjs';
 
 const ROOT = process.env.CAREER_OPS_ROOT ?? process.cwd();
 const PIPELINE_PATH = path.join(ROOT, 'data', 'pipeline.md');
@@ -44,23 +45,9 @@ function isRealJobUrl(url) {
   } catch { return false; }
 }
 
-const TRACKING_PARAMS = new Set([
-  'utm_source','utm_medium','utm_campaign','utm_term','utm_content',
-  'ref','src','source','token','position','count',
-]);
-
-function canonicalize(url) {
-  try {
-    const u = new URL(url);
-    const keep = new URLSearchParams();
-    for (const [k, v] of u.searchParams) {
-      if (!TRACKING_PARAMS.has(k.toLowerCase())) keep.set(k, v);
-    }
-    u.search = keep.toString();
-    u.hash = '';
-    return u.toString();
-  } catch { return url; }
-}
+// URL canonicalization now uses the shared lib/url-canonical.mjs (was a local
+// copy that stripped fewer params than gmail's — the drift this consolidation
+// fixes).
 
 function inferCompany(url) {
   try {
@@ -147,7 +134,7 @@ async function main() {
           console.log(`  ✗ expired  ${url.slice(0, 70)}`);
           return;
         }
-        const clean = canonicalize(final);
+        const clean = canonicalizeUrl(final);
         if (seenUrls.has(clean)) {
           duped++;
           console.log(`  = dupe     ${clean.slice(0, 70)}`);
