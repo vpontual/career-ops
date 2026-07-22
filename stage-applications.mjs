@@ -27,6 +27,8 @@ import { checkUrl } from './check-liveness.mjs';
 import { checkFacts } from './verify-cv-facts.mjs';
 import { classifyArchetype } from './tailor-cv.mjs';
 import { canonKey } from './lib/canonical.mjs';
+import { parseJd } from './lib/jd-parse.mjs';
+import { renderCvHtml, renderCoverLetterHtml } from './lib/render.mjs';
 
 try {
   const { config } = await import('dotenv');
@@ -98,18 +100,11 @@ async function pLimit(items, n, fn) {
 }
 
 // Parse the front-matter that fetch-jds.mjs writes at the top of every jds/*.md.
+// Thin adapter over the shared lib/jd-parse.mjs — preserves this file's field
+// names (postedIso/postedDays) so downstream code is unchanged.
 function parseJdMeta(jdContent) {
-  const lines = jdContent.split('\n');
-  const title = (lines[0] || '').replace(/^#\s*/, '').trim();
-  let url = '', company = '', postedIso = null, postedDays = null;
-  for (const line of lines.slice(0, 20)) {
-    let m;
-    if ((m = line.match(/^\*\*URL:\*\*\s*(.+)/i))) url = m[1].trim();
-    else if ((m = line.match(/^\*\*Company:\*\*\s*(.+)/i))) company = m[1].trim();
-    else if ((m = line.match(/^\*\*Posted:\*\*\s*([^\s(]+)\s*\((\d+)\s*days/i))) { postedIso = m[1]; postedDays = parseInt(m[2], 10); }
-    else if ((m = line.match(/^\*\*Posted:\*\*\s*([^\s(]+)/i))) { postedIso = m[1]; }
-  }
-  return { title, url, company, postedIso, postedDays };
+  const jd = parseJd(jdContent);
+  return { title: jd.title, url: jd.url, company: jd.company, postedIso: jd.posted_at, postedDays: jd.posted_days };
 }
 
 async function loadCandidates() {
@@ -239,59 +234,7 @@ async function renderPdf(html, outPath, browser) {
   await ctx.close();
 }
 
-function htmlForCv(cvMd, profile) {
-  // Quick markdown-to-html: just enough for cv.md format. No external deps.
-  const lines = cvMd.split('\n');
-  const html = [];
-  let inList = false;
-  for (let line of lines) {
-    line = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    line = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    line = line.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
-    if (/^# /.test(line)) { if (inList) { html.push('</ul>'); inList = false; } html.push(`<h1>${line.slice(2)}</h1>`); }
-    else if (/^## /.test(line)) { if (inList) { html.push('</ul>'); inList = false; } html.push(`<h2>${line.slice(3)}</h2>`); }
-    else if (/^### /.test(line)) { if (inList) { html.push('</ul>'); inList = false; } html.push(`<h3>${line.slice(4)}</h3>`); }
-    else if (/^- /.test(line)) { if (!inList) { html.push('<ul>'); inList = true; } html.push(`<li>${line.slice(2)}</li>`); }
-    else if (line.trim() === '') { if (inList) { html.push('</ul>'); inList = false; } html.push(''); }
-    else { if (inList) { html.push('</ul>'); inList = false; } html.push(`<p>${line}</p>`); }
-  }
-  if (inList) html.push('</ul>');
-  return `<!doctype html><html><head><meta charset="utf-8"><style>
-    body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 10.5pt; line-height: 1.45; color: #111; }
-    h1 { font-size: 22pt; margin: 0 0 0.1in 0; letter-spacing: -0.02em; }
-    h2 { font-size: 13pt; margin: 0.25in 0 0.05in 0; border-bottom: 1px solid #888; padding-bottom: 2px; text-transform: uppercase; letter-spacing: 0.05em; }
-    h3 { font-size: 11pt; margin: 0.12in 0 0.02in 0; }
-    p { margin: 0.04in 0; }
-    ul { margin: 0.05in 0 0.1in 0.25in; padding: 0; }
-    li { margin: 0.02in 0; }
-    a { color: #1a4faa; text-decoration: none; }
-    strong { font-weight: 600; }
-  </style></head><body>${html.join('\n')}</body></html>`;
-}
-
-function htmlForCoverLetter(text, candidate, profile) {
-  const candName = (profile.match(/full_name:\s*"([^"]+)"/) || [])[1] || 'Vitor Pontual';
-  const email = (profile.match(/email:\s*"([^"]+)"/) || [])[1] || '';
-  const phone = (profile.match(/phone:\s*"([^"]+)"/) || [])[1] || '';
-  const linkedin = (profile.match(/linkedin:\s*"([^"]+)"/) || [])[1] || '';
-  const today = new Date().toISOString().slice(0, 10);
-  const escaped = text.split('\n').map(l => l.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')).join('<br>\n');
-  return `<!doctype html><html><head><meta charset="utf-8"><style>
-    body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 11pt; line-height: 1.55; color: #111; padding: 0; }
-    .head { border-bottom: 1px solid #ccc; padding-bottom: 0.15in; margin-bottom: 0.25in; }
-    .name { font-size: 18pt; font-weight: 600; letter-spacing: -0.01em; }
-    .contact { font-size: 9.5pt; color: #555; margin-top: 4px; }
-    .meta { font-size: 9pt; color: #666; margin: 0.25in 0; }
-    .body { margin: 0.1in 0; }
-  </style></head><body>
-    <div class="head">
-      <div class="name">${candName}</div>
-      <div class="contact">${[email, phone, linkedin].filter(Boolean).join(' · ')}</div>
-    </div>
-    <div class="meta">${today}<br>Re: ${candidate.role} - ${candidate.company}</div>
-    <div class="body">${escaped}</div>
-  </body></html>`;
-}
+// htmlForCv / htmlForCoverLetter now live in the shared lib/render.mjs.
 
 async function main() {
   await mkdir(OUTPUT_DIR, { recursive: true });
@@ -353,7 +296,7 @@ async function main() {
   // Render the CV PDF once (no per-JD tailoring in v1)
   const sharedCvPdf = path.join(OUTPUT_DIR, 'cv.pdf');
   console.log(`Rendering shared CV PDF → ${sharedCvPdf}`);
-  await renderPdf(htmlForCv(cv, profile), sharedCvPdf, browser);
+  await renderPdf(renderCvHtml(cv), sharedCvPdf, browser);
 
   let staged = 0;
   const results = await pLimit(liveCandidates, MAX_CONCURRENT, async (c, idx) => {
@@ -385,7 +328,7 @@ async function main() {
     await writeFile(coverMdPath, `# Cover letter — ${c.company}: ${c.role}\n\n**URL:** ${c.url}\n**Generated:** ${new Date().toISOString()}\n**Days old at staging:** ${c.days}\n**Score:** ${c.score}\n${factNote}\n---\n\n${letterText}\n`);
 
     const coverPdfPath = path.join(dir, 'cover-letter.pdf');
-    await renderPdf(htmlForCoverLetter(letterText, c, profile), coverPdfPath, browser);
+    await renderPdf(renderCoverLetterHtml(letterText, profile, `Re: ${c.role} - ${c.company}`), coverPdfPath, browser);
 
     // Per-role tailored CV: classify the JD's archetype (tailor-cv.mjs) and render
     // the matching cv-variants/cv-{variant}.md into this packet instead of copying
@@ -393,7 +336,7 @@ async function main() {
     const variant = classifyArchetype(c.jdContent || '');
     let cvMd = cv, variantUsed = 'cv.md';
     try { cvMd = await readFile(path.join(VARIANTS_DIR, `cv-${variant}.md`), 'utf-8'); variantUsed = variant; } catch {}
-    await renderPdf(htmlForCv(cvMd, profile), path.join(dir, 'cv.pdf'), browser);
+    await renderPdf(renderCvHtml(cvMd), path.join(dir, 'cv.pdf'), browser);
     await writeFile(path.join(dir, 'cv-variant.txt'), variantUsed + '\n');
     console.log(`  [${idx}] CV variant: ${variantUsed}`);
 

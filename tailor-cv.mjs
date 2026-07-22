@@ -17,6 +17,7 @@ import { readFile, readdir, writeFile, mkdir, stat } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { chromium } from 'playwright';
+import { renderCvHtml } from './lib/render.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const OUTPUT_DIR = path.join(ROOT, 'output');
@@ -103,34 +104,7 @@ async function pickVariant(slug, override) {
   return classifyArchetype(jd);
 }
 
-function htmlForCv(cvMd) {
-  const lines = cvMd.split('\n');
-  const html = [];
-  let inList = false;
-  for (let line of lines) {
-    line = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    line = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    line = line.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
-    if (/^# /.test(line)) { if (inList) { html.push('</ul>'); inList = false; } html.push(`<h1>${line.slice(2)}</h1>`); }
-    else if (/^## /.test(line)) { if (inList) { html.push('</ul>'); inList = false; } html.push(`<h2>${line.slice(3)}</h2>`); }
-    else if (/^### /.test(line)) { if (inList) { html.push('</ul>'); inList = false; } html.push(`<h3>${line.slice(4)}</h3>`); }
-    else if (/^- /.test(line)) { if (!inList) { html.push('<ul>'); inList = true; } html.push(`<li>${line.slice(2)}</li>`); }
-    else if (line.trim() === '') { if (inList) { html.push('</ul>'); inList = false; } html.push(''); }
-    else { if (inList) { html.push('</ul>'); inList = false; } html.push(`<p>${line}</p>`); }
-  }
-  if (inList) html.push('</ul>');
-  return `<!doctype html><html><head><meta charset="utf-8"><style>
-    body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 10.5pt; line-height: 1.45; color: #111; }
-    h1 { font-size: 22pt; margin: 0 0 0.1in 0; letter-spacing: -0.02em; }
-    h2 { font-size: 13pt; margin: 0.25in 0 0.05in 0; border-bottom: 1px solid #888; padding-bottom: 2px; text-transform: uppercase; letter-spacing: 0.05em; }
-    h3 { font-size: 11pt; margin: 0.12in 0 0.02in 0; }
-    p { margin: 0.04in 0; }
-    ul { margin: 0.05in 0 0.1in 0.25in; padding: 0; }
-    li { margin: 0.02in 0; }
-    a { color: #1a4faa; text-decoration: none; }
-    strong { font-weight: 600; }
-  </style></head><body>${html.join('\n')}</body></html>`;
-}
+// htmlForCv now lives in the shared lib/render.mjs (renderCvHtml).
 
 async function renderPdf(html, outPath, browser) {
   const ctx = await browser.newContext();
@@ -163,7 +137,7 @@ async function tailorOne(slug, browser, opts = {}) {
     return { slug, variant, dryRun: true };
   }
   const outPdf = path.join(slugDir, 'cv.pdf');
-  await renderPdf(htmlForCv(cvMd), outPdf, browser);
+  await renderPdf(renderCvHtml(cvMd), outPdf, browser);
   // Record what was used so the choice is auditable
   await writeFile(path.join(slugDir, 'cv-variant.txt'), variant + '\n');
   return { slug, variant, written: outPdf };

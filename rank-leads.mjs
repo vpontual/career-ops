@@ -23,6 +23,7 @@ import yaml from 'js-yaml';
 import dotenv from 'dotenv';
 import { loadBlacklist, blacklistEntry } from './blacklist.mjs';
 import { canonKey } from './lib/canonical.mjs';
+import { parseJd } from './lib/jd-parse.mjs';
 
 dotenv.config();
 
@@ -118,30 +119,7 @@ async function loadProfileTargets() {
 
 // ── JD parsing ────────────────────────────────────────────────────────────
 
-function parseJdFile(content, filename) {
-  const lines = content.split('\n');
-  const jd = { filename, title: '', company: '', location: '', pay: '', posted_at: null, posted_days: null, body: '', url: '' };
-
-  jd.title = (lines[0] || '').replace(/^#\s*/, '').trim();
-
-  for (const line of lines.slice(0, 20)) {
-    let m;
-    if ((m = line.match(/^\*\*URL:\*\*\s*(.+)/i))) jd.url = m[1].trim();
-    else if ((m = line.match(/^\*\*Company:\*\*\s*(.+)/i))) jd.company = m[1].trim();
-    else if ((m = line.match(/^\*\*Location:\*\*\s*(.+)/i))) jd.location = m[1].trim();
-    else if ((m = line.match(/^\*\*Compensation:\*\*\s*(.+)/i))) jd.pay = m[1].trim();
-    else if ((m = line.match(/^\*\*Posted:\*\*\s*([^\s(]+)\s*\((\d+)\s*days/i))) {
-      jd.posted_at = m[1];
-      jd.posted_days = parseInt(m[2], 10);
-    } else if ((m = line.match(/^\*\*Posted:\*\*\s*([^\s(]+)/i))) {
-      jd.posted_at = m[1];
-    }
-  }
-
-  const sepIdx = lines.findIndex(l => l.trim() === '---');
-  jd.body = sepIdx >= 0 ? lines.slice(sepIdx + 1).join('\n').trim() : content;
-  return jd;
-}
+// parseJd now lives in the shared lib/jd-parse.mjs.
 
 function freshnessOf(jd) {
   // Prefer recomputing from the ISO timestamp so day counts advance as the
@@ -390,7 +368,7 @@ async function main() {
   for (const f of files) {
     const p = path.join(JDS_DIR, f);
     const raw = await readFile(p, 'utf-8');
-    const jd = parseJdFile(raw, f);
+    const jd = parseJd(raw, f);
     const tf = titleFilter(jd.title);
     if (!tf.passes) { titleDropped++; continue; }
     if (blacklist.size && blacklistEntry(jd.company, blacklist)) { blacklistDropped++; continue; }

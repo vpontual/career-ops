@@ -28,7 +28,10 @@ features** (no freeze). Kills the duplication + drift Agent-1 flagged:
   and wrongly merged distinct roles, e.g. Owner.com's 3 Senior PM roles). Only
   true punctuation variants collapse. `ui/lib/pipeline.ts` aligned inline (can't
   import root `.mjs`; kept in sync by convention). Unit tests in `test-all.mjs`.
-- **`lib/jd-parse`** — the `**Field:**` front-matter parser (~4 copies).
+- [x] **`lib/jd-parse`** — ✅ SHIPPED 2026-07-22. `lib/jd-parse.mjs` (`parseJd`)
+  replaces `parseJdFile` (rank-leads) + `parseJdMeta` (stage-applications, now a
+  thin adapter preserving its postedIso/postedDays field names). `fetch-jds` is
+  the writer, not a parse copy. Unit-tested.
 - [x] **`lib/status`** — status normalization. ✅ SHIPPED 2026-07-22
   (`refactor/shared-libs`): `lib/status.mjs` unifies the 6 drifted copies
   (verify-pipeline, followup-cadence, analyze-patterns, dedup-tracker readers;
@@ -39,8 +42,19 @@ features** (no freeze). Kills the duplication + drift Agent-1 flagged:
   unchanged. Exports normalizeStatus (reader), classifyStatus (writer, rich
   regex + moveToNotes), toDisplay, STATUS_RANK, CANONICAL_STATUSES. Unit-tested
   incl. a writer→disk→reader round-trip drift guard.
-- **`lib/render`** — CV / cover-letter HTML templates (5 copies).
-- **`lib/llm`** — gateway client + the timeout/retry (and a future cross-provider fallback).
+- [x] **`lib/render`** — ✅ SHIPPED 2026-07-22. `lib/render.mjs` (`renderCvHtml`,
+  `renderCoverLetterHtml`) unifies the 3 byte-identical `htmlForCv` copies
+  (tailor-cv, render-pdfs, stage-applications) + the 2 profile-based
+  `htmlForCoverLetter` (render-pdfs, stage-applications); the cover "Re:" line is
+  a `metaLine` param so output is byte-preserved. `renderPdf()` stays per-file
+  (PDF margins differ by doc type). `batch-stage.mjs` keeps its own cover variant
+  (module-level contact vars + `Re: role, company`) — documented exception, not
+  folded in to avoid changing its output. Unit-tested.
+- [~] **`lib/llm`** — NOT extracted (intentional): there is no live duplication.
+  The gateway call (`OLLAMA_URL /api/chat` + AbortController timeout/retry) is
+  single-site in `rank-leads.mjs` (the sole scorer); Gemini is single-site in
+  `stage-applications`. Extracting now would be premature abstraction (YAGNI).
+  Revisit only if/when a genuine cross-provider fallback is actually built.
 
 ## Backlog (opportunistic)
 - **URL canonicalization at ingest** — the 3 appenders (scan / gmail / lensa) strip different tracking params, which is the *root* of the URL-drift the canonical join papers over. Fix the source.
