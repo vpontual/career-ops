@@ -22,6 +22,7 @@ import path from 'path';
 import yaml from 'js-yaml';
 import dotenv from 'dotenv';
 import { loadBlacklist, blacklistEntry } from './blacklist.mjs';
+import { canonKey } from './lib/canonical.mjs';
 
 dotenv.config();
 
@@ -286,12 +287,12 @@ async function scoreOne(jd, resume, targets) {
 
 function buildInboxLeadsMd(scored) {
   const now = new Date().toISOString();
-  // Dedup by title+company — same posting can land in pipeline.md under
-  // multiple URL variants (digest with ?position=1/2/3, tracking tokens, etc).
-  // Keep the freshest, prefer non-tracking-laden URLs as a tiebreaker.
+  // Dedup by canonical company::title (shared lib/canonical) — same posting can
+  // land in pipeline.md under multiple URL variants (digest with ?position=1/2/3,
+  // tracking tokens, etc). Keep the freshest, prefer non-tracking-laden URLs.
   const seen = new Map();
   for (const s of scored) {
-    const key = `${(s.title || '').toLowerCase().trim()} @ ${(s.company || '').toLowerCase().trim()}`;
+    const key = canonKey(s.company, s.title);
     const existing = seen.get(key);
     if (!existing) { seen.set(key, s); continue; }
     const newer = (s.posted_days ?? 999) < (existing.posted_days ?? 999);

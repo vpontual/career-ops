@@ -169,11 +169,13 @@ let jdMetaCacheDay: string | null = null;
 function normalizeCompany(name: string): string {
   return (name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
 }
+// Keep parenthetical CONTENT (strip punctuation only) — mirrors the shared
+// lib/canonical.mjs. Dropping "(...)" collapsed genuinely distinct roles at one
+// company (validated against real jds/ 2026-07-22). The UI can't import root
+// .mjs (separate module graph), so this stays in sync by convention with
+// lib/canonical.mjs — keep them identical.
 function normalizeTitle(title: string): string {
-  return (title || "")
-    .toLowerCase()
-    .replace(/\([^)]*\)/g, " ")          // drop "(Berlin)" / "(Remote)" splits
-    .replace(/[^a-z0-9]/g, "");
+  return (title || "").toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 function canonKey(company: string, title: string): string {
   return `${normalizeCompany(company)}::${normalizeTitle(title)}`;

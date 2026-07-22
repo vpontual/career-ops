@@ -26,6 +26,7 @@ import { chromium } from 'playwright';
 import { checkUrl } from './check-liveness.mjs';
 import { checkFacts } from './verify-cv-facts.mjs';
 import { classifyArchetype } from './tailor-cv.mjs';
+import { canonKey } from './lib/canonical.mjs';
 
 try {
   const { config } = await import('dotenv');
@@ -161,7 +162,7 @@ async function loadCandidates() {
   // one output dir (was a latent bug at MAX_CONCURRENT>1).
   const best = new Map();
   for (const r of out) {
-    const key = `${(r.company || '').toLowerCase()}|${(r.role || '').toLowerCase()}`;
+    const key = canonKey(r.company, r.role);
     const cur = best.get(key);
     if (!cur || r.score > cur.score || (r.score === cur.score && (r.days ?? 999) < (cur.days ?? 999))) {
       best.set(key, r);

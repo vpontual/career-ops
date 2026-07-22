@@ -118,6 +118,42 @@ try {
   fail(`Liveness classification tests crashed: ${e.message}`);
 }
 
+console.log('\n3b. Canonical dedup key (lib/canonical.mjs)');
+
+try {
+  const { canonKey, normalizeCompany } = await import(pathToFileURL(join(ROOT, 'lib', 'canonical.mjs')).href);
+
+  // Pure formatting/punctuation variants of the SAME role must collapse.
+  if (canonKey('Datadog', 'Product Manager II - AI & Data Security') ===
+      canonKey('Datadog', 'Product Manager II, AI & Data Security')) {
+    pass('Punctuation-only title variants collapse to one key');
+  } else {
+    fail('Punctuation-only title variants did NOT collapse');
+  }
+  // Company punctuation/case is normalized.
+  if (canonKey('Acme, Inc.', 'PM') === canonKey('acme inc', 'PM')) {
+    pass('Company punctuation/casing is normalized');
+  } else {
+    fail('Company normalization mismatch');
+  }
+  // DISTINCT roles differing only in the parenthetical must STAY distinct
+  // (regression guard: dropping "(...)" over-merged real roles — see lib/canonical.mjs).
+  if (canonKey('Owner.com', 'Senior Product Manager (AI CMO)') !==
+      canonKey('Owner.com', 'Senior Product Manager (Guest Lifecycle & Loyalty)')) {
+    pass('Distinct roles differing only by parenthetical stay separate');
+  } else {
+    fail('Parenthetical-distinct roles were wrongly merged');
+  }
+  // Null-safety.
+  if (normalizeCompany(null) === '' && normalizeCompany(undefined) === '') {
+    pass('normalizeCompany is null-safe');
+  } else {
+    fail('normalizeCompany not null-safe');
+  }
+} catch (e) {
+  fail(`Canonical dedup tests crashed: ${e.message}`);
+}
+
 // ── 4. DASHBOARD BUILD ──────────────────────────────────────────
 
 if (!QUICK) {
