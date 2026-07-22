@@ -29,7 +29,16 @@ features** (no freeze). Kills the duplication + drift Agent-1 flagged:
   true punctuation variants collapse. `ui/lib/pipeline.ts` aligned inline (can't
   import root `.mjs`; kept in sync by convention). Unit tests in `test-all.mjs`.
 - **`lib/jd-parse`** — the `**Field:**` front-matter parser (~4 copies).
-- **`lib/status`** — `applications.md` status normalization (5 copies, already drifting on casing). NEXT: unify on the Title-case canonical the writer (`normalize-statuses.mjs`) already emits to disk; per-file downstream compares need updating — higher-risk (live `applications.md` semantics).
+- [x] **`lib/status`** — status normalization. ✅ SHIPPED 2026-07-22
+  (`refactor/shared-libs`): `lib/status.mjs` unifies the 6 drifted copies
+  (verify-pipeline, followup-cadence, analyze-patterns, dedup-tracker readers;
+  normalize-statuses, merge-tracker writers). Fixes the casing drift by making
+  the canonical **lowercase** internally (readers stay drop-in — their
+  `=== 'applied'` compares untouched) and having writers map to the on-disk
+  Title-case via `toDisplay()` at write time. `applications.md` format
+  unchanged. Exports normalizeStatus (reader), classifyStatus (writer, rich
+  regex + moveToNotes), toDisplay, STATUS_RANK, CANONICAL_STATUSES. Unit-tested
+  incl. a writer→disk→reader round-trip drift guard.
 - **`lib/render`** — CV / cover-letter HTML templates (5 copies).
 - **`lib/llm`** — gateway client + the timeout/retry (and a future cross-provider fallback).
 

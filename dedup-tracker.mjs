@@ -12,6 +12,7 @@
 import { readFileSync, writeFileSync, copyFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { STATUS_RANK } from './lib/status.mjs';
 
 const CAREER_OPS = dirname(fileURLToPath(import.meta.url));
 // Support both layouts: data/applications.md (boilerplate) and applications.md (original)
@@ -23,31 +24,8 @@ const DRY_RUN = process.argv.includes('--dry-run');
 // Ensure required directories exist (fresh setup)
 mkdirSync(join(CAREER_OPS, 'data'), { recursive: true });
 
-// Status advancement order (higher = more advanced in pipeline)
-// Aplicado > Rechazado because active application > terminal state
-const STATUS_RANK = {
-  // English canonicals (states.yml labels)
-  'skip': 0,
-  'discarded': 0,
-  'rejected': 1,
-  'evaluated': 2,
-  'applied': 3,
-  'responded': 4,
-  'interview': 5,
-  'offer': 6,
-  // Spanish aliases — kept for backwards compat with existing tracker data
-  'no_aplicar': 0,
-  'no aplicar': 0,
-  'descartado': 0,
-  'descartada': 0,
-  'rechazado': 1,  // Terminal — below active states
-  'rechazada': 1,
-  'evaluada': 2,
-  'aplicado': 3,
-  'respondido': 4,
-  'entrevista': 5,
-  'oferta': 6,
-};
+// STATUS_RANK (advancement order, incl. legacy Spanish keys) now lives in the
+// shared lib/status.mjs.
 
 function normalizeCompany(name) {
   return name.toLowerCase()

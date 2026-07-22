@@ -154,6 +154,52 @@ try {
   fail(`Canonical dedup tests crashed: ${e.message}`);
 }
 
+console.log('\n3c. Status normalization (lib/status.mjs)');
+
+try {
+  const { normalizeStatus, classifyStatus, toDisplay, STATUS_RANK } =
+    await import(pathToFileURL(join(ROOT, 'lib', 'status.mjs')).href);
+
+  // Readers canonicalize to lowercase (drop-in with existing === 'applied' compares).
+  if (normalizeStatus('**Applied** 2026-07-01') === 'applied' &&
+      normalizeStatus('evaluada') === 'evaluated' &&
+      normalizeStatus('monitor') === 'skip') {
+    pass('Reader normalizeStatus → lowercase canonical (aliases + bold/date strip)');
+  } else {
+    fail('Reader normalizeStatus produced wrong canonical');
+  }
+  // Writers display Title-case (matches on-disk applications.md).
+  if (toDisplay('applied') === 'Applied' && toDisplay('skip') === 'SKIP') {
+    pass('toDisplay maps canonical → on-disk Title-case');
+  } else {
+    fail('toDisplay casing wrong');
+  }
+  // The casing-drift regression guard: writer-out round-trips to reader-in.
+  const written = toDisplay(classifyStatus('aplicado').status);   // → 'Applied'
+  if (written === 'Applied' && normalizeStatus(written) === 'applied') {
+    pass('Writer→disk→reader status round-trips (no casing drift)');
+  } else {
+    fail(`Status casing drift: wrote "${written}", read back "${normalizeStatus(written)}"`);
+  }
+  // Rich classifier: dup/repost/em-dash → discarded (+moveToNotes); unknown flagged.
+  if (classifyStatus('Duplicado #3').status === 'discarded' &&
+      classifyStatus('repost #5').moveToNotes &&
+      classifyStatus('—').status === 'discarded' &&
+      classifyStatus('total nonsense').unknown === true) {
+    pass('classifyStatus handles dup/repost/em-dash + flags unknowns');
+  } else {
+    fail('classifyStatus regex/unknown handling wrong');
+  }
+  // Dedup rank ordering.
+  if (STATUS_RANK.offer > STATUS_RANK.applied && STATUS_RANK.applied > STATUS_RANK.rejected) {
+    pass('STATUS_RANK advancement order intact');
+  } else {
+    fail('STATUS_RANK ordering wrong');
+  }
+} catch (e) {
+  fail(`Status normalization tests crashed: ${e.message}`);
+}
+
 // ── 4. DASHBOARD BUILD ──────────────────────────────────────────
 
 if (!QUICK) {
