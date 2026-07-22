@@ -88,7 +88,7 @@ for (let i = 0; i < lines.length; i++) {
   lines[i] = newLine;
   changes++;
 
-  console.log(`#${num}: "${oldStatus}" → "${result.status}"`);
+  console.log(`#${num}: "${oldStatus}" → "${display}"`);
 }
 
 if (unknowns.length > 0) {
