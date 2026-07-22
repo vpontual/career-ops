@@ -12,6 +12,7 @@ type View = { id: string; label: string; hint?: string; match: (r: PipelineRow) 
 const CORE_VIEWS: View[] = [
   { id: "shortlist", label: "Shortlist", hint: "Scored 4+ — worth applying to", match: r => typeof r.score === "number" && r.score >= 4.0 },
   { id: "staged", label: "Ready to apply", hint: "Application pack generated", match: r => Boolean(r.stagedSlug) },
+  { id: "ranked", label: "Ranked", hint: "Every scored role, grouped by fit tier", match: r => typeof r.score === "number" },
   { id: "all", label: "All roles", hint: "Everything in the pipeline", match: () => true }
 ];
 
@@ -122,6 +123,31 @@ function scoreStyles(score: number): string {
   if (score >= 4.0) return "bg-emerald-400/10 text-emerald-300 ring-1 ring-emerald-400/20";
   if (score >= 3.5) return "bg-amber-400/10 text-amber-300 ring-1 ring-amber-400/20";
   return "bg-slate-700/30 text-slate-400 ring-1 ring-slate-600/40";
+}
+
+// ── Ranked-tab tier grouping ──────────────────────────────────────────────
+// The Ranked view groups every scored role into a fit tier (5 = exceptional …
+// 1 = poor). Score is a float (e.g. 4.5); the tier is its floor, clamped 1-5.
+function scoreTier(score: number): number {
+  return Math.max(1, Math.min(5, Math.floor(score)));
+}
+
+const TIER_META: Record<number, { label: string; accent: string }> = {
+  5: { label: "Exceptional fit", accent: "text-emerald-200 border-emerald-400/30 bg-emerald-400/10" },
+  4: { label: "Strong fit", accent: "text-emerald-300 border-emerald-400/20 bg-emerald-400/[0.07]" },
+  3: { label: "Possible fit", accent: "text-amber-300 border-amber-400/25 bg-amber-400/10" },
+  2: { label: "Weak fit", accent: "text-orange-300 border-orange-400/25 bg-orange-400/10" },
+  1: { label: "Poor fit", accent: "text-rose-300 border-rose-400/25 bg-rose-400/10" }
+};
+
+function groupByTier(rows: PipelineRow[]): { tier: number; rows: PipelineRow[] }[] {
+  const groups = new Map<number, PipelineRow[]>();
+  for (const r of rows) {
+    if (typeof r.score !== "number") continue;
+    const t = scoreTier(r.score);
+    (groups.get(t) ?? groups.set(t, []).get(t)!).push(r);
+  }
+  return [5, 4, 3, 2, 1].filter(t => groups.has(t)).map(t => ({ tier: t, rows: groups.get(t)! }));
 }
 
 function RoleRow({ r }: { r: PipelineRow }) {
@@ -349,6 +375,24 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
                     ? "No application packs generated yet. High-fit roles get staged after the nightly scoring."
                     : "Nothing here yet."}
             </p>
+          </div>
+        ) : activeView.id === "ranked" ? (
+          <div className="space-y-8">
+            {groupByTier(sorted).map(({ tier, rows }) => (
+              <section key={tier}>
+                <div className="mb-3 flex items-center gap-3">
+                  <span className={`rounded-md border px-2 py-0.5 text-xs font-semibold tabular-nums ${TIER_META[tier].accent}`}>
+                    Score {tier}
+                  </span>
+                  <h2 className="text-sm font-medium text-slate-300">{TIER_META[tier].label}</h2>
+                  <span className="text-xs tabular-nums text-slate-600">{rows.length}</span>
+                  <span className="h-px flex-1 bg-slate-800/70" />
+                </div>
+                <ul className="space-y-2.5">
+                  {rows.map(r => <RoleRow key={r.url} r={r} />)}
+                </ul>
+              </section>
+            ))}
           </div>
         ) : (
           <ul className="space-y-2.5">

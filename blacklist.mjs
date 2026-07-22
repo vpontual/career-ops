@@ -8,13 +8,13 @@
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { normalizeCompany } from './lib/canonical.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const BLACKLIST_PATH = path.join(ROOT, 'data', 'blacklist.md');
 
-export function normalizeCompany(name) {
-  return String(name ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
-}
+// normalizeCompany is the shared canonical primitive (single source of truth).
+export { normalizeCompany };
 
 /** Parse blacklist.md text → Map<normalizedCompany, {company, since, scope, reason}>. */
 export function parseBlacklist(text) {

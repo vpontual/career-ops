@@ -17,6 +17,8 @@
 import { readFileSync, readdirSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { canonKey } from './lib/canonical.mjs';
+import { CANONICAL_STATUSES, ALIASES } from './lib/status.mjs';
 
 const CAREER_OPS = dirname(fileURLToPath(import.meta.url));
 // Support both layouts: data/applications.md (boilerplate) and applications.md (original)
@@ -33,21 +35,7 @@ const STATES_FILE = existsSync(join(CAREER_OPS, 'templates/states.yml'))
 mkdirSync(join(CAREER_OPS, 'data'), { recursive: true });
 mkdirSync(REPORTS_DIR, { recursive: true });
 
-const CANONICAL_STATUSES = [
-  'evaluated', 'applied', 'responded', 'interview',
-  'offer', 'rejected', 'discarded', 'skip',
-];
-
-const ALIASES = {
-  'evaluada': 'evaluated', 'condicional': 'evaluated', 'hold': 'evaluated', 'evaluar': 'evaluated', 'verificar': 'evaluated',
-  'aplicado': 'applied', 'enviada': 'applied', 'aplicada': 'applied', 'applied': 'applied', 'sent': 'applied',
-  'respondido': 'responded',
-  'entrevista': 'interview',
-  'oferta': 'offer',
-  'rechazado': 'rejected', 'rechazada': 'rejected',
-  'descartado': 'discarded', 'descartada': 'discarded', 'cerrada': 'discarded', 'cancelada': 'discarded',
-  'no aplicar': 'skip', 'no_aplicar': 'skip', 'monitor': 'skip', 'geo blocker': 'skip',
-};
+// CANONICAL_STATUSES + ALIASES now live in the shared lib/status.mjs.
 
 let errors = 0;
 let warnings = 0;
@@ -111,8 +99,7 @@ if (badStatuses === 0) ok('All statuses are canonical');
 const companyRoleMap = new Map();
 let dupes = 0;
 for (const e of entries) {
-  const key = e.company.toLowerCase().replace(/[^a-z0-9]/g, '') + '::' +
-    e.role.toLowerCase().replace(/[^a-z0-9 ]/g, '');
+  const key = canonKey(e.company, e.role);
   if (!companyRoleMap.has(key)) companyRoleMap.set(key, []);
   companyRoleMap.get(key).push(e);
 }

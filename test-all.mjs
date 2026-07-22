@@ -118,6 +118,156 @@ try {
   fail(`Liveness classification tests crashed: ${e.message}`);
 }
 
+console.log('\n3b. Canonical dedup key (lib/canonical.mjs)');
+
+try {
+  const { canonKey, normalizeCompany } = await import(pathToFileURL(join(ROOT, 'lib', 'canonical.mjs')).href);
+
+  // Pure formatting/punctuation variants of the SAME role must collapse.
+  if (canonKey('Datadog', 'Product Manager II - AI & Data Security') ===
+      canonKey('Datadog', 'Product Manager II, AI & Data Security')) {
+    pass('Punctuation-only title variants collapse to one key');
+  } else {
+    fail('Punctuation-only title variants did NOT collapse');
+  }
+  // Company punctuation/case is normalized.
+  if (canonKey('Acme, Inc.', 'PM') === canonKey('acme inc', 'PM')) {
+    pass('Company punctuation/casing is normalized');
+  } else {
+    fail('Company normalization mismatch');
+  }
+  // DISTINCT roles differing only in the parenthetical must STAY distinct
+  // (regression guard: dropping "(...)" over-merged real roles — see lib/canonical.mjs).
+  if (canonKey('Owner.com', 'Senior Product Manager (AI CMO)') !==
+      canonKey('Owner.com', 'Senior Product Manager (Guest Lifecycle & Loyalty)')) {
+    pass('Distinct roles differing only by parenthetical stay separate');
+  } else {
+    fail('Parenthetical-distinct roles were wrongly merged');
+  }
+  // Null-safety.
+  if (normalizeCompany(null) === '' && normalizeCompany(undefined) === '') {
+    pass('normalizeCompany is null-safe');
+  } else {
+    fail('normalizeCompany not null-safe');
+  }
+} catch (e) {
+  fail(`Canonical dedup tests crashed: ${e.message}`);
+}
+
+console.log('\n3c. Status normalization (lib/status.mjs)');
+
+try {
+  const { normalizeStatus, classifyStatus, toDisplay, STATUS_RANK } =
+    await import(pathToFileURL(join(ROOT, 'lib', 'status.mjs')).href);
+
+  // Readers canonicalize to lowercase (drop-in with existing === 'applied' compares).
+  if (normalizeStatus('**Applied** 2026-07-01') === 'applied' &&
+      normalizeStatus('evaluada') === 'evaluated' &&
+      normalizeStatus('monitor') === 'skip') {
+    pass('Reader normalizeStatus → lowercase canonical (aliases + bold/date strip)');
+  } else {
+    fail('Reader normalizeStatus produced wrong canonical');
+  }
+  // Writers display Title-case (matches on-disk applications.md).
+  if (toDisplay('applied') === 'Applied' && toDisplay('skip') === 'SKIP') {
+    pass('toDisplay maps canonical → on-disk Title-case');
+  } else {
+    fail('toDisplay casing wrong');
+  }
+  // The casing-drift regression guard: writer-out round-trips to reader-in.
+  const written = toDisplay(classifyStatus('aplicado').status);   // → 'Applied'
+  if (written === 'Applied' && normalizeStatus(written) === 'applied') {
+    pass('Writer→disk→reader status round-trips (no casing drift)');
+  } else {
+    fail(`Status casing drift: wrote "${written}", read back "${normalizeStatus(written)}"`);
+  }
+  // Rich classifier: dup/repost/em-dash → discarded (+moveToNotes); unknown flagged.
+  if (classifyStatus('Duplicado #3').status === 'discarded' &&
+      classifyStatus('repost #5').moveToNotes &&
+      classifyStatus('—').status === 'discarded' &&
+      classifyStatus('total nonsense').unknown === true) {
+    pass('classifyStatus handles dup/repost/em-dash + flags unknowns');
+  } else {
+    fail('classifyStatus regex/unknown handling wrong');
+  }
+  // Dedup rank ordering.
+  if (STATUS_RANK.offer > STATUS_RANK.applied && STATUS_RANK.applied > STATUS_RANK.rejected) {
+    pass('STATUS_RANK advancement order intact');
+  } else {
+    fail('STATUS_RANK ordering wrong');
+  }
+} catch (e) {
+  fail(`Status normalization tests crashed: ${e.message}`);
+}
+
+console.log('\n3d. JD front-matter parser (lib/jd-parse.mjs)');
+
+try {
+  const { parseJd } = await import(pathToFileURL(join(ROOT, 'lib', 'jd-parse.mjs')).href);
+  const sample = [
+    '# Senior PM (AI)',
+    '**URL:** https://x.example/job',
+    '**Company:** Acme, Inc.',
+    '**Location:** NYC',
+    '**Compensation:** $200k',
+    '**Posted:** 2026-07-01 (5 days ago)',
+    '',
+    '---',
+    'Body text here.',
+  ].join('\n');
+  const jd = parseJd(sample, 'x.md');
+  if (jd.title === 'Senior PM (AI)' && jd.company === 'Acme, Inc.' &&
+      jd.url === 'https://x.example/job' && jd.location === 'NYC' && jd.pay === '$200k' &&
+      jd.posted_at === '2026-07-01' && jd.posted_days === 5 &&
+      jd.body === 'Body text here.' && jd.filename === 'x.md') {
+    pass('parseJd extracts all fields + body');
+  } else {
+    fail(`parseJd fields wrong: ${JSON.stringify(jd)}`);
+  }
+  // Null-safe + no-body fallback.
+  const bare = parseJd('# Only A Title');
+  if (bare.title === 'Only A Title' && bare.company === '' && bare.body === '# Only A Title') {
+    pass('parseJd handles missing fields / no separator');
+  } else {
+    fail(`parseJd bare-case wrong: ${JSON.stringify(bare)}`);
+  }
+} catch (e) {
+  fail(`JD parser tests crashed: ${e.message}`);
+}
+
+console.log('\n3e. CV / cover-letter rendering (lib/render.mjs)');
+
+try {
+  const { renderCvHtml, renderCoverLetterHtml } = await import(pathToFileURL(join(ROOT, 'lib', 'render.mjs')).href);
+
+  const cv = renderCvHtml('# Jane Doe\n## Experience\n- **Lead** PM at [Acme](https://acme.co)\n\nParagraph.');
+  if (cv.includes('<h1>Jane Doe</h1>') && cv.includes('<h2>Experience</h2>') &&
+      cv.includes('<strong>Lead</strong>') && cv.includes('<a href="https://acme.co">Acme</a>') &&
+      cv.includes('<li>') && cv.includes("font-family: 'Helvetica Neue'") && cv.includes('font-size: 22pt')) {
+    pass('renderCvHtml converts markdown + keeps the CV template CSS');
+  } else {
+    fail('renderCvHtml output missing expected markup/CSS');
+  }
+  // HTML escaping (no raw injection).
+  if (renderCvHtml('- a < b & c').includes('a &lt; b &amp; c')) {
+    pass('renderCvHtml escapes HTML');
+  } else {
+    fail('renderCvHtml did not escape HTML');
+  }
+
+  const profile = 'full_name: "Vitor Pontual"\nemail: "v@x.com"\nphone: "555"\nlinkedin: "in/vp"';
+  const cover = renderCoverLetterHtml('Dear team,\nHello.', profile, 'Re: PM - Acme');
+  if (cover.includes('<div class="name">Vitor Pontual</div>') &&
+      cover.includes('v@x.com · 555 · in/vp') &&
+      cover.includes('Re: PM - Acme') && cover.includes('Dear team,<br>')) {
+    pass('renderCoverLetterHtml renders contact + supplied meta line');
+  } else {
+    fail('renderCoverLetterHtml output wrong');
+  }
+} catch (e) {
+  fail(`Render tests crashed: ${e.message}`);
+}
+
 // ── 4. DASHBOARD BUILD ──────────────────────────────────────────
 
 if (!QUICK) {

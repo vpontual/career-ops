@@ -1,6 +1,5 @@
 import { readFile } from "fs/promises";
 import path from "path";
-import { loadJdMetaIndex } from "@/lib/pipeline";
 
 const DATA_ROOT = process.env.CAREER_OPS_ROOT ?? "/data";
 const INBOX_LEADS_PATH = path.join(DATA_ROOT, "data", "inbox-leads.md");
@@ -126,19 +125,11 @@ export async function loadInboxLeads(): Promise<RankedSnapshot> {
   }
   flushPending();
 
-  // Override the `· Xd ·` text from inbox-leads.md (frozen at rank-leads.mjs
-  // generation time, doesn't advance with the calendar) with a fresh value
-  // computed from each JD's Posted ISO timestamp. Falls back to the parsed
-  // text if no JD record exists for the URL.
-  try {
-    const jdMeta = await loadJdMetaIndex();
-    for (const lead of leads) {
-      const meta = jdMeta.get(lead.url);
-      if (meta && meta.posted != null) {
-        lead.ageDays = meta.posted;
-      }
-    }
-  } catch { /* JD index unavailable — keep the parsed values */ }
+  // Age recomputation lives in pipeline.ts now: when loadPipeline joins these
+  // leads onto PipelineRow, it pulls `postedDaysAgo` from the JD ISO index
+  // and that field — not RankedLead.ageDays — is what the UI renders. We
+  // could strip ageDays from the type, but keeping it preserves the option
+  // of using loadInboxLeads standalone (e.g. from a CLI script).
 
   return { generatedAt, filtersLine, leads };
 }
