@@ -20,9 +20,16 @@ multi-user product. **This fork should not** — it's a personal tool relied on 
 and its value is features, not architecture. Instead, capture ~80% of the benefit at
 ~10% of the risk by extracting a shared typed `lib/` **one module at a time, between
 features** (no freeze). Kills the duplication + drift Agent-1 flagged:
-- **`lib/canonical`** — company/title normalization + dedup. Currently duplicated in `ui/lib/pipeline.ts`, `stage-applications.mjs`, and `rank-leads.mjs` (3 copies of the same idea).
+- [x] **`lib/canonical`** — company/title normalization + dedup. ✅ SHIPPED
+  2026-07-22 (`refactor/shared-libs`): `lib/canonical.mjs` now backs
+  `rank-leads.mjs`, `stage-applications.mjs`, `verify-pipeline.mjs`, and
+  `blacklist.mjs`. Data-validated against 496 real JDs — corrected
+  `normalizeTitle` to KEEP parenthetical content (the upstream impl dropped it
+  and wrongly merged distinct roles, e.g. Owner.com's 3 Senior PM roles). Only
+  true punctuation variants collapse. `ui/lib/pipeline.ts` aligned inline (can't
+  import root `.mjs`; kept in sync by convention). Unit tests in `test-all.mjs`.
 - **`lib/jd-parse`** — the `**Field:**` front-matter parser (~4 copies).
-- **`lib/status`** — `applications.md` status normalization (5 copies, already drifting on casing).
+- **`lib/status`** — `applications.md` status normalization (5 copies, already drifting on casing). NEXT: unify on the Title-case canonical the writer (`normalize-statuses.mjs`) already emits to disk; per-file downstream compares need updating — higher-risk (live `applications.md` semantics).
 - **`lib/render`** — CV / cover-letter HTML templates (5 copies).
 - **`lib/llm`** — gateway client + the timeout/retry (and a future cross-provider fallback).
 
