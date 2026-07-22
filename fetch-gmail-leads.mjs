@@ -31,6 +31,7 @@ import yaml from 'js-yaml';
 import dotenv from 'dotenv';
 import { writeFile, appendFile, mkdir } from 'fs/promises';
 import { existsSync, readFileSync } from 'fs';
+import { canonicalizeUrl } from './lib/url-canonical.mjs';
 import path from 'path';
 
 dotenv.config();
@@ -67,7 +68,9 @@ function loadTitleFilter() {
 function loadSeenUrls() {
   const seen = new Set();
   const harvest = (text) => {
-    for (const m of text.matchAll(/https?:\/\/[^\s|)<>"']+/g)) seen.add(m[0]);
+    // Canonicalize seen URLs so dedup compares like-for-like against the
+    // canonicalized URLs we write (symmetric with scan/lensa).
+    for (const m of text.matchAll(/https?:\/\/[^\s|)<>"']+/g)) seen.add(canonicalizeUrl(m[0]));
   };
   for (const p of [PIPELINE_PATH, APPLICATIONS_PATH, INBOX_LEADS_PATH, SCAN_HISTORY_PATH]) {
     if (existsSync(p)) harvest(readFileSync(p, 'utf-8'));
@@ -111,46 +114,9 @@ function isNoiseUrl(url, noisePatterns = []) {
   return noisePatterns.some(p => url.includes(p));
 }
 
-// Tracking-only query params that don't change which job a URL points to.
-// Strip them before dedup so the same posting in a digest at position=1, 2,
-// or 3 collapses to one row in pipeline.md.
-const TRACKING_PARAMS = new Set([
-  'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
-  'token', 'position', 'count', 'jpsi', 'ccaon', 'jobstop',
-  'mc_cid', 'mc_eid', 'fbclid', 'gclid', 'msclkid', '_hsenc', '_hsmi',
-  'trk', 'trkInfo', 'refId', 'recommendedFlavor',
-  'ref', 'src', 'source',
-]);
-
-// Hosts where the entire query string is tracking and the bare path is the
-// canonical URL. Listed explicitly because some hosts (Greenhouse via gh_jid)
-// rely on a query param that we must KEEP.
-const STRIP_ALL_QUERY_HOSTS = new Set([
-  'app.welcometothejungle.com',
-  'www.welcometothejungle.com',
-]);
-
-function canonicalizeUrl(url) {
-  try {
-    const u = new URL(url);
-    const host = u.hostname.toLowerCase();
-    if (STRIP_ALL_QUERY_HOSTS.has(host)) {
-      u.search = '';
-      u.hash = '';
-      return u.toString();
-    }
-    // Per-param strip
-    const keep = new URLSearchParams();
-    for (const [k, v] of u.searchParams) {
-      if (!TRACKING_PARAMS.has(k.toLowerCase())) keep.set(k, v);
-    }
-    u.search = keep.toString();
-    u.hash = '';
-    return u.toString();
-  } catch {
-    return url;
-  }
-}
+// canonicalizeUrl (tracking-param strip at ingest) now lives in the shared
+// lib/url-canonical.mjs — used identically by scan / gmail / lensa so the same
+// posting collapses to one row instead of drifting across URL variants.
 
 // Hard rule: a URL has to look like a job posting (path contains job/career
 // markers) before we pay to fetch its JD. This is the post-resolution filter

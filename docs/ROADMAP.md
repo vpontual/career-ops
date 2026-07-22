@@ -57,7 +57,14 @@ features** (no freeze). Kills the duplication + drift Agent-1 flagged:
   Revisit only if/when a genuine cross-provider fallback is actually built.
 
 ## Backlog (opportunistic)
-- **URL canonicalization at ingest** — the 3 appenders (scan / gmail / lensa) strip different tracking params, which is the *root* of the URL-drift the canonical join papers over. Fix the source.
+- [x] **URL canonicalization at ingest** — ✅ SHIPPED 2026-07-22. `lib/url-canonical.mjs`
+  (`canonicalizeUrl`) is now used at ingest by all 3 appenders: gmail (was the
+  richest — 24 tracking params + strip-all-query hosts, now the shared source),
+  lensa (was drifted — only 12 params; upgraded), and scan (had NONE; now
+  canonicalizes both its seen-set and every job URL before dedup/append). Strips
+  tracking (utm/click-ids/session/position/…), keeps identifying params (gh_jid).
+  Drift variants of one posting now collapse to a single URL at the source
+  instead of the `company::title` join papering over them. Unit-tested.
 - **`company_aliases`** (portals.yml) — the alias half of the #1750 port (ATS-org vs brand, e.g. Intercom↔Fin).
 - **Extension** — per-role cover-letter auto-paste (job URL → staged slug), threshold-dropdown years-of-experience (pick the "10+"/"15+" band), Ashby Location combobox auto-select.
 - **Salary enrichment** — Adzuna/Levels.fyi comp band to filter to $150–200K before scoring (blocked on an API key).
