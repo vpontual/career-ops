@@ -68,7 +68,9 @@ function loadTitleFilter() {
 function loadSeenUrls() {
   const seen = new Set();
   const harvest = (text) => {
-    for (const m of text.matchAll(/https?:\/\/[^\s|)<>"']+/g)) seen.add(m[0]);
+    // Canonicalize seen URLs so dedup compares like-for-like against the
+    // canonicalized URLs we write (symmetric with scan/lensa).
+    for (const m of text.matchAll(/https?:\/\/[^\s|)<>"']+/g)) seen.add(canonicalizeUrl(m[0]));
   };
   for (const p of [PIPELINE_PATH, APPLICATIONS_PATH, INBOX_LEADS_PATH, SCAN_HISTORY_PATH]) {
     if (existsSync(p)) harvest(readFileSync(p, 'utf-8'));
