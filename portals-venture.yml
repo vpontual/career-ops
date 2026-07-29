@@ -1,6 +1,17 @@
-# portals-venture.yml - generated 2026-07-29
-# Track E. VC platform, accelerator and operator-in-residence roles - the space
-# between product, teaching and advising. Investment-analyst titles excluded.
+# portals-venture.yml
+# Track E. VC platform, accelerator, studio and operator/entrepreneur-in-residence
+# roles - the space between product, advising and founding.
+#
+# ONLY VERIFIED SLUGS BELONG HERE. Slug-guessing against Greenhouse/Ashby/Lever
+# produced eight wrong-company collisions on 2026-07-29 alone: greenhouse/robinhood
+# is Robinhood Markets not Robin Hood Foundation, ashby/human is HUMAN Security not
+# Human Ventures, greenhouse/village is a New Jersey childcare centre, ashby/grand is
+# a Dublin fintech, greenhouse/thrive is an Atlanta design studio, ashby/compound is a
+# wealth advisor, greenhouse/wing is Alphabet's drone unit, greenhouse/amplify is
+# Amplify Education. Open the board and read the job titles before adding a line.
+#
+# Founders Factory posts mostly Berlin/London - kept because the studio model fits,
+# but expect geo rejects.
 
 title_filter:
   positive:
@@ -40,8 +51,17 @@ tracked_companies:
   careers_url: https://job-boards.greenhouse.io/bessemerventurepartners
   api: https://boards-api.greenhouse.io/v1/boards/bessemerventurepartners/jobs
   enabled: true
+- name: Company Ventures
+  careers_url: https://jobs.ashbyhq.com/companyventures
+  enabled: true
 - name: First Round Capital
   careers_url: https://jobs.ashbyhq.com/firstround
+  enabled: true
+- name: Forum Ventures (Studio)
+  careers_url: https://jobs.ashbyhq.com/forum-ventures
+  enabled: true
+- name: Founders Factory
+  careers_url: https://jobs.ashbyhq.com/founders-factory
   enabled: true
 - name: General Catalyst
   careers_url: https://job-boards.greenhouse.io/generalcatalyst
