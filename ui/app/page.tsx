@@ -2,6 +2,20 @@ import { loadPipeline, PipelineRow } from "@/lib/pipeline";
 import StatusControl from "@/components/StatusControl";
 import SearchFilter from "@/components/SearchFilter";
 import Link from "next/link";
+import { readFile } from "fs/promises";
+import path from "path";
+
+// Count of prepared applications still awaiting VP's approve/reject in /review.
+// Never throws: a missing or malformed queue just means "nothing to review".
+async function pendingReviewCount(): Promise<number> {
+  try {
+    const root = process.env.CAREER_OPS_ROOT ?? "/data";
+    const q = JSON.parse(await readFile(path.join(root, "data", "review-queue.json"), "utf-8"));
+    return (q.items ?? []).filter((i: { decision?: string | null }) => !i.decision).length;
+  } catch {
+    return 0;
+  }
+}
 
 export const dynamic = "force-dynamic";
 
@@ -267,6 +281,7 @@ function TabLink({
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ tab?: string; sort?: string; q?: string; fresh?: string }> }) {
   const data = await loadPipeline();
+  const pendingReview = await pendingReviewCount();
   const { tab = "shortlist", sort: sortParam, q: rawQ, fresh: freshParam } = await searchParams;
   const q = (rawQ ?? "").trim().toLowerCase();
   const fresh = freshParam === "1";
@@ -323,6 +338,16 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
               {visibleStatusViews.map(v => (
                 <TabLink key={v.id} view={v} active={v.id === activeView.id} count={count(v)} sortParam={sortParam} q={q} fresh={fresh} />
               ))}
+              <span className="mx-1 h-5 w-px bg-slate-800" />
+              <Link
+                href="/review"
+                className={"flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors " + (pendingReview > 0 ? "bg-blue-500/15 text-blue-200 ring-1 ring-inset ring-blue-400/40 hover:bg-blue-500/25" : "text-slate-500 hover:text-slate-300")}
+              >
+                Review queue
+                {pendingReview > 0 && (
+                  <span className="rounded bg-blue-400/20 px-1.5 py-0.5 text-[10px] tabular-nums text-blue-100">{pendingReview}</span>
+                )}
+              </Link>
             </nav>
 
             <div className="flex items-center gap-2">

@@ -65,12 +65,20 @@ try {
 
 await writeFile(mdPath, preserveHeader + '\n' + newText + '\n');
 
-// Copy shared cv.pdf into the role dir if present
+// Seed the role dir with the shared cv.pdf ONLY if it has no CV yet.
+// Never overwrite: stage-applications.mjs / tailor-cv.mjs may have already
+// written a per-role tailored CV here, and clobbering it with the generic
+// one silently downgrades the packet.
 const sharedCv = path.join(ROOT, 'output', 'cv.pdf');
+const roleCv = path.join(dir, 'cv.pdf');
 try {
-  await stat(sharedCv);
-  await copyFile(sharedCv, path.join(dir, 'cv.pdf'));
-} catch {}
+  await stat(roleCv);            // already has a CV (possibly tailored) - leave it
+} catch {
+  try {
+    await stat(sharedCv);
+    await copyFile(sharedCv, roleCv);
+  } catch {}
+}
 
 // Render the cover letter PDF
 const candName = (profile.match(/full_name:\s*"([^"]+)"/) || [])[1] || 'Vitor Pontual';
