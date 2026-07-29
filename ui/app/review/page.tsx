@@ -84,7 +84,7 @@ const DECISION_BADGE: Record<string, { label: string; color: string }> = {
 
 // VP runs three parallel tracks and asked that the pivots stay visually
 // separate from the standard search rather than blended into one list.
-const TRACK_ORDER = ["pm", "nonprofit", "teaching"];
+const TRACK_ORDER = ["pm", "govtech", "nonprofit", "teaching"];
 const TRACK_FALLBACK: Record<string, string> = {
   pm: "PM / PMM — the standard search",
   nonprofit: "Nonprofit / charity",

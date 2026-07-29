@@ -1,4 +1,4 @@
-import { readFile, writeFile, appendFile } from "fs/promises";
+import { readFile, writeFile } from "fs/promises";
 import path from "path";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
@@ -18,25 +18,47 @@ function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-// Append a tracker line to applications.md. The pipeline reader scans for any line
-// containing a URL + a status keyword, so format is forgiving — we just need a URL
-// and one of: applied / rejected / archived / under review (default).
+// Append a tracker row to applications.md.
 //
-// Format: `- [x] {url} | {company} | {role} | {Status} {date}{note ? " — " + note : ""}`
+// The file is a markdown TABLE, not a list. followup-cadence, analyze-patterns,
+// verify-pipeline, dedup-tracker and merge-tracker all parse it by splitting on
+// "|" and requiring >=9 columns; this route used to write "- [x] url | ..."
+// list rows, which every one of those readers silently skipped. So the UI's
+// "Mark as Applied" button recorded a status the tooling could never see.
+// The URL goes in Notes because ui/lib/pipeline.ts matches rows by URL regex.
+const TABLE_HEADER = [
+  "# Applications tracker",
+  "",
+  "| # | Date | Company | Role | Score | Status | PDF | Report | Notes |",
+  "|---|------|---------|------|-------|--------|-----|--------|-------|",
+  ""
+].join("\n");
+
 async function appendStatusLine(url: string, status: string, company: string, role: string, note?: string) {
   const label = STATUS_LABEL[status] ?? "Under review";
-  const checkbox = status === "applied" ? "x" : " ";
-  const noteSuffix = note ? ` — ${note.replace(/[\r\n|]/g, " ").trim()}` : "";
-  const line = `- [${checkbox}] ${url} | ${company} | ${role} | ${label} ${todayIso()}${noteSuffix}\n`;
 
-  // Ensure file exists with a header
+  let content = "";
   try {
-    await readFile(APPLICATIONS_PATH, "utf-8");
+    content = await readFile(APPLICATIONS_PATH, "utf-8");
   } catch {
-    await writeFile(APPLICATIONS_PATH, "# Applications tracker\n\n", "utf-8");
+    content = "";
+  }
+  if (!content.includes("| # |")) content = TABLE_HEADER;
+
+  // next row number
+  let next = 1;
+  for (const line of content.split("\n")) {
+    if (!line.startsWith("|")) continue;
+    const n = parseInt(line.split("|")[1]?.trim() ?? "", 10);
+    if (!isNaN(n) && n >= next) next = n + 1;
   }
 
-  await appendFile(APPLICATIONS_PATH, line, "utf-8");
+  const clean = (v: string) => v.replace(/[\r\n|]/g, " ").trim();
+  const notes = [note ? clean(note) : "", url].filter(Boolean).join(" ");
+  const row = `| ${next} | ${todayIso()} | ${clean(company) || "-"} | ${clean(role) || "-"} | - | ${label} | - | - | ${notes} |\n`;
+
+  if (!content.endsWith("\n")) content += "\n";
+  await writeFile(APPLICATIONS_PATH, content + row, "utf-8");
 }
 
 // Clear status: rewrite applications.md without any line referencing this URL.
