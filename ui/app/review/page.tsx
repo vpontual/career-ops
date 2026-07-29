@@ -41,8 +41,7 @@ interface Loaded extends QueueItem {
 
 async function loadQueue(): Promise<Queue | null> {
   try {
-    const q: Queue = JSON.parse(await readFile(QUEUE_PATH, "utf-8"));
-    return q;
+    return JSON.parse(await readFile(QUEUE_PATH, "utf-8")) as Queue;
   } catch {
     return null;
   }
@@ -62,6 +61,16 @@ async function hydrate(item: QueueItem): Promise<Loaded> {
   return { ...item, answers, coverBody };
 }
 
+// Tabs need short labels; the long description belongs under the tab bar, once.
+const TRACK_ORDER = ["pm", "govtech", "nonprofit", "teaching", "venture"];
+const TRACK_LABEL: Record<string, string> = {
+  pm: "PM / PMM",
+  govtech: "Government",
+  nonprofit: "Nonprofit",
+  teaching: "Teaching",
+  venture: "Venture",
+};
+
 // ≤5d is the goal, ≤30d a stretch, >30d probably filled.
 function ageColor(days: number): string {
   if (days <= 5) return "text-emerald-300 border-emerald-400/30 bg-emerald-400/10";
@@ -71,48 +80,83 @@ function ageColor(days: number): string {
 
 const COVER_BADGE: Record<string, { label: string; color: string }> = {
   absent: { label: "no cover letter field", color: "text-slate-400 border-slate-700 bg-slate-800/40" },
-  optional: { label: "cover letter optional — not attaching", color: "text-slate-400 border-slate-700 bg-slate-800/40" },
+  optional: { label: "cover letter optional", color: "text-slate-400 border-slate-700 bg-slate-800/40" },
   required: { label: "cover letter REQUIRED", color: "text-blue-200 border-blue-400/40 bg-blue-500/15" },
-  unknown: { label: "cover letter: not yet checked", color: "text-amber-300 border-amber-400/30 bg-amber-400/10" }
+  unknown: { label: "cover letter unchecked", color: "text-amber-300 border-amber-400/30 bg-amber-400/10" },
 };
 
 const DECISION_BADGE: Record<string, { label: string; color: string }> = {
   approved: { label: "APPROVED", color: "text-emerald-200 border-emerald-400/50 bg-emerald-500/20" },
   hold: { label: "ON HOLD", color: "text-amber-200 border-amber-400/50 bg-amber-500/20" },
-  rejected: { label: "REJECTED", color: "text-rose-200 border-rose-400/50 bg-rose-500/20" }
-};
-
-// VP runs three parallel tracks and asked that the pivots stay visually
-// separate from the standard search rather than blended into one list.
-const TRACK_ORDER = ["pm", "govtech", "nonprofit", "teaching", "venture"];
-const TRACK_FALLBACK: Record<string, string> = {
-  pm: "PM / PMM — the standard search",
-  nonprofit: "Nonprofit / charity",
-  teaching: "Teaching",
+  rejected: { label: "REJECTED", color: "text-rose-200 border-rose-400/50 bg-rose-500/20" },
 };
 
 function Badge({ label, color, title }: { label: string; color: string; title?: string }) {
   return (
-    <span title={title} className={`px-2 py-0.5 rounded border text-[11px] font-mono ${color}`}>
+    <span
+      title={title ?? label}
+      className={`inline-block max-w-[22rem] truncate rounded border px-2 py-0.5 align-middle font-mono text-[11px] ${color}`}
+    >
       {label}
     </span>
   );
 }
 
-export default async function ReviewPage({ searchParams }: { searchParams: Promise<{ track?: string }> }) {
+// Notes are authored as "LABEL: text || LABEL: text". Rendering that as one
+// paragraph made the risk warnings invisible, so each segment becomes its own
+// callout and anything flagged RISK / EXCLUDED / DILIGENCE gets colour.
+function NoteBlocks({ notes }: { notes: string }) {
+  const segments = notes.split("||").map(s => s.trim()).filter(Boolean);
+  if (!segments.length) return null;
+  return (
+    <div className="mt-3 space-y-2">
+      {segments.map((seg, i) => {
+        // Split on the COLON only. A non-greedy match that also accepted "-"
+        // chopped "TAKE-HOME RISK: ..." into label "TAKE" + body "HOME: ...",
+        // which silently stripped the danger colour off the risk callouts.
+        const m = seg.match(/^([A-Z][A-Z0-9 \-/&']{2,60}):\s*(.*)$/s);
+        const label = m ? m[1].trim() : null;
+        const body = m ? m[2].trim() : seg;
+        const danger = /RISK|EXCLUD|DILIGENCE|READ THIS|FLAG|CHECK WITH/i.test(label ?? seg);
+        const todo = /TO DO|NOT YET|UNKNOWN/i.test(label ?? "");
+        const tone = danger
+          ? "border-l-rose-400/60 bg-rose-500/[0.06]"
+          : todo
+          ? "border-l-amber-400/50 bg-amber-500/[0.05]"
+          : "border-l-slate-700 bg-slate-900/40";
+        const labelTone = danger ? "text-rose-300" : todo ? "text-amber-300" : "text-slate-500";
+        return (
+          <div key={i} className={`rounded-r border-l-2 py-2 pl-3 pr-3 ${tone}`}>
+            {label && (
+              <div className={`mb-0.5 font-mono text-[10px] uppercase tracking-wider ${labelTone}`}>
+                {label}
+              </div>
+            )}
+            <p className="text-[13px] leading-relaxed text-slate-300">{body}</p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export default async function ReviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ track?: string }>;
+}) {
   const { track: trackParam } = await searchParams;
   const queue = await loadQueue();
 
   if (!queue || !queue.items?.length) {
     return (
-      <main className="min-h-screen px-6 py-10 max-w-5xl mx-auto">
-        <Link href="/" className="text-xs text-slate-500 hover:text-blue-300 font-mono">
+      <main className="mx-auto min-h-screen max-w-5xl px-6 py-10">
+        <Link href="/" className="font-mono text-xs text-slate-500 hover:text-blue-300">
           ← back to dashboard
         </Link>
-        <h1 className="text-2xl font-semibold mt-3">Review queue</h1>
-        <p className="text-slate-400 mt-4 text-sm">
-          Nothing waiting for review. When a batch is prepared it lands in{" "}
-          <code className="text-slate-300">data/review-queue.json</code>.
+        <h1 className="mt-3 text-2xl font-semibold">Review queue</h1>
+        <p className="mt-4 text-sm text-slate-400">
+          Nothing waiting. Batches land in <code className="text-slate-300">data/review-queue.json</code>.
         </p>
       </main>
     );
@@ -122,51 +166,53 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
   const grouped: Record<string, Loaded[]> = {};
   for (const it of items) (grouped[it.track || "pm"] ||= []).push(it);
 
-  // One tab per pivot rather than one long scroll. Falls back to the first
-  // track that actually has items so an empty ?track= never shows a blank page.
   const present = TRACK_ORDER.filter(t => grouped[t]?.length);
-  const active = present.includes(trackParam ?? "") ? (trackParam as string) : (present[0] ?? "pm");
+  const active = present.includes(trackParam ?? "") ? (trackParam as string) : present[0] ?? "pm";
   const shown = grouped[active] ?? [];
-  const undecidedIn = (t: string) => (grouped[t] ?? []).filter(i => !i.decision).length;
-  const counts = {
-    approved: items.filter(i => i.decision === "approved").length,
-    hold: items.filter(i => i.decision === "hold").length,
-    rejected: items.filter(i => i.decision === "rejected").length,
-    undecided: items.filter(i => !i.decision).length
-  };
+  const pendingIn = (t: string) => (grouped[t] ?? []).filter(i => !i.decision).length;
+  const totalPending = items.filter(i => !i.decision).length;
 
   return (
-    <main className="min-h-screen px-6 py-8 md:px-12 md:py-10 max-w-5xl mx-auto">
-      <header className="mb-8 border-b border-slate-800 pb-6">
-        <Link href="/" className="text-xs text-slate-500 hover:text-blue-300 font-mono">
-          ← back to dashboard
-        </Link>
-        <h1 className="text-2xl font-semibold mt-2">Review queue</h1>
-        <p className="text-sm text-slate-400 mt-1">{queue.batch}</p>
-        {queue.note && <p className="text-xs text-slate-500 mt-2 font-mono">{queue.note}</p>}
-        <div className="flex flex-wrap gap-2 mt-4">
-          <Badge label={`${counts.undecided} awaiting you`} color="text-blue-200 border-blue-400/40 bg-blue-500/15" />
-          <Badge label={`${counts.approved} approved`} color="text-emerald-300 border-emerald-400/30 bg-emerald-400/10" />
-          <Badge label={`${counts.hold} on hold`} color="text-amber-300 border-amber-400/30 bg-amber-400/10" />
-          <Badge label={`${counts.rejected} rejected`} color="text-rose-300 border-rose-400/30 bg-rose-400/10" />
+    <main className="mx-auto min-h-screen max-w-5xl px-6 py-8 md:px-10">
+      <header className="mb-6">
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <div>
+            <Link href="/" className="font-mono text-xs text-slate-500 hover:text-blue-300">
+              ← back to dashboard
+            </Link>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-100">Review queue</h1>
+          </div>
+          <p className="font-mono text-xs text-slate-500">
+            <span className="text-blue-200">{totalPending}</span> awaiting you · {queue.batch}
+          </p>
         </div>
+        <p className="mt-1 text-xs text-slate-600">
+          Nothing is submitted from here. Approving records a decision only.
+        </p>
       </header>
 
-      <nav className="mb-8 flex flex-wrap gap-2 border-b border-slate-800 pb-3">
+      <nav className="flex flex-wrap items-center gap-1 border-b border-slate-800">
         {present.map(t => {
           const isActive = t === active;
-          const pending = undecidedIn(t);
+          const pending = pendingIn(t);
           return (
             <Link
               key={t}
               href={`/review?track=${t}`}
-              className={"flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition " + (isActive
-                ? "bg-blue-500/15 text-blue-100 ring-1 ring-inset ring-blue-400/50"
-                : "text-slate-400 hover:bg-slate-900/60 hover:text-slate-200")}
+              className={
+                "-mb-px flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium transition " +
+                (isActive
+                  ? "border-blue-400 text-slate-100"
+                  : "border-transparent text-slate-500 hover:text-slate-300")
+              }
             >
-              {queue.tracks?.[t] ?? TRACK_FALLBACK[t] ?? t}
-              <span className={"rounded px-1.5 py-0.5 text-[10px] tabular-nums " + (pending > 0
-                ? "bg-blue-400/20 text-blue-100" : "bg-slate-800 text-slate-500")}>
+              {TRACK_LABEL[t] ?? t}
+              <span
+                className={
+                  "rounded px-1.5 py-0.5 text-[10px] tabular-nums " +
+                  (pending > 0 ? "bg-blue-400/20 text-blue-100" : "bg-slate-800 text-slate-500")
+                }
+              >
                 {grouped[t].length}
               </span>
             </Link>
@@ -174,130 +220,127 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
         })}
       </nav>
 
-      <div className="space-y-6">
+      {queue.tracks?.[active] && (
+        <p className="mb-6 mt-3 text-sm text-slate-500">{queue.tracks[active]}</p>
+      )}
+
+      <div className="space-y-5">
         {shown.map(item => {
           const cover = COVER_BADGE[item.coverLetter] ?? COVER_BADGE.unknown;
           const dec = item.decision ? DECISION_BADGE[item.decision] : null;
           return (
             <article
               key={item.slug}
-              className={`rounded-lg border bg-slate-900/40 p-5 transition ${
-                item.decision === "approved"
+              className={
+                "rounded-lg border bg-slate-900/40 p-5 transition " +
+                (item.decision === "approved"
                   ? "border-emerald-400/40"
                   : item.decision === "rejected"
-                  ? "border-rose-400/30 opacity-60"
+                  ? "border-rose-400/30 opacity-50"
                   : item.decision === "hold"
                   ? "border-amber-400/30"
-                  : "border-slate-800"
-              }`}
+                  : "border-slate-800")
+              }
             >
-              <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <h2 className="text-lg font-semibold text-slate-100">{item.company}</h2>
-                  <p className="text-sm text-slate-300">{item.role}</p>
+                  <p className="text-sm text-slate-400">{item.role}</p>
                 </div>
-                {dec && <Badge label={dec.label} color={dec.color} />}
+                <div className="flex items-center gap-2">
+                  {dec && <Badge label={dec.label} color={dec.color} />}
+                  <ReviewControls slug={item.slug} decision={item.decision} />
+                </div>
               </div>
 
-              <div className="flex flex-wrap gap-2 mt-3">
-                <Badge label={`score ${item.score}`} color="text-blue-200 border-blue-400/40 bg-blue-500/15" />
-                <Badge label={`${item.ageDays}d old`} color={ageColor(item.ageDays)} />
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {item.score > 0 && (
+                  <Badge label={`fit ${item.score}`} color="text-blue-200 border-blue-400/40 bg-blue-500/15" />
+                )}
+                {item.ageDays > 0 && <Badge label={`${item.ageDays}d`} color={ageColor(item.ageDays)} />}
                 <Badge label={item.geo} color="text-sky-300 border-sky-400/30 bg-sky-400/10" />
-                <Badge label={`cv: ${item.cvVariant}`} color="text-slate-400 border-slate-700 bg-slate-800/40" />
                 <Badge label={cover.label} color={cover.color} />
+                {item.cvVariant && item.cvVariant !== "none yet" && (
+                  <Badge label={`cv: ${item.cvVariant}`} color="text-slate-400 border-slate-700 bg-slate-800/40" />
+                )}
+                {item.cvVariant === "none yet" && (
+                  <Badge label="no CV yet" color="text-amber-300 border-amber-400/30 bg-amber-400/10" />
+                )}
                 <Badge
                   label={item.ats === "unresolved" ? "apply path UNRESOLVED" : item.ats}
                   color={
                     item.ats === "unresolved"
                       ? "text-rose-300 border-rose-400/30 bg-rose-400/10"
-                      : "text-slate-400 border-slate-700 bg-slate-800/40"
+                      : "text-slate-500 border-slate-700 bg-slate-800/40"
                   }
                 />
               </div>
 
-              {item.notes && <p className="text-xs text-slate-400 mt-3 leading-relaxed">{item.notes}</p>}
+              {item.notes && <NoteBlocks notes={item.notes} />}
 
-              <div className="flex flex-wrap gap-2 mt-4">
-                <a
-                  href={`/api/files/${item.slug}/cv.pdf`}
-                  target="_blank"
-                  rel="noopener"
-                  className="px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-md hover:border-blue-400/60 transition text-xs"
-                >
-                  📄 cv.pdf
-                </a>
-                <Link
-                  href={`/pack/${item.slug}`}
-                  className="px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-md hover:border-blue-400/60 transition text-xs"
-                >
-                  📦 full pack
-                </Link>
-                {item.applyUrl ? (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {item.cvVariant && item.cvVariant !== "none yet" && (
                   <a
-                    href={item.applyUrl}
+                    href={`/api/files/${item.slug}/cv.pdf`}
                     target="_blank"
                     rel="noopener"
-                    className="px-3 py-1.5 bg-blue-500/15 border border-blue-400/60 text-blue-200 rounded-md hover:bg-blue-500/25 transition text-xs font-medium"
+                    className="rounded-md border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs transition hover:border-blue-400/60"
                   >
-                    🌐 Open application ↗
-                  </a>
-                ) : (
-                  <a
-                    href={item.sourceUrl}
-                    target="_blank"
-                    rel="noopener"
-                    className="px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-md hover:border-blue-400/60 transition text-xs"
-                  >
-                    🔎 source listing ↗
+                    cv.pdf
                   </a>
                 )}
-              </div>
-
-              {item.answers && (
-                <details className="mt-4 group" open>
-                  <summary className="cursor-pointer text-xs uppercase tracking-wider text-slate-500 font-mono hover:text-blue-300">
-                    Application answers
-                  </summary>
-                  <pre className="mt-2 px-4 py-3 bg-slate-950 border border-slate-800 rounded-md text-xs leading-relaxed text-slate-300 overflow-x-auto whitespace-pre-wrap font-mono">
-                    {item.answers}
-                  </pre>
-                </details>
-              )}
-
-              {item.coverBody && (
-                <details className="mt-3">
-                  <summary className="cursor-pointer text-xs uppercase tracking-wider text-slate-500 font-mono hover:text-blue-300">
-                    Cover letter on file{" "}
-                    <span className="normal-case text-slate-600">
-                      ({item.coverLetter === "required" ? "will be attached" : "not being attached"})
-                    </span>
-                  </summary>
-                  <pre className="mt-2 px-4 py-3 bg-slate-950 border border-slate-800 rounded-md text-xs leading-relaxed text-slate-400 overflow-x-auto whitespace-pre-wrap font-mono">
-                    {item.coverBody}
-                  </pre>
-                </details>
-              )}
-
-              <div className="mt-5 pt-4 border-t border-slate-800 flex items-center justify-between gap-3 flex-wrap">
-                <ReviewControls slug={item.slug} decision={item.decision} />
+                <Link
+                  href={`/pack/${item.slug}`}
+                  className="rounded-md border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs transition hover:border-blue-400/60"
+                >
+                  full pack
+                </Link>
+                <a
+                  href={item.applyUrl || item.sourceUrl}
+                  target="_blank"
+                  rel="noopener"
+                  className="rounded-md border border-blue-400/60 bg-blue-500/15 px-3 py-1.5 text-xs font-medium text-blue-200 transition hover:bg-blue-500/25"
+                >
+                  {item.applyUrl ? "Open application ↗" : "Source listing ↗"}
+                </a>
                 {item.decidedAt && (
-                  <span className="text-[11px] text-slate-600 font-mono">
+                  <span className="self-center font-mono text-[11px] text-slate-600">
                     decided {item.decidedAt.slice(0, 16).replace("T", " ")}
                   </span>
                 )}
               </div>
+
+              {(item.answers || item.coverBody) && (
+                <div className="mt-4 space-y-2 border-t border-slate-800 pt-3">
+                  {item.answers && (
+                    <details>
+                      <summary className="cursor-pointer font-mono text-xs uppercase tracking-wider text-slate-500 hover:text-blue-300">
+                        Application answers
+                      </summary>
+                      <pre className="mt-2 overflow-x-auto whitespace-pre-wrap rounded-md border border-slate-800 bg-slate-950 px-4 py-3 font-mono text-xs leading-relaxed text-slate-300">
+                        {item.answers}
+                      </pre>
+                    </details>
+                  )}
+                  {item.coverBody && (
+                    <details>
+                      <summary className="cursor-pointer font-mono text-xs uppercase tracking-wider text-slate-500 hover:text-blue-300">
+                        Cover letter on file{" "}
+                        <span className="normal-case text-slate-600">
+                          ({item.coverLetter === "required" ? "will be attached" : "not being attached"})
+                        </span>
+                      </summary>
+                      <pre className="mt-2 overflow-x-auto whitespace-pre-wrap rounded-md border border-slate-800 bg-slate-950 px-4 py-3 font-mono text-xs leading-relaxed text-slate-400">
+                        {item.coverBody}
+                      </pre>
+                    </details>
+                  )}
+                </div>
+              )}
             </article>
           );
         })}
       </div>
-
-      <footer className="mt-12 pt-6 border-t border-slate-800 text-xs text-slate-600 font-mono">
-        <p>
-          Approving here does not submit anything. It records your decision in{" "}
-          <code className="text-slate-400">data/review-queue.json</code>; submission stays a
-          separate, deliberate step.
-        </p>
-      </footer>
     </main>
   );
 }
