@@ -21,6 +21,7 @@ Env:  INDEED_HOURS_OLD (default 720 = 30d), INDEED_RESULTS (default 30)
 import os
 import re
 import sys
+import time
 import datetime as dt
 import socket as _socket
 
@@ -39,15 +40,43 @@ JDS_DIR = os.path.join(ROOT, "jds")
 PORTALS = os.path.join(ROOT, "portals.yml")
 
 HOURS_OLD = int(os.environ.get("INDEED_HOURS_OLD", "720"))   # 30 days
-RESULTS = int(os.environ.get("INDEED_RESULTS", "30"))
+RESULTS = int(os.environ.get("INDEED_RESULTS", "100"))
 
-# (search_term, location, is_remote). Edit to tune coverage.
+# Boards to sweep. Default is indeed only, and that is a measured decision:
+# tested 2026-07-29, zip_recruiter and google both return 0 rows for every
+# query from this host (ZipRecruiter fronts Cloudflare; jobspy's google backend
+# returns nothing even with google_search_term set). They stay wired so they
+# can be re-enabled the moment they work again, but defaulting them ON would
+# mean a third of every run silently doing nothing.
+#   JOBSPY_SITES="indeed,zip_recruiter,google,linkedin,glassdoor"
+# linkedin and glassdoor are supported by jobspy but rate-limit hard without
+# proxies, so they are opt-in too.
+SITES = [x.strip() for x in os.environ.get(
+    "JOBSPY_SITES", "indeed").split(",") if x.strip()]
+
+# (search_term, location, is_remote). Breadth is the point: the portals.yml scan
+# covers ~128 named companies deeply; this covers every employer posting to a
+# major board, at any size, in any industry. portals.yml title_filter cuts the
+# volume down long before anything reaches the LLM scorer.
 SEARCHES = [
-    ("product manager AI", "New York, NY", False),
-    ("AI product manager", "remote", True),
-    ("senior product manager AI", "New York, NY", False),
-    ("staff product manager AI", "remote", True),
+    ("product manager",           "New York, NY", False),
+    ("senior product manager",    "New York, NY", False),
+    ("principal product manager", "New York, NY", False),
+    ("director of product",       "New York, NY", False),
+    ("head of product",           "New York, NY", False),
+    ("product marketing manager", "New York, NY", False),
+    ("AI product manager",        "New York, NY", False),
+    ("senior product manager",    "remote",       True),
+    ("principal product manager", "remote",       True),
+    ("director of product",       "remote",       True),
+    ("head of product",           "remote",       True),
+    ("product marketing manager", "remote",       True),
+    ("AI product manager",        "remote",       True),
+    ("founding product manager",  "remote",       True),
 ]
+
+# site x query sweep, flattened so the loop body stays at one indent level
+QUERIES = [(site, t, l, r) for site in SITES for (t, l, r) in SEARCHES]
 
 try:
     from jobspy import scrape_jobs
@@ -110,6 +139,29 @@ def days_ago(date_posted):
         return None
 
 
+
+# Board APIs sit behind Cloudflare and intermittently fail DNS resolution
+# mid-run even though the host resolves fine from the shell. Transient network
+# errors get retried rather than surfaced; a query that still fails after
+# RETRIES attempts is skipped with a warning.
+RETRIES = int(os.environ.get("JOBSPY_RETRIES", "3"))
+_TRANSIENT = ("NameResolutionError", "Max retries exceeded", "Temporary failure",
+              "Connection reset", "timed out", "ConnectTimeout", "ReadTimeout")
+
+
+def scrape_with_retry(**kwargs):
+    last = None
+    for attempt in range(1, RETRIES + 1):
+        try:
+            return scrape_jobs(**kwargs)
+        except Exception as e:  # noqa: BLE001 - jobspy raises bare Exceptions
+            last = e
+            if not any(t in str(e) for t in _TRANSIENT) or attempt == RETRIES:
+                raise
+            time.sleep(2 ** attempt)
+    raise last
+
+
 def main():
     pos, neg = load_title_filter()
     seen = known_urls()
@@ -118,11 +170,18 @@ def main():
     collected = []  # (url, company, title, location, iso, days, description)
     run_seen = set()
 
-    for term, loc, remote in SEARCHES:
+    for site, term, loc, remote in QUERIES:
         try:
-            df = scrape_jobs(
-                site_name=["indeed"],
+            # jobspy's google backend ignores search_term and needs its own
+            # natural-language query, otherwise it silently returns 0 rows.
+            extra = {}
+            if site == "google":
+                where = "remote" if remote else loc
+                extra["google_search_term"] = f"{term} jobs near {where}"
+            df = scrape_with_retry(
+                site_name=[site],
                 search_term=term,
+                **extra,
                 location=loc,
                 is_remote=remote,
                 results_wanted=RESULTS,
@@ -132,10 +191,10 @@ def main():
                 verbose=0,
             )
         except Exception as e:
-            print(f"  search failed [{term} @ {loc}]: {e}", file=sys.stderr)
+            print(f"  search failed [{site}: {term} @ {loc}]: {e}", file=sys.stderr)
             continue
         if df is None or len(df) == 0:
-            print(f"  0 results  [{term} @ {loc}]")
+            print(f"  0 results  [{site}: {term} @ {loc}]")
             continue
 
         kept = 0
