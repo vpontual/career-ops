@@ -74,6 +74,9 @@ export function classifyArchetype(jdContent) {
   // out-score into ai-enterprise and ship a PM-flavoured CV. The JD files put
   // the title on the first line, so look only at the head.
   if (/product marketing/.test(text.slice(0, 300))) return 'pmm';
+  // Same reasoning for teaching roles: a school posting is dense in program /
+  // leadership vocabulary and would otherwise classify as a product variant.
+  if (/\b(teacher|teaching|instructor|lecturer|adjunct|faculty|educator)\b/.test(text.slice(0, 300))) return 'teaching';
   // Score each archetype by keyword hits, pick the highest non-zero score.
   const scores = ARCHETYPES.map(a => ({
     name: a.name,

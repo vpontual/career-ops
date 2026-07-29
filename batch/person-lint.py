@@ -10,7 +10,9 @@ THIRD = [
     "manages", "watches", "prototypes", "designs", "partners", "creates", "delivers",
     "defines", "directs", "scales", "lifts", "closes", "supports", "studies",
 ]
-THIRD_RE = re.compile(r"(?:^|(?<=[.;:]\s)|(?<=^- ))\s*(?:Currently |Now |Also )?(" + "|".join(THIRD) + r")\b",
+# Bold markdown labels ("**Technology:** builds ...") put the verb after ":** ",
+# which the plain [.;:]\s lookbehind missed. Allow trailing markup before the verb.
+THIRD_RE = re.compile(r"(?:^|(?<=[.;:])|(?<=^- ))[\s*_]*(?:Currently |Now |Also )?(" + "|".join(THIRD) + r")\b",
                       re.IGNORECASE | re.MULTILINE)
 
 # Framing that devalues the work.
