@@ -1,0 +1,59 @@
+# portals-venture.yml - generated 2026-07-29
+# Track E. VC platform, accelerator and operator-in-residence roles - the space
+# between product, teaching and advising. Investment-analyst titles excluded.
+
+title_filter:
+  positive:
+  - Platform
+  - Head of Platform
+  - Director of Platform
+  - Talent Partner
+  - Head of Talent
+  - Community
+  - Program Director
+  - Director of Programs
+  - Program Manager
+  - Venture Partner
+  - Operator in Residence
+  - Operator-In-Residence
+  - Entrepreneur in Residence
+  - Operating Partner
+  - Portfolio
+  - Managing Director
+  negative:
+  - Analyst
+  - Intern
+  - Associate
+  - Executive Assistant
+  - Accountant
+  - Controller
+  - Engineer
+  - Designer
+  - Recruiter Coordinator
+  - Fund Accountant
+  - Compliance
+  - Legal
+  - Tax
+  - Audit
+tracked_companies:
+- name: Bessemer Venture Partners
+  careers_url: https://job-boards.greenhouse.io/bessemerventurepartners
+  api: https://boards-api.greenhouse.io/v1/boards/bessemerventurepartners/jobs
+  enabled: true
+- name: First Round Capital
+  careers_url: https://jobs.ashbyhq.com/firstround
+  enabled: true
+- name: General Catalyst
+  careers_url: https://job-boards.greenhouse.io/generalcatalyst
+  api: https://boards-api.greenhouse.io/v1/boards/generalcatalyst/jobs
+  enabled: true
+- name: Primary Venture Partners
+  careers_url: https://jobs.ashbyhq.com/primary
+  enabled: true
+- name: Y Combinator
+  careers_url: https://jobs.ashbyhq.com/ycombinator
+  enabled: true
+scan_settings:
+  max_results_per_company: 20
+  max_age_days: 60
+  default_scan_method: greenhouse_api

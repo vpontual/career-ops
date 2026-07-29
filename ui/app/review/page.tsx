@@ -84,7 +84,7 @@ const DECISION_BADGE: Record<string, { label: string; color: string }> = {
 
 // VP runs three parallel tracks and asked that the pivots stay visually
 // separate from the standard search rather than blended into one list.
-const TRACK_ORDER = ["pm", "govtech", "nonprofit", "teaching"];
+const TRACK_ORDER = ["pm", "govtech", "nonprofit", "teaching", "venture"];
 const TRACK_FALLBACK: Record<string, string> = {
   pm: "PM / PMM — the standard search",
   nonprofit: "Nonprofit / charity",
@@ -99,7 +99,8 @@ function Badge({ label, color, title }: { label: string; color: string; title?: 
   );
 }
 
-export default async function ReviewPage() {
+export default async function ReviewPage({ searchParams }: { searchParams: Promise<{ track?: string }> }) {
+  const { track: trackParam } = await searchParams;
   const queue = await loadQueue();
 
   if (!queue || !queue.items?.length) {
@@ -120,6 +121,13 @@ export default async function ReviewPage() {
   const items = await Promise.all(queue.items.map(hydrate));
   const grouped: Record<string, Loaded[]> = {};
   for (const it of items) (grouped[it.track || "pm"] ||= []).push(it);
+
+  // One tab per pivot rather than one long scroll. Falls back to the first
+  // track that actually has items so an empty ?track= never shows a blank page.
+  const present = TRACK_ORDER.filter(t => grouped[t]?.length);
+  const active = present.includes(trackParam ?? "") ? (trackParam as string) : (present[0] ?? "pm");
+  const shown = grouped[active] ?? [];
+  const undecidedIn = (t: string) => (grouped[t] ?? []).filter(i => !i.decision).length;
   const counts = {
     approved: items.filter(i => i.decision === "approved").length,
     hold: items.filter(i => i.decision === "hold").length,
@@ -144,16 +152,30 @@ export default async function ReviewPage() {
         </div>
       </header>
 
-      {TRACK_ORDER.filter(t => grouped[t]?.length).map(t => (
-        <section key={t} className="mb-10">
-          <div className="mb-4 flex items-baseline gap-3 border-b border-slate-800 pb-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-300">
+      <nav className="mb-8 flex flex-wrap gap-2 border-b border-slate-800 pb-3">
+        {present.map(t => {
+          const isActive = t === active;
+          const pending = undecidedIn(t);
+          return (
+            <Link
+              key={t}
+              href={`/review?track=${t}`}
+              className={"flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition " + (isActive
+                ? "bg-blue-500/15 text-blue-100 ring-1 ring-inset ring-blue-400/50"
+                : "text-slate-400 hover:bg-slate-900/60 hover:text-slate-200")}
+            >
               {queue.tracks?.[t] ?? TRACK_FALLBACK[t] ?? t}
-            </h2>
-            <span className="text-xs text-slate-600 font-mono">{grouped[t].length}</span>
-          </div>
-          <div className="space-y-6">
-        {grouped[t].map(item => {
+              <span className={"rounded px-1.5 py-0.5 text-[10px] tabular-nums " + (pending > 0
+                ? "bg-blue-400/20 text-blue-100" : "bg-slate-800 text-slate-500")}>
+                {grouped[t].length}
+              </span>
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className="space-y-6">
+        {shown.map(item => {
           const cover = COVER_BADGE[item.coverLetter] ?? COVER_BADGE.unknown;
           const dec = item.decision ? DECISION_BADGE[item.decision] : null;
           return (
@@ -267,9 +289,7 @@ export default async function ReviewPage() {
             </article>
           );
         })}
-          </div>
-        </section>
-      ))}
+      </div>
 
       <footer className="mt-12 pt-6 border-t border-slate-800 text-xs text-slate-600 font-mono">
         <p>
