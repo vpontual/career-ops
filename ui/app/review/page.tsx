@@ -117,19 +117,38 @@ function NoteBlocks({ notes }: { notes: string }) {
         const m = seg.match(/^([A-Z][A-Z0-9 \-/&']{2,60}):\s*(.*)$/s);
         const label = m ? m[1].trim() : null;
         const body = m ? m[2].trim() : seg;
-        const danger = /RISK|EXCLUD|DILIGENCE|READ THIS|FLAG|CHECK WITH/i.test(label ?? seg);
-        const todo = /TO DO|NOT YET|UNKNOWN/i.test(label ?? "");
+        // Ownership has to be obvious. A card in VP's queue showing Claude's
+        // own chores as "TO DO" read like a task list for him.
+        const danger = /RISK|EXCLUD|DILIGENCE|READ THIS|FLAG/i.test(label ?? seg);
+        const needsYou = /NEEDS YOU|DECIDE|YOUR CALL/i.test(label ?? "");
+        const onMe = /ON ME|NOT YET|UNRESOLVED|UNKNOWN/i.test(label ?? "");
         const tone = danger
           ? "border-l-rose-400/60 bg-rose-500/[0.06]"
-          : todo
-          ? "border-l-amber-400/50 bg-amber-500/[0.05]"
+          : needsYou
+          ? "border-l-blue-400/60 bg-blue-500/[0.07]"
+          : onMe
+          ? "border-l-slate-700 bg-slate-900/30 opacity-70"
           : "border-l-slate-700 bg-slate-900/40";
-        const labelTone = danger ? "text-rose-300" : todo ? "text-amber-300" : "text-slate-500";
+        const labelTone = danger
+          ? "text-rose-300"
+          : needsYou
+          ? "text-blue-300"
+          : "text-slate-500";
         return (
           <div key={i} className={`rounded-r border-l-2 py-2 pl-3 pr-3 ${tone}`}>
             {label && (
-              <div className={`mb-0.5 font-mono text-[10px] uppercase tracking-wider ${labelTone}`}>
+              <div className={`mb-0.5 flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider ${labelTone}`}>
                 {label}
+                {onMe && (
+                  <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[9px] normal-case text-slate-500">
+                    Claude&apos;s job, not yours
+                  </span>
+                )}
+                {needsYou && (
+                  <span className="rounded bg-blue-400/20 px-1.5 py-0.5 text-[9px] normal-case text-blue-100">
+                    needs your input
+                  </span>
+                )}
               </div>
             )}
             <p className="text-[13px] leading-relaxed text-slate-300">{body}</p>
