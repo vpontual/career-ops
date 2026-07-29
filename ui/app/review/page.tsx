@@ -23,6 +23,7 @@ interface QueueItem {
   notes: string;
   decision: string | null;
   decidedAt: string | null;
+  track?: string;
 }
 
 interface Queue {
@@ -30,6 +31,7 @@ interface Queue {
   created: string;
   note?: string;
   items: QueueItem[];
+  tracks?: Record<string, string>;
 }
 
 interface Loaded extends QueueItem {
@@ -80,6 +82,15 @@ const DECISION_BADGE: Record<string, { label: string; color: string }> = {
   rejected: { label: "REJECTED", color: "text-rose-200 border-rose-400/50 bg-rose-500/20" }
 };
 
+// VP runs three parallel tracks and asked that the pivots stay visually
+// separate from the standard search rather than blended into one list.
+const TRACK_ORDER = ["pm", "nonprofit", "teaching"];
+const TRACK_FALLBACK: Record<string, string> = {
+  pm: "PM / PMM — the standard search",
+  nonprofit: "Nonprofit / charity",
+  teaching: "Teaching",
+};
+
 function Badge({ label, color, title }: { label: string; color: string; title?: string }) {
   return (
     <span title={title} className={`px-2 py-0.5 rounded border text-[11px] font-mono ${color}`}>
@@ -107,6 +118,8 @@ export default async function ReviewPage() {
   }
 
   const items = await Promise.all(queue.items.map(hydrate));
+  const grouped: Record<string, Loaded[]> = {};
+  for (const it of items) (grouped[it.track || "pm"] ||= []).push(it);
   const counts = {
     approved: items.filter(i => i.decision === "approved").length,
     hold: items.filter(i => i.decision === "hold").length,
@@ -131,8 +144,16 @@ export default async function ReviewPage() {
         </div>
       </header>
 
-      <div className="space-y-6">
-        {items.map(item => {
+      {TRACK_ORDER.filter(t => grouped[t]?.length).map(t => (
+        <section key={t} className="mb-10">
+          <div className="mb-4 flex items-baseline gap-3 border-b border-slate-800 pb-2">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-300">
+              {queue.tracks?.[t] ?? TRACK_FALLBACK[t] ?? t}
+            </h2>
+            <span className="text-xs text-slate-600 font-mono">{grouped[t].length}</span>
+          </div>
+          <div className="space-y-6">
+        {grouped[t].map(item => {
           const cover = COVER_BADGE[item.coverLetter] ?? COVER_BADGE.unknown;
           const dec = item.decision ? DECISION_BADGE[item.decision] : null;
           return (
@@ -246,7 +267,9 @@ export default async function ReviewPage() {
             </article>
           );
         })}
-      </div>
+          </div>
+        </section>
+      ))}
 
       <footer className="mt-12 pt-6 border-t border-slate-800 text-xs text-slate-600 font-mono">
         <p>
