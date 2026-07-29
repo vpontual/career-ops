@@ -22,7 +22,11 @@ const parseYaml = yaml.load;
 
 // ── Config ──────────────────────────────────────────────────────────
 
-const PORTALS_PATH = 'portals.yml';
+// Track-scoped configs: VP runs PM/PMM, nonprofit and teaching as separate
+// searches with different title filters and different employers. Each track
+// gets its own portals file; PORTALS_FILE selects it.
+//   PORTALS_FILE=portals-teaching.yml node scan.mjs
+const PORTALS_PATH = process.env.PORTALS_FILE || 'portals.yml';
 const SCAN_HISTORY_PATH = 'data/scan-history.tsv';
 const PIPELINE_PATH = 'data/pipeline.md';
 const APPLICATIONS_PATH = 'data/applications.md';

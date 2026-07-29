@@ -1,0 +1,102 @@
+# portals-nonprofit.yml - generated 2026-07-29
+# Track B. Nonprofits and civic-tech orgs where product skills apply.
+# Titles run wider than "Product Manager"; comp floor is ~$60K, not the PM floor.
+
+title_filter:
+  positive:
+  - Product Manager
+  - Senior Product Manager
+  - Principal Product Manager
+  - Lead Product Manager
+  - Director of Product
+  - Director, Product
+  - Head of Product
+  - Chief Product Officer
+  - Product Lead
+  - Director of Technology
+  - Director of Digital
+  - Director of Innovation
+  - Director of Programs
+  - Program Director
+  - Senior Program Manager
+  - Director of Product Management
+  negative:
+  - Fundraising
+  - Development Officer
+  - Major Gifts
+  - Grant Writer
+  - Grants Manager
+  - Donor
+  - Volunteer
+  - Intern
+  - Junior
+  - Associate Product Manager
+  - APM
+  - Engineer
+  - Engineering Manager
+  - Developer
+  - Designer
+  - Data Scientist
+  - Data Engineer
+  - Researcher
+  - Architect
+  - DevOps
+  - SRE
+  - Growth
+  - Acquisition
+  - Demand Generation
+  - Content Marketing
+  - Sales
+  - Account Executive
+tracked_companies:
+- name: Acumen
+  careers_url: https://job-boards.greenhouse.io/acumen
+  api: https://boards-api.greenhouse.io/v1/boards/acumen/jobs
+  enabled: true
+- name: Code for America
+  careers_url: https://job-boards.greenhouse.io/codeforamerica
+  api: https://boards-api.greenhouse.io/v1/boards/codeforamerica/jobs
+  enabled: true
+- name: DonorsChoose
+  careers_url: https://job-boards.greenhouse.io/donorschoose
+  api: https://boards-api.greenhouse.io/v1/boards/donorschoose/jobs
+  enabled: true
+- name: Girls Who Code
+  careers_url: https://jobs.lever.co/girlswhocode
+  enabled: true
+- name: Khan Academy
+  careers_url: https://job-boards.greenhouse.io/khanacademy
+  api: https://boards-api.greenhouse.io/v1/boards/khanacademy/jobs
+  enabled: true
+- name: Mozilla Foundation
+  careers_url: https://job-boards.greenhouse.io/mozilla
+  api: https://boards-api.greenhouse.io/v1/boards/mozilla/jobs
+  enabled: true
+- name: ProPublica
+  careers_url: https://job-boards.greenhouse.io/propublica
+  api: https://boards-api.greenhouse.io/v1/boards/propublica/jobs
+  enabled: true
+- name: Propel
+  careers_url: https://jobs.ashbyhq.com/propel
+  enabled: true
+- name: The Trevor Project
+  careers_url: https://jobs.lever.co/thetrevorproject
+  enabled: true
+- name: Vera Institute of Justice
+  careers_url: https://job-boards.greenhouse.io/verainstituteofjustice
+  api: https://boards-api.greenhouse.io/v1/boards/verainstituteofjustice/jobs
+  enabled: true
+- name: Wikimedia Foundation
+  careers_url: https://job-boards.greenhouse.io/wikimedia
+  api: https://boards-api.greenhouse.io/v1/boards/wikimedia/jobs
+  enabled: true
+- name: charity water
+  careers_url: https://jobs.lever.co/charitywater
+  enabled: true
+- name: iMentor
+  careers_url: https://jobs.lever.co/imentor
+  enabled: true
+scan_settings:
+  max_results_per_company: 20
+  max_age_days: 60
+  default_scan_method: greenhouse_api

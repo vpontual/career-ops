@@ -1,0 +1,83 @@
+# portals-teaching.yml - generated 2026-07-29
+# Track C. Schools that hire without a NYC teaching license, plus fellowship routes.
+# Diligence lives in ~/Dev/plans/MISSION-nyc-job.md - these are NOT equivalent employers.
+
+title_filter:
+  positive:
+  - Teacher
+  - Lead Teacher
+  - Elementary Teacher
+  - Middle School Teacher
+  - High School Teacher
+  - Math Teacher
+  - Science Teacher
+  - Business Teacher
+  - Computer Science Teacher
+  - Technology Teacher
+  - Instructor
+  - Adjunct
+  - Lecturer
+  - Faculty
+  - Teaching Fellow
+  - Resident Teacher
+  negative:
+  - Substitute
+  - Teaching Assistant
+  - Teacher Assistant
+  - Paraprofessional
+  - Aide
+  - Intern
+  - Special Education
+  - Speech
+  - Social Worker
+  - Counselor
+  - Nurse
+  - Custodian
+  - Bus
+  - Security
+  - Recruiter
+  - Talent
+  - Operations
+  - Finance
+  - Facilities
+  - Data Analyst
+  - Engineer
+  - Designer
+  - Coordinator
+  - Fellowship Recruitment
+tracked_companies:
+- name: Achievement First
+  careers_url: https://job-boards.greenhouse.io/achievementfirst
+  api: https://boards-api.greenhouse.io/v1/boards/achievementfirst/jobs
+  enabled: true
+- name: Brilla Public Charter Schools
+  careers_url: https://job-boards.greenhouse.io/brillapubliccharterschools
+  api: https://boards-api.greenhouse.io/v1/boards/brillapubliccharterschools/jobs
+  enabled: true
+- name: Coney Island Prep
+  careers_url: https://job-boards.greenhouse.io/coneyislandprep
+  api: https://boards-api.greenhouse.io/v1/boards/coneyislandprep/jobs
+  enabled: true
+- name: Democracy Prep Public Schools
+  careers_url: https://job-boards.greenhouse.io/democracypreppublicschools
+  api: https://boards-api.greenhouse.io/v1/boards/democracypreppublicschools/jobs
+  enabled: true
+- name: Relay Graduate School of Education
+  careers_url: https://job-boards.greenhouse.io/relaygraduateschoolofeducation
+  api: https://boards-api.greenhouse.io/v1/boards/relaygraduateschoolofeducation/jobs
+  enabled: true
+- name: Rocketship Public Schools
+  careers_url: https://jobs.lever.co/rocketship
+  enabled: true
+- name: Success Academy Charter Schools
+  careers_url: https://job-boards.greenhouse.io/successacademycharterschool
+  api: https://boards-api.greenhouse.io/v1/boards/successacademycharterschool/jobs
+  enabled: true
+- name: Zeta Charter Schools
+  careers_url: https://job-boards.greenhouse.io/zetacharterschools
+  api: https://boards-api.greenhouse.io/v1/boards/zetacharterschools/jobs
+  enabled: true
+scan_settings:
+  max_results_per_company: 20
+  max_age_days: 60
+  default_scan_method: greenhouse_api
