@@ -107,8 +107,9 @@ async function loadProfileTargets() {
     const scoringMatch = md.match(/## Your Scoring Rules \(Override\)([\s\S]*?)(?=^## |\z)/m);
     if (scoringMatch) {
       lines.push('\nScoring rules — apply these strictly on top of the base scale:');
-      // Trim to ~2500 chars to stay well within token budget
-      lines.push(scoringMatch[1].trim().slice(0, 2500));
+      // Trim to ~6000 chars. Was 2500, which the rules had already nearly
+      // filled — appending silently truncated new rules out of the prompt.
+      lines.push(scoringMatch[1].trim().slice(0, 6000));
     }
     // Language capability not in profile.yml — inject explicitly
     lines.push('\nLanguage note: candidate is fluent in French, Spanish, and Portuguese. Uprank roles that require or benefit from these languages.');

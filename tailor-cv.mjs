@@ -49,6 +49,15 @@ const ARCHETYPES = [
     ]
   },
   {
+    name: 'pmm',
+    keywords: [
+      'product marketing', 'positioning', 'messaging', 'competitive intelligence',
+      'competitive landscape', 'launch strategy', 'go-to-market strategy',
+      'buyer persona', 'customer education', 'evangelism', 'thought leadership',
+      'product storytelling', 'analyst relations', 'win/loss', 'value proposition'
+    ]
+  },
+  {
     name: 'ai-consumer',
     keywords: [
       'consumer product', 'consumers', 'millions of people', 'consumer AI',
@@ -60,6 +69,11 @@ const ARCHETYPES = [
 
 export function classifyArchetype(jdContent) {
   const text = jdContent.toLowerCase();
+  // A product marketing role is decided by its title, not by keyword mass.
+  // PMM postings are dense in enterprise/GTM vocabulary and would otherwise
+  // out-score into ai-enterprise and ship a PM-flavoured CV. The JD files put
+  // the title on the first line, so look only at the head.
+  if (/product marketing/.test(text.slice(0, 300))) return 'pmm';
   // Score each archetype by keyword hits, pick the highest non-zero score.
   const scores = ARCHETYPES.map(a => ({
     name: a.name,
