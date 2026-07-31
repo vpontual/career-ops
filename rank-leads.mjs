@@ -223,6 +223,70 @@ Report what the JD says. If it does not say, use null or "unclear" rather than g
 //
 // The model now reports facts; these rules turn facts into a score the same way
 // every time, and changing VP's priorities means editing this function.
+// The model was asked for one of six geo enum values and returned free text
+// instead - "New York, NY", "San Francisco, CA", "Remote, US". Only 18 of 403
+// replies used the enum, so every gate comparing geo === 'onsite-elsewhere'
+// silently never fired and nothing was filtered on location at all.
+//
+// Asking a third time would not help. The same lesson as the score itself
+// applies: let the model report what it sees, and make the CATEGORY a
+// deterministic function of that text. This is testable, it cannot drift, and
+// it handles the enum values too for the replies that did comply.
+const NYC_METRO = /\b(nyc|new york|manhattan|brooklyn|queens|bronx|newark|jersey city|hoboken|stamford|greenwich, ct|white plains|princeton|east windsor|port chester|yonkers)\b/i;
+const REMOTE = /\bremote|work from home|wfh|distributed\b/i;
+const HYBRID = /\bhybrid|days? (?:a|per) week|in[- ]office\b/i;
+// Anywhere he cannot reach daily from Manhattan. Non-US entries land here too.
+const ELSEWHERE = /\b(san francisco|sf\b|bay area|palo alto|mountain view|san mateo|redwood city|seattle|bellevue|redmond|austin|denver|chicago|boston|los angeles|miami|toronto|london|dublin|ireland|uk\b|spain|madrid|portugal|greece|germany|india|israel|tel aviv|sydney|dubai|bogota|canada|europe|morrisville|howell)\b/i;
+
+function normalizeGeo(raw) {
+  const t = String(raw ?? '').trim();
+  if (!t) return 'unclear';
+
+  // Replies that did use the enum pass straight through.
+  if (/^(nyc|remote-us|hybrid-nyc|hybrid-elsewhere|onsite-elsewhere|unclear)$/i.test(t)) {
+    return t.toLowerCase();
+  }
+
+  const nyc = NYC_METRO.test(t);
+  const remote = REMOTE.test(t);
+  const hybrid = HYBRID.test(t);
+  const elsewhere = ELSEWHERE.test(t);
+
+  // A listing naming both NYC and a far office ("San Francisco, CA | New York")
+  // is workable - he takes the New York one.
+  if (nyc) return hybrid ? 'hybrid-nyc' : 'nyc';
+
+  // Fully remote is fine wherever the company is. Check this before ELSEWHERE
+  // so "Remote (US)" at an SF company is not misread as an SF office.
+  if (remote && !hybrid) return 'remote-us';
+
+  // Recurring days at an office he cannot reach - the one hard exclusion.
+  if (elsewhere) return hybrid ? 'hybrid-elsewhere' : 'onsite-elsewhere';
+
+  return 'unclear';
+}
+
+// Third field, same lesson. The model was given five archetype values and
+// returned twelve-plus of its own - "Product", "Staff PM", "Product Leader",
+// "Technical PM". So the Director/Founding bonus never fired, and the lead-gen
+// gate, which tests archetype === 'Product Marketing', only caught the replies
+// that happened to phrase it exactly that way.
+//
+// Order matters here: "Senior Product Marketing Manager" contains both
+// "product marketing" and "senior", and it is a marketing role.
+function normalizeArchetype(raw) {
+  const t = String(raw ?? '').toLowerCase();
+  if (!t) return 'Other';
+  if (/product marketing|pmm\b/.test(t)) return 'Product Marketing';
+  if (/founding|founder|first pm|early.stage pm/.test(t)) return 'Founding/Early PM';
+  if (/director|head of|vp\b|chief|leader|leadership|principal/.test(t)) return 'Director/Head of Product';
+  if (/\bai\b|ml\b|machine learning|llm|genai/.test(t)) return 'AI Product PM';
+  if (/senior|staff|lead\b|sr\.?\b|technical pm|platform pm|product manager|product management|\bproduct\b|\bpm\b/.test(t)) {
+    return 'Senior PM';
+  }
+  return 'Other';
+}
+
 function scoreFromFacts(f) {
   // Hard gates — things VP will not do, which no upside can offset.
   //
@@ -331,9 +395,11 @@ async function scoreOne(jd, resume, targets) {
       }
       const parsed = parseLLMJson(content);
       const facts = {
-        archetype: String(parsed.archetype || '').slice(0, 60),
+        archetype: normalizeArchetype(parsed.archetype),
+        archetypeRaw: String(parsed.archetype || '').slice(0, 40),  // what it actually said
         aiNative: parsed.aiNative === true,
-        geo: String(parsed.geo || 'unclear').slice(0, 24),
+        geo: normalizeGeo(parsed.geo),
+        geoRaw: String(parsed.geo || '').slice(0, 60),  // keep what it actually said, for auditing
         level: String(parsed.level || 'at').slice(0, 12),
         leadGen: parsed.leadGen === true,
         technicalScreen: parsed.technicalScreen === true,
