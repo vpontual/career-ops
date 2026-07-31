@@ -45,7 +45,11 @@ const OLLAMA_MODEL = process.env.RANK_MODEL ?? 'Qwen/Qwen3.6-35B-A3B-FP8';
 // hang — see the DGX-wedge history) must not hang the whole nightly run. On
 // timeout/error we retry a few times in-run, then throw so the caller skips
 // that JD (uncached → retried next run).
-const SCORE_TIMEOUT_MS = parseInt(process.env.SCORE_TIMEOUT_MS ?? '90000', 10);
+// 90s was calibrated when the scoring rules were being silently truncated to
+// 750 chars. With the full rules restored the prompt is ~17k characters and
+// the slowest JDs exceed 90s, so each one burned 4.5 minutes across retries
+// and still failed. 240s costs nothing on the common path.
+const SCORE_TIMEOUT_MS = parseInt(process.env.SCORE_TIMEOUT_MS ?? '240000', 10);
 const SCORE_RETRIES = parseInt(process.env.SCORE_RETRIES ?? '2', 10);
 
 if (!OLLAMA_URL) {
@@ -504,6 +508,10 @@ async function main() {
       const result = await scoreOne(jd, resume, targets);
       cache[jd.filename] = { ...result, scored_at: new Date().toISOString() };
       scored.push({ ...jd, ...result });
+      // Checkpoint. This run takes hours and used to write only at the end, so
+      // an interruption discarded everything - which happened three times in one
+      // day. Every 10 scores bounds the loss to a couple of minutes of work.
+      if ((llmCalls % 10) === 0) await saveScores(cache);
       llmCalls++;
       if ((llmCalls % 5) === 0) console.log(`  scored ${llmCalls}/${toScore.length - cacheHits}...`);
     } catch (e) {

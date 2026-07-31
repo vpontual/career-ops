@@ -67,6 +67,11 @@ def main():
         notes = it.get("notes", "")
         if "EXCLUDED" in notes or "SUBMITTED 2026" in notes:
             continue
+        # A decided role needs no prep. Rejected ones were flagged as missing
+        # answers.md immediately after being dropped, which is noise that makes
+        # a real gap harder to see.
+        if it.get("decision") in ("rejected", "applied", "submitted"):
+            continue
         ans_path = os.path.join(ROOT, "output", it["slug"], "answers.md")
         answers = open(ans_path, encoding="utf-8").read().lower() if os.path.exists(ans_path) else ""
         if not answers:
