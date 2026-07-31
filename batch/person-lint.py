@@ -41,7 +41,10 @@ def lint(path):
 
 
 fail = 0
-for f in sorted(glob.glob(os.path.join(sys.argv[1], "*.md"))):
+# Default to the CV variants, which is the only directory this is ever run
+# against. Requiring the argument made a bare run look like a crash.
+TARGET = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(__file__), "..", "cv-variants")
+for f in sorted(glob.glob(os.path.join(TARGET, "*.md"))):
     hits = lint(f)
     name = os.path.basename(f)
     if hits:
