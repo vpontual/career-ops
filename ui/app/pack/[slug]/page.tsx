@@ -8,6 +8,7 @@ const DATA_ROOT = process.env.CAREER_OPS_ROOT ?? "/data";
 
 interface PackData {
   slug: string;
+  answers?: string;
   url: string;
   company: string;
   role: string;
@@ -20,16 +21,36 @@ interface PackData {
 async function loadPack(slug: string): Promise<PackData | null> {
   if (!/^[a-z0-9-]+$/.test(slug)) return null;
   const dir = path.join(DATA_ROOT, "output", slug);
-  let coverMd: string;
+  // A pack no longer implies a cover letter: most applications do not want one,
+  // so the metadata falls back to the review queue when it is absent. Requiring
+  // cover-letter.md here 404'd every clean pack.
+  let coverMd = "";
   try {
     coverMd = await readFile(path.join(dir, "cover-letter.md"), "utf-8");
-  } catch {
-    return null;
-  }
-  const url = (coverMd.match(/\*\*URL:\*\*\s+(\S+)/) || [])[1] || "";
+  } catch {}
+
+  let url = (coverMd.match(/\*\*URL:\*\*\s+(\S+)/) || [])[1] || "";
   const heading = (coverMd.match(/^# Cover letter\s*-\s*(.+?):\s*(.+)$/m) || []);
-  const company = heading[1] || "";
-  const role = heading[2] || "";
+  let company = heading[1] || "";
+  let role = heading[2] || "";
+
+  let answers: string | undefined;
+  try {
+    answers = await readFile(path.join(dir, "answers.md"), "utf-8");
+  } catch {}
+
+  if (!company || !role || !url) {
+    try {
+      const q = JSON.parse(await readFile(path.join(DATA_ROOT, "data", "review-queue.json"), "utf-8"));
+      const hit = (q.items ?? []).find((i: { slug: string }) => i.slug === slug);
+      if (hit) {
+        company = company || hit.company || "";
+        role = role || hit.role || "";
+        url = url || hit.applyUrl || hit.sourceUrl || "";
+      }
+    } catch {}
+  }
+  if (!company && !role && !coverMd && !answers) return null;
 
   let defaults: string | undefined;
   try {
@@ -50,7 +71,7 @@ async function loadPack(slug: string): Promise<PackData | null> {
   // Strip the markdown header and metadata, keep just the body.
   const body = coverMd.split(/^---\s*$/m).slice(1).join("---").trim();
 
-  return { slug, url, company, role, coverLetterMd: body, defaults, autofillReport, hasAutofillScreenshot };
+  return { slug, url, company, role, coverLetterMd: body, answers, defaults, autofillReport, hasAutofillScreenshot };
 }
 
 export default async function PackPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -115,6 +136,16 @@ export default async function PackPage({ params }: { params: Promise<{ slug: str
         </div>
       </section>
 
+      {pack.answers && (
+        <section className="mb-8">
+          <h3 className="text-xs uppercase tracking-wider text-slate-500 font-mono mb-3">Application answers</h3>
+          <pre className="px-4 py-3 bg-slate-950 border border-slate-800 rounded-md text-xs leading-relaxed text-slate-200 overflow-x-auto whitespace-pre-wrap font-mono">
+            {pack.answers}
+          </pre>
+        </section>
+      )}
+
+      {pack.coverLetterMd && (
       <section className="mb-8">
         <h3 className="text-xs uppercase tracking-wider text-slate-500 font-mono mb-3 flex items-center justify-between">
           <span>Cover letter (copy-paste ready)</span>
@@ -126,6 +157,7 @@ export default async function PackPage({ params }: { params: Promise<{ slug: str
           value={pack.coverLetterMd}
         />
       </section>
+      )}
 
       {pack.autofillReport ? (
         <section className="mb-8">

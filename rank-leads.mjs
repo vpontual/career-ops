@@ -155,23 +155,67 @@ async function saveScores(scores) {
 
 // ── LLM scoring ───────────────────────────────────────────────────────────
 
-const SYSTEM_PROMPT = `You are a job-fit scorer. Given a candidate's resume and a job description, return ONLY a JSON object with this exact shape — no prose, no markdown fences:
+const SYSTEM_PROMPT = `You are a job-fit ANALYST, not a scorer. Do not rate the job. Report observable facts about it as JSON — no prose, no markdown fences:
 
 {
-  "score": <number 1-5, where 5 = exceptional fit, 1 = wrong role>,
-  "archetype": "<one of: AI Product PM | Founding/Early PM | Senior PM | Director/Head of Product | Other>",
-  "verdict": "<one short sentence: why this fit score>",
-  "redFlags": "<empty string or 1-2 concerns: geo mismatch, junior level, narrow domain, etc>"
+  "archetype": "<one of: AI Product PM | Founding/Early PM | Senior PM | Director/Head of Product | Product Marketing | Other>",
+  "aiNative": <true only if the PRODUCT this role owns is itself AI/ML — an LLM app, model tooling, inference infra, an AI feature surface. false for a conventional product at a company that merely uses AI internally>,
+  "geo": "<one of: nyc | remote-us | hybrid-nyc | hybrid-elsewhere | onsite-elsewhere | unclear>",
+  "level": "<one of: below | at | above — relative to Senior PM / Principal / Director. 'below' means new-grad, associate, or 0-3 years>",
+  "leadGen": <true if a Product Marketing title is really demand generation, pipeline, campaigns, or sales enablement rather than explaining the product to customers>,
+  "technicalScreen": <true if the JD requires coding tests, take-home assignments, SQL tests, or live technical exercises>,
+  "compLow": <lowest stated base salary as a plain number, or null if not stated>,
+  "verdict": "<one short sentence: what this role actually is>",
+  "redFlags": "<empty string or 1-2 concrete concerns>"
 }
 
-Scoring scale:
-  5 = perfect match: AI/product PM role, senior IC level, NYC/remote-US, comp likely ≥$150K
-  4 = strong match: PM role in target archetype with one secondary concern (geo, comp, niche)
-  3 = workable: senior PM but adjacent domain or unclear fit
-  2 = weak: title matches but role/level/geo wrong
-  1 = drop: misclassified or off-target
+Report what the JD says. If it does not say, use null or "unclear" rather than guessing. JSON only. /no_think`;
 
-Be honest. Most jobs are 2-3. Reserve 4-5 for genuinely strong matches. JSON only.`;
+// VP's policy lives here, in code, not in the prompt. A prompt-side rubric
+// drifted badly: it told the model "most jobs are 2-3" while defining tier 4 as
+// "target archetype with one secondary concern", which fits nearly every senior
+// PM posting in NYC. The result was 32% of the board at tier 4+, so the tier
+// stopped meaning anything and the review queue could not be built from it.
+//
+// The model now reports facts; these rules turn facts into a score the same way
+// every time, and changing VP's priorities means editing this function.
+function scoreFromFacts(f) {
+  // Hard gates — things VP will not do, which no upside can offset.
+  //
+  // leadGen is only a gate on Product Marketing titles. Applied to every
+  // archetype it fired on ordinary PM roles at Stripe, Pinecone and Writer
+  // that merely mentioned go-to-market, and buried four good roles at tier 1.
+  if (f.leadGen && f.archetype === 'Product Marketing') return 1;
+  if (f.level === 'below') return 1;                          // not entry level
+  if (f.geo === 'onsite-elsewhere') return 1;                 // he is in NYC
+  if (f.geo === 'hybrid-elsewhere') return 1;                 // weekly flights
+
+  let score = 3;                                              // a plausible role
+
+  // The thesis: AI-native product work is what he is actually hunting.
+  if (f.aiNative) score += 1;
+
+  // Seniority he has earned. Director/Head and Founding are the stretch he wants.
+  if (f.archetype === 'Director/Head of Product' || f.archetype === 'Founding/Early PM') score += 1;
+
+  // Comp: a stated band at or above his floor is real signal. An unstated band
+  // is neutral — compLow is null there, never 0 — so silence costs nothing.
+  if (f.compLow != null && f.compLow >= 150000) score += 1;
+  if (f.compLow != null && f.compLow < 120000) score -= 1;
+
+  // A coding screen makes the role unwinnable for him regardless of fit.
+  if (f.technicalScreen) score -= 2;
+
+  // Geography he can work is assumed, not rewarded; only ambiguity costs.
+  if (f.geo === 'unclear') score -= 1;
+
+  // Tier 5 is reserved for the thesis. A well-paid senior non-AI role is a
+  // real option and should reach 4, but it is not what this search is for, and
+  // letting comp alone buy a 5 is what made the old top tier meaningless.
+  if (!f.aiNative) score = Math.min(score, 4);
+
+  return Math.max(1, Math.min(5, score));
+}
 
 function buildUserPrompt(jd, resume, targets) {
   const body = jd.body.slice(0, 6000);
@@ -239,9 +283,22 @@ async function scoreOne(jd, resume, targets) {
       const data = await res.json();
       const content = data?.message?.content ?? '';
       const parsed = parseLLMJson(content);
-      return {
-        score: Number(parsed.score) || 0,
+      const facts = {
         archetype: String(parsed.archetype || '').slice(0, 60),
+        aiNative: parsed.aiNative === true,
+        geo: String(parsed.geo || 'unclear').slice(0, 24),
+        level: String(parsed.level || 'at').slice(0, 12),
+        leadGen: parsed.leadGen === true,
+        technicalScreen: parsed.technicalScreen === true,
+        compLow: Number.isFinite(Number(parsed.compLow)) && Number(parsed.compLow) > 0
+          ? Number(parsed.compLow)
+          : null,
+      };
+      return {
+        // Score is derived, never taken from the model. Facts are kept so a
+        // score can always be explained and the policy re-run without re-asking.
+        score: scoreFromFacts(facts),
+        ...facts,
         verdict: String(parsed.verdict || '').slice(0, 240),
         redFlags: String(parsed.redFlags || '').slice(0, 200),
       };

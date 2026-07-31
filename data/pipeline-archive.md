@@ -1,0 +1,625 @@
+# Pipeline archive
+
+Rows removed from the board by prune-stale.mjs. Kept so a bad prune is recoverable.
+
+- 2026-07-31 | age 120d | https://job-boards.greenhouse.io/anthropic/jobs/4985920008 | Anthropic | Product Manager, Claude Code
+- 2026-07-31 | age 120d | https://job-boards.greenhouse.io/anthropic/jobs/5127559008 | Anthropic | Product Manager, Consumer
+- 2026-07-31 | age 112d | https://job-boards.greenhouse.io/anthropic/jobs/5153773008 | Anthropic | Product Manager, Monetization
+- 2026-07-31 | age 120d | https://job-boards.greenhouse.io/anthropic/jobs/5097067008 | Anthropic | Research Product Manager, Model Behaviors
+- 2026-07-31 | age 111d | https://job-boards.greenhouse.io/anthropic/jobs/5183006008 | Anthropic | Senior Product Manager, Education Labs
+- 2026-07-31 | age 100d | https://jobs.ashbyhq.com/perplexity/f25e190e-0508-4707-b575-fcaed358dc13 | Perplexity | Product Manager (Builder)
+- 2026-07-31 | age 233d | https://jobs.ashbyhq.com/pinecone/7261adcb-026d-4552-8f89-7a46156c40c5 | Pinecone | Principal Product Manager, Database
+- 2026-07-31 | age 170d | https://jobs.ashbyhq.com/pinecone/24f9a4e3-472d-4e63-908c-2653c0d8b612 | Pinecone | Principal Product Manager, Knowledge
+- 2026-07-31 | age 122d | https://job-boards.greenhouse.io/arizeai/jobs/5818115004 | Arize AI | AI Product Manager
+- 2026-07-31 | age 248d | https://jobs.ashbyhq.com/langchain/27af5f96-b287-4bcc-8679-f96686dc7c8d | LangChain | Product Manager, LangSmith
+- 2026-07-31 | age 334d | https://jobs.ashbyhq.com/sierra/422cb7bb-ab03-447b-808c-6d72f59bbd2f | Sierra | Product Manager, Agent Data Platform
+- 2026-07-31 | age 140d | https://jobs.ashbyhq.com/sierra/effd7cd2-8a28-4bae-a3b8-40720ba09717 | Sierra | Product Manager, Agent Development
+- 2026-07-31 | age 343d | https://jobs.ashbyhq.com/sierra/fed8ca9a-0bb7-44ef-a541-0be6a8ae7bba | Sierra | Product Manager, Agent Development (German speaking)
+- 2026-07-31 | age 343d | https://jobs.ashbyhq.com/sierra/38f06024-4ee9-47d6-a36f-f2791ac1e412 | Sierra | Product Manager, Agent Development (French speaking)
+- 2026-07-31 | age 343d | https://jobs.ashbyhq.com/sierra/4892f01e-8871-4b32-8963-527f1cf8db5d | Sierra | Product Manager, Agent Development (Spanish speaking)
+- 2026-07-31 | age 238d | https://jobs.ashbyhq.com/sierra/9dc1651d-43e9-4970-a757-a5223cef1c4d | Sierra | Product Manager, Agent Development (Arabic speaking)
+- 2026-07-31 | age 238d | https://jobs.ashbyhq.com/sierra/edf44ab4-538b-4e65-b93c-392c950b9fe6 | Sierra | Product Manager, Agent Development
+- 2026-07-31 | age 238d | https://jobs.ashbyhq.com/sierra/2e07f536-bbaa-4cc0-957a-774ddf99de64 | Sierra | Product Manager, Agent Development (Italian speaking)
+- 2026-07-31 | age 174d | https://jobs.ashbyhq.com/sierra/10d2e2f1-6657-40c9-b6fb-6999c76df6cf | Sierra | Product Manager, Agent SDK
+- 2026-07-31 | age 153d | https://jobs.ashbyhq.com/sierra/65eb2c63-c936-4e8e-87e7-ea080dcdca73 | Sierra | Product Manager, Agent Development - Healthcare
+- 2026-07-31 | age 107d | https://jobs.ashbyhq.com/sierra/0c66e8ed-1c18-4b64-ad27-a522a866b6e1 | Sierra | Product Manager, Voice
+- 2026-07-31 | age 107d | https://jobs.ashbyhq.com/sierra/5aaa2eeb-92bc-4b0a-901e-8e091eff819e | Sierra | Product Manager, Agent Studio
+- 2026-07-31 | age 110d | https://jobs.ashbyhq.com/sierra/22ba107d-de01-4aa3-98fc-838cccad760c | Sierra | Product Manager, Ghostwriter
+- 2026-07-31 | age 106d | https://boards.greenhouse.io/figma/jobs/5830640004?gh_jid=5830640004 | Figma | Product Manager, AI Platform
+- 2026-07-31 | age 106d | https://boards.greenhouse.io/figma/jobs/5505263004?gh_jid=5505263004 | Figma | Product Manager, Design Tools
+- 2026-07-31 | age 106d | https://boards.greenhouse.io/figma/jobs/5819866004?gh_jid=5819866004 | Figma | Product Manager, Figma Weave (New York, United States)
+- 2026-07-31 | age 127d | https://jobs.ashbyhq.com/decagon/dcf9b561-f2fb-422b-88a9-33ce76e96608 | Decagon | Senior Agent Product Manager
+- 2026-07-31 | age 188d | https://jobs.ashbyhq.com/decagon/d790a2a2-958d-4f49-96ed-adbd68d2e6ce | Decagon | Product Manager
+- 2026-07-31 | age 189d | https://jobs.ashbyhq.com/decagon/0563a376-0881-48c6-92ae-d1ac4ee58765 | Decagon | Product Manager, Voice Agent
+- 2026-07-31 | age 155d | https://jobs.ashbyhq.com/decagon/6321ea2f-4e21-4c18-8859-b4ef5489b6fe | Decagon | Product Manager, Research
+- 2026-07-31 | age 125d | https://job-boards.greenhouse.io/airtable/jobs/8199012002 | Airtable | Product Manager, AI
+- 2026-07-31 | age 125d | https://job-boards.greenhouse.io/airtable/jobs/8245333002 | Airtable | Product Manager, Omni
+- 2026-07-31 | age 113d | https://job-boards.greenhouse.io/gleanwork/jobs/4659409005 | Glean | Forward Deployed Product Manager
+- 2026-07-31 | age 113d | https://job-boards.greenhouse.io/gleanwork/jobs/4007711005 | Glean | Product Manager
+- 2026-07-31 | age 113d | https://job-boards.greenhouse.io/gleanwork/jobs/4525297005 | Glean | Product Manager, Agent Security & Governance
+- 2026-07-31 | age 113d | https://job-boards.greenhouse.io/gleanwork/jobs/4525518005 | Glean | Product Manager, AI Quality
+- 2026-07-31 | age 113d | https://job-boards.greenhouse.io/gleanwork/jobs/4597178005 | Glean | Product Manager, Connectors
+- 2026-07-31 | age 113d | https://job-boards.greenhouse.io/gleanwork/jobs/4641940005 | Glean | Product Manager, Glean Protect (Security & Governance)
+- 2026-07-31 | age 296d | https://jobs.ashbyhq.com/harvey/8d092528-2554-42e4-a68b-67307b48e6aa | Harvey | Staff Product Manager
+- 2026-07-31 | age 184d | https://jobs.ashbyhq.com/harvey/2cbe13b9-a44b-47d3-abb8-45d9a98b05f6 | Harvey | Staff Product Manager, New Verticals
+- 2026-07-31 | age 231d | https://jobs.ashbyhq.com/harvey/e5272fbe-4431-4841-bf00-b9f59812b82a | Harvey | Innovation Product Manager
+- 2026-07-31 | age 231d | https://jobs.ashbyhq.com/harvey/3b63c938-eee5-4850-a14d-930b66e57ef6 | Harvey | Innovation Product Manager, EMEA
+- 2026-07-31 | age 118d | https://jobs.ashbyhq.com/harvey/288a7a0d-ed93-4574-a5c0-c6a37d692324 | Harvey | Staff Product Manager, Embedded Experience
+- 2026-07-31 | age 107d | https://jobs.ashbyhq.com/harvey/39c40209-798d-47e9-a600-742c876c536b | Harvey | Staff Product Manager, Agent Platform
+- 2026-07-31 | age 170d | https://jobs.ashbyhq.com/claylabs/749a6373-0979-424a-abc9-9cfc511a5e44 | Clay | Product Manager, Enrichment & AI
+- 2026-07-31 | age 247d | https://jobs.lever.co/mistral/6201f9a0-233f-4de3-a8cc-65b75e99370f | Mistral AI | Product Manager, AI Studio
+- 2026-07-31 | age 252d | https://jobs.lever.co/mistral/e769b26a-90e9-4c6f-877c-a145a93f705d | Mistral AI | Product Manager, Audio
+- 2026-07-31 | age 107d | https://jobs.lever.co/mistral/ca22a1ac-c87e-4463-914a-6753ca79318c | Mistral AI | Product Manager, Cloud Partnerships
+- 2026-07-31 | age 233d | https://jobs.lever.co/mistral/c08c3a0f-9899-4e6c-8195-8b1cc24c56ff | Mistral AI | Product Manager, Context & Search
+- 2026-07-31 | age 227d | https://jobs.lever.co/mistral/11087966-f183-44b1-adc9-3a400c1f52ad | Mistral AI | Product Manager, Forge
+- 2026-07-31 | age 380d | https://jobs.ashbyhq.com/cohere/2a179d34-c391-48bd-b2a3-b04f468a3840 | Cohere | Product Manager, Search and Embeddings
+- 2026-07-31 | age 141d | https://jobs.ashbyhq.com/cohere/a8122632-cc3b-4a1a-bd78-4b4b9466cb38 | Cohere | Product Manager, Safety Research
+- 2026-07-31 | age 134d | https://jobs.ashbyhq.com/cohere/2a7f1fad-05ff-4260-af36-556d1d694775 | Cohere | Product Manager, Public Sector & Defence
+- 2026-07-31 | age 134d | https://jobs.ashbyhq.com/cohere/1d1b300d-254b-48c4-958f-99c6b907f295 | Cohere | Product Manager, Agent Harness & Modelling
+- 2026-07-31 | age 135d | https://jobs.ashbyhq.com/notion/35785e61-c4c3-44ec-a401-6741d89dd16a | Notion | Product Manager, Enterprise
+- 2026-07-31 | age 185d | https://jobs.ashbyhq.com/replit/cf236c47-218b-4a31-b0b6-d6ed12a8e077 | Replit | Senior Product Manager
+- 2026-07-31 | age 113d | https://job-boards.greenhouse.io/gleanwork/jobs/4659407005 | Glean | Forward Deployed Product Manager
+- 2026-07-31 | age 113d | https://job-boards.greenhouse.io/gleanwork/jobs/4629292005 | Glean | Product Manager
+- 2026-07-31 | age 113d | https://job-boards.greenhouse.io/gleanwork/jobs/4482380005 | Glean | Product Manager, Connectors
+- 2026-07-31 | age 338d | https://jobs.ashbyhq.com/decagon/e31c0645-7325-43b9-9d58-0acc40904240 | Decagon | Senior Agent Product Manager
+- 2026-07-31 | age 121d | https://jobs.ashbyhq.com/harvey/7b468987-7236-4239-9e56-6eb7f92b4531 | Harvey | Staff Product Manager
+- 2026-07-31 | age 107d | https://jobs.ashbyhq.com/harvey/549b549c-b589-4432-b646-83a649c33e7c | Harvey | Staff Product Manager, Agent Platform
+- 2026-07-31 | age 478d | https://jobs.ashbyhq.com/sierra/b4b762e6-8ce7-4ea7-b9b3-40c04f62135a | Sierra | Product Manager, Agent Development
+- 2026-07-31 | age 113d | https://job-boards.greenhouse.io/gleanwork/jobs/4651950005 | Glean | Forward Deployed Product Manager
+- 2026-07-31 | age 178d | https://jobs.ashbyhq.com/decagon/ee6c3e3f-b6ce-4945-a367-172d2b62ccf8 | Decagon | Senior Agent Product Manager
+- 2026-07-31 | age 269d | https://jobs.ashbyhq.com/sierra/dc443fd1-14bd-493c-9397-c3713c78321c | Sierra | Product Manager, Agent Development
+- 2026-07-31 | age 107d | https://jobs.ashbyhq.com/harvey/d71c8e88-f5da-47f7-b08b-d68b7c4d35e8 | Harvey | Staff Product Manager, Agent Platform
+- 2026-07-31 | age 176d | https://jobs.ashbyhq.com/character/5aa34edd-33b0-4e46-b8ff-439b42704ccf | Character.AI | Product Manager, Core Product
+- 2026-07-31 | age 111d | https://jobs.ashbyhq.com/suno/275eaa39-e1d5-4007-9164-d63aaf45dd1c | Suno | Senior Product Manager, Payments Platform
+- 2026-07-31 | age 111d | https://jobs.ashbyhq.com/suno/0740427c-6afa-4f3f-a3e1-1675fa23301c | Suno | Product Manager, Artists & Creators
+- 2026-07-31 | age 126d | https://jobs.ashbyhq.com/lambda/e0327962-391e-45d2-9428-bc5e109c8dfa | Lambda Labs | Staff Product Manager
+- 2026-07-31 | age 126d | https://jobs.ashbyhq.com/lambda/a78dfe47-1176-4da7-b9da-0e18551ea434 | Lambda Labs | Staff External Product Manager
+- 2026-07-31 | age 1687d | https://jobs.ashbyhq.com/lightning/2d77b496-ab0d-4e54-bcf8-33260d1bab6b | Lightning AI | Technical Product Manager (Remote)
+- 2026-07-31 | age 175d | https://job-boards.greenhouse.io/runpod/jobs/5112001008 | RunPod | Senior Product Manager
+- 2026-07-31 | age 219d | https://jobs.ashbyhq.com/crusoe/6cc6dcf0-e3a2-49f7-8ac5-2ecf691d346f | Crusoe | Staff Product Manager, Managed Intelligence (SF/Sunnyvale)
+- 2026-07-31 | age 119d | https://jobs.ashbyhq.com/crusoe/68cbbe99-8fd8-4923-ad2b-f119206e274b | Crusoe | Staff Product Manager, Compute (SF, Sunnyvale)
+- 2026-07-31 | age 120d | https://jobs.ashbyhq.com/crusoe/ed9d0936-5f34-42a5-bd41-f64c14451267 | Crusoe | Staff Product Manager, Orchestration
+- 2026-07-31 | age 290d | https://jobs.ashbyhq.com/llamaindex/0d746429-0038-4ab1-950e-321f09084d4b | LlamaIndex | Lead Product Manager
+- 2026-07-31 | age 135d | https://jobs.ashbyhq.com/anyscale/b988fd59-9034-486c-8d52-96012da739b1 | Anyscale | Product Manager - Observability
+- 2026-07-31 | age 385d | https://jobs.ashbyhq.com/anyscale/71f0d335-6b29-437e-a7ae-ec1f3fc0b143 | Anyscale | Senior / Staff Product Manager - Ray Data
+- 2026-07-31 | age 100d | https://stripe.com/jobs/search?gh_jid=7655023 | Stripe | Product Lead, AI
+- 2026-07-31 | age 100d | https://stripe.com/jobs/search?gh_jid=7561053 | Stripe | Product Manager, Banking as a Service
+- 2026-07-31 | age 100d | https://stripe.com/jobs/search?gh_jid=7721834 | Stripe | Product Manager, Capital
+- 2026-07-31 | age 100d | https://stripe.com/jobs/search?gh_jid=7561551 | Stripe | Product Manager, Commerce Systems
+- 2026-07-31 | age 100d | https://stripe.com/jobs/search?gh_jid=7768979 | Stripe | Product Manager, EMEA Payments Lead
+- 2026-07-31 | age 100d | https://stripe.com/jobs/search?gh_jid=7812346 | Stripe | Product Manager IC-02
+- 2026-07-31 | age 100d | https://stripe.com/jobs/search?gh_jid=7392697 | Stripe | Product Manager, Link Consumer Product
+- 2026-07-31 | age 100d | https://stripe.com/jobs/search?gh_jid=7486955 | Stripe | Product Manager, Local Payment Methods EMEA
+- 2026-07-31 | age 100d | https://stripe.com/jobs/search?gh_jid=7737124 | Stripe | Product Manager: New Grad Accelerator
+- 2026-07-31 | age 100d | https://stripe.com/jobs/search?gh_jid=7176530 | Stripe | Product Manager, Payments
+- 2026-07-31 | age 100d | https://stripe.com/jobs/search?gh_jid=7580706 | Stripe | Product Manager, Payments Intelligence
+- 2026-07-31 | age 100d | https://stripe.com/jobs/search?gh_jid=6473321 | Stripe | Product Manager, Revenue and Financial Automation
+- 2026-07-31 | age 100d | https://stripe.com/jobs/search?gh_jid=7625842 | Stripe | Product Manager, Risk & Compliance
+- 2026-07-31 | age 100d | https://stripe.com/jobs/search?gh_jid=7834628 | Stripe | Product Manager, SEA
+- 2026-07-31 | age 100d | https://stripe.com/jobs/search?gh_jid=6651889 | Stripe | Product Manager, Stripe Infrastructure
+- 2026-07-31 | age 100d | https://stripe.com/jobs/search?gh_jid=7440429 | Stripe | Product Manager, Support Products - Support Experience
+- 2026-07-31 | age 100d | https://stripe.com/jobs/search?gh_jid=7397265 | Stripe | Product Manager, Terminal Device Expansion
+- 2026-07-31 | age 100d | https://stripe.com/jobs/search?gh_jid=6683456 | Stripe | Product Manager, Terminal - Unified Commerce
+- 2026-07-31 | age 100d | https://stripe.com/jobs/search?gh_jid=7812856 | Stripe | Staff Product Manager, Enterprise (Industries)
+- 2026-07-31 | age 100d | https://stripe.com/jobs/search?gh_jid=7819059 | Stripe | Staff Product Manager, Payments
+- 2026-07-31 | age 100d | https://stripe.com/jobs/search?gh_jid=7550590 | Stripe | Staff Product Manager, Stripe Apps and Extensibility Platform
+- 2026-07-31 | age 110d | https://www.brex.com/careers/8438581002?gh_jid=8438581002 | Brex | Group Product Manager
+- 2026-07-31 | age 110d | https://www.brex.com/careers/8432702002?gh_jid=8432702002 | Brex | Staff Product Manager
+- 2026-07-31 | age 224d | https://jobs.ashbyhq.com/ramp/9972df9e-4133-4e2c-9305-49c285b76506 | Ramp | Product Manager
+- 2026-07-31 | age 147d | https://jobs.ashbyhq.com/ramp/bc828c32-cac3-42b4-9d26-ce80af957da1 | Ramp | Product Manager
+- 2026-07-31 | age 106d | https://job-boards.greenhouse.io/mercury/jobs/5867562004 | Mercury | Senior Product Manager - API & Agentic Banking
+- 2026-07-31 | age 106d | https://job-boards.greenhouse.io/mercury/jobs/5832762004 | Mercury | Senior Product Manager - Ledger
+- 2026-07-31 | age 106d | https://job-boards.greenhouse.io/mercury/jobs/5817294004 | Mercury | Senior Product Manager - Mission Control
+- 2026-07-31 | age 99d | https://job-boards.greenhouse.io/intercom/jobs/5663703 | Intercom | Product Manager
+- 2026-07-31 | age 104d | https://job-boards.greenhouse.io/intercom/jobs/7511861 | Intercom | Senior Product Manager, Web
+- 2026-07-31 | age 104d | https://job-boards.greenhouse.io/intercom/jobs/6758904 | Intercom | Senior Product Manager, Web (Narrative/Content)
+- 2026-07-31 | age 101d | https://job-boards.greenhouse.io/intercom/jobs/5379326 | Intercom | Staff Product Manager
+- 2026-07-31 | age 101d | https://job-boards.greenhouse.io/intercom/jobs/5663720 | Intercom | Staff Product Manager
+- 2026-07-31 | age 100d | https://job-boards.greenhouse.io/intercom/jobs/7464291 | Intercom | Staff/Senior AI Product Manager
+- 2026-07-31 | age 143d | https://job-boards.greenhouse.io/algolia/jobs/5435426004 | Algolia | Director, Product Management (AI Search)
+- 2026-07-31 | age 143d | https://job-boards.greenhouse.io/algolia/jobs/5729016004 | Algolia | Principal Product Manager, Tech Platform
+- 2026-07-31 | age 143d | https://job-boards.greenhouse.io/algolia/jobs/5725185004 | Algolia | Senior Product Manager, Data
+- 2026-07-31 | age 136d | https://jobs.elastic.co/jobs?gh_jid=7624142&gh_jid=7624142 | Elastic | Principal Product Manager AI-driven, Observability
+- 2026-07-31 | age 136d | https://jobs.elastic.co/jobs?gh_jid=7635293&gh_jid=7635293 | Elastic | Senior Product Manager - Logs, Observability
+- 2026-07-31 | age 136d | https://jobs.elastic.co/jobs?gh_jid=7603577&gh_jid=7603577 | Elastic | Technical Product Manager
+- 2026-07-31 | age 114d | https://boards.greenhouse.io/descript/jobs/6576153003?gh_jid=6576153003 | Descript | Product Manager, AI Models
+- 2026-07-31 | age 114d | https://boards.greenhouse.io/descript/jobs/7606367003?gh_jid=7606367003 | Descript | Product Manager, API & Platform
+- 2026-07-31 | age 114d | https://boards.greenhouse.io/descript/jobs/7413750003?gh_jid=7413750003 | Descript | Product Manager, Editor
+- 2026-07-31 | age 163d | https://jobs.ashbyhq.com/tavus/7e517f76-1e34-4bab-a1dc-fcbec890d804 | Tavus | Product Manager
+- 2026-07-31 | age 112d | https://careers.datadoghq.com/detail/7798672/?gh_jid=7798672 | Datadog | Director of Product Management, AI Observability
+- 2026-07-31 | age 120d | https://careers.datadoghq.com/detail/7616721/?gh_jid=7616721 | Datadog | Director of Product Management - Applied AI
+- 2026-07-31 | age 120d | https://careers.datadoghq.com/detail/7583609/?gh_jid=7583609 | Datadog | Director, Product Management - Core Platforms
+- 2026-07-31 | age 120d | https://careers.datadoghq.com/detail/7679601/?gh_jid=7679601 | Datadog | Director, Product Management - Security
+- 2026-07-31 | age 119d | https://careers.datadoghq.com/detail/7654981/?gh_jid=7654981 | Datadog | Group Product Manager - Containers
+- 2026-07-31 | age 119d | https://careers.datadoghq.com/detail/7608826/?gh_jid=7608826 | Datadog | Group Product Manager - Threat Detection and Incident Response (Cloud SIEM)
+- 2026-07-31 | age 111d | https://careers.datadoghq.com/detail/7808839/?gh_jid=7808839 | Datadog | Product Manager II - AI & Data Security
+- 2026-07-31 | age 120d | https://careers.datadoghq.com/detail/7646496/?gh_jid=7646496 | Datadog | Product Manager II - Cloud Detection & Response
+- 2026-07-31 | age 120d | https://careers.datadoghq.com/detail/7641271/?gh_jid=7641271 | Datadog | Product Manager II - Code Security
+- 2026-07-31 | age 120d | https://careers.datadoghq.com/detail/7704689/?gh_jid=7704689 | Datadog | Product Manager II - Custom Metrics
+- 2026-07-31 | age 118d | https://careers.datadoghq.com/detail/7776413/?gh_jid=7776413 | Datadog | Product Manager II - Identity Security
+- 2026-07-31 | age 120d | https://careers.datadoghq.com/detail/7713577/?gh_jid=7713577 | Datadog | Product Manager II, Log Management
+- 2026-07-31 | age 120d | https://careers.datadoghq.com/detail/7144556/?gh_jid=7144556 | Datadog | Product Manager II - Model Lab
+- 2026-07-31 | age 120d | https://careers.datadoghq.com/detail/7763117/?gh_jid=7763117 | Datadog | Product Manager II - Network Path
+- 2026-07-31 | age 120d | https://careers.datadoghq.com/detail/7694469/?gh_jid=7694469 | Datadog | Product Manager II – Real User Monitoring (RUM)
+- 2026-07-31 | age 112d | https://careers.datadoghq.com/detail/7800765/?gh_jid=7800765 | Datadog | Product Manager II – Risk-Based Alerting (SIEM)
+- 2026-07-31 | age 120d | https://careers.datadoghq.com/detail/7555509/?gh_jid=7555509 | Datadog | Product Manager II - Semantic & Agentic Search AI
+- 2026-07-31 | age 120d | https://careers.datadoghq.com/detail/7696404/?gh_jid=7696404 | Datadog | Senior Product Manager – AI Remediation
+- 2026-07-31 | age 101d | https://careers.datadoghq.com/detail/7833865/?gh_jid=7833865 | Datadog | Senior Product Manager - Code Security
+- 2026-07-31 | age 114d | https://careers.datadoghq.com/detail/7785350/?gh_jid=7785350 | Datadog | Senior Product Manager - Data Agent
+- 2026-07-31 | age 113d | https://careers.datadoghq.com/detail/7723988/?gh_jid=7723988 | Datadog | Senior Product Manager - Integrations & Ecosystem
+- 2026-07-31 | age 120d | https://careers.datadoghq.com/detail/7555533/?gh_jid=7555533 | Datadog | Senior Product Manager, Networking
+- 2026-07-31 | age 120d | https://careers.datadoghq.com/detail/7560326/?gh_jid=7560326 | Datadog | Senior Product Manager - Notebooks
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=8466731002 | Databricks | Learning Product Manager Lead
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=8133727002 | Databricks | Product Manager, New Grad (2026) - Amsterdam
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=8145800002 | Databricks | Product Manager, New Grad (2026) - Berlin
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=8200284002 | Databricks | Sr. Product Manager, Compute Platform
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=8136204002 | Databricks | Sr. Product Manager, Databricks AI
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=7680573002 | Databricks | Sr. Product Manager, Databricks Free Edition
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=8326513002 | Databricks | Sr. Product Manager, Databricks Repos
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=7863522002 | Databricks | Sr. Product Manager, Data Governance
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=7924423002 | Databricks | Sr. Product Manager, DBSQL
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=8186386002 | Databricks | Sr. Product Manager, Lakeflow
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=8387085002 | Databricks | Sr. Product Manager - Technical
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=7649411002 | Databricks | Staff Product Manager
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=8420609002 | Databricks | Staff Product Manager, AI Platform
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=8041821002 | Databricks | Staff Product Manager, Content Experience
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=7110509002 | Databricks | Staff Product Manager, Security
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=8420607002 | Databricks | Staff Product Manager, Serverless Workspaces
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=8394060002 | Databricks | Staff Product Manager - Technical
+- 2026-07-31 | age 110d | https://www.brex.com/careers/8438580002?gh_jid=8438580002 | Brex | Group Product Manager
+- 2026-07-31 | age 110d | https://www.brex.com/careers/8432698002?gh_jid=8432698002 | Brex | Staff Product Manager
+- 2026-07-31 | age 100d | https://stripe.com/jobs/search?gh_jid=7547596 | Stripe | Product Manager, Local Payment Methods EMEA
+- 2026-07-31 | age 104d | https://job-boards.greenhouse.io/intercom/jobs/7511855 | Intercom | Senior Product Manager, Web
+- 2026-07-31 | age 101d | https://job-boards.greenhouse.io/intercom/jobs/7371973 | Intercom | Staff Product Manager
+- 2026-07-31 | age 100d | https://job-boards.greenhouse.io/intercom/jobs/7464294 | Intercom | Staff/Senior AI Product Manager
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=8200462002 | Databricks | Sr. Product Manager, Compute Platform
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=8136071002 | Databricks | Sr. Product Manager, Databricks AI
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=8235785002 | Databricks | Sr. Product Manager, Databricks Free Edition
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=8326570002 | Databricks | Sr. Product Manager, Databricks Repos
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=7863365002 | Databricks | Sr. Product Manager, Data Governance
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=7929994002 | Databricks | Sr. Product Manager, DBSQL
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=7649409002 | Databricks | Staff Product Manager
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=8427940002 | Databricks | Staff Product Manager, AI Platform
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=8040989002 | Databricks | Staff Product Manager, Content Experience
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=7110499002 | Databricks | Staff Product Manager, Security
+- 2026-07-31 | age 112d | https://databricks.com/company/careers/open-positions/job?gh_jid=8427954002 | Databricks | Staff Product Manager, Serverless Workspaces
+- 2026-07-31 | age 99d | https://stripe.com/jobs/search?gh_jid=7651697 | Stripe | Product Manager, Local Payment Methods EMEA
+- 2026-07-31 | age 110d | https://www.brex.com/careers/8438584002?gh_jid=8438584002 | Brex | Group Product Manager
+- 2026-07-31 | age 110d | https://www.brex.com/careers/8432703002?gh_jid=8432703002 | Brex | Staff Product Manager
+- 2026-07-31 | age 100d | https://job-boards.greenhouse.io/intercom/jobs/7377200 | Intercom | Staff/Senior AI Product Manager
+- 2026-07-31 | age 98d | https://boards.greenhouse.io/inflectionai/jobs/4675986006?gh_jid=4675986006 | Inflection AI | Senior Product Manager, Consumer AI & Agents
+- 2026-07-31 | age 110d | https://www.brex.com/careers/8438582002?gh_jid=8438582002 | Brex | Group Product Manager
+- 2026-07-31 | age 110d | https://www.brex.com/careers/8433764002?gh_jid=8433764002 | Brex | Staff Product Manager
+- 2026-07-31 | age 97d | https://job-boards.greenhouse.io/vercel/jobs/5979660004 | Vercel | Pricing Product Manager
+- 2026-07-31 | age 248d | https://jobs.lever.co/mistral/7809b483-bdae-4964-97c7-5b8d232a142f | Mistral AI | Product Manager, Document Intelligence
+- 2026-07-31 | age 94d | https://jobs.ashbyhq.com/vapi/6d2c731b-64be-45cc-87c8-f6330d29b7f4 | Vapi | Product Manager - Enterprise & Governance
+- 2026-07-31 | age 171d | https://jobs.lever.co/mistral/650e0e53-dc35-4e61-9b46-6f7ef003d0be | Mistral AI | Product Manager, Mistral Vibe
+- 2026-07-31 | age 92d | https://jobs.ashbyhq.com/harvey/d022efd3-c3cc-459c-9925-ba5dbc8558b9 | Harvey | Group Product Manager, Knowledge Platform
+- 2026-07-31 | age 92d | https://jobs.ashbyhq.com/weaviate/c4c18609-c956-4a33-9a73-ad1d7680de6b | Weaviate | Product Manager, Database
+- 2026-07-31 | age 91d | https://jobs.ashbyhq.com/sierra/1e052261-0c89-4ccb-abfa-3820a1596a6e | Sierra | Product Manager, Infrastructure
+- 2026-07-31 | age 86d | https://jobs.ashbyhq.com/poolside/4d04f031-394c-4db3-90ee-298bec4d6814 | Poolside | Head of Product Experience
+- 2026-07-31 | age 86d | https://jobs.ashbyhq.com/crusoe/d6a78556-dc38-45ef-b8c9-43198feb9263 | Crusoe | Group Product Manager, Storage (SF, Sunnyvale, Seattle)
+- 2026-07-31 | age 86d | https://jobs.ashbyhq.com/crusoe/16d96420-c0eb-4e88-b2f0-3de0dfc1a535 | Crusoe | Group Product Manager, Storage (Denver)
+- 2026-07-31 | age 85d | https://job-boards.greenhouse.io/galileo/jobs/8535283002 | Galileo | Lead Product Manager, Clinical Experience
+- 2026-07-31 | age 85d | https://careers.datadoghq.com/detail/7899504/?gh_jid=7899504 | Datadog | Director, Product Management - Infrastructure Monitoring
+- 2026-07-31 | age 99d | https://app.welcometothejungle.com/jobs/aRnofuRt | App | New match: Senior Product Manager at Spotify
+- 2026-07-31 | age 100d | https://app.welcometothejungle.com/jobs/zSDUu1E7 | App | New match: Senior Product Manager at Spotify
+- 2026-07-31 | age 189d | https://app.welcometothejungle.com/jobs/ZAJMec1M | App | New match: Senior Product Manager at Spotify
+- 2026-07-31 | age 100d | https://app.welcometothejungle.com/jobs/hTaKRj7j | App | New match: Principal Product Manager at Spotify
+- 2026-07-31 | age 99d | https://app.welcometothejungle.com/jobs/Emo3-ZNv | App | New match: Principal Product Manager at Spotify
+- 2026-07-31 | age 100d | https://app.welcometothejungle.com/jobs/BUr_yETn | App | New match: Principal Product Manager at Spotify
+- 2026-07-31 | age 104d | https://app.welcometothejungle.com/jobs/s0g_rmDs | App | New match: Product Manager at Splice
+- 2026-07-31 | age 191d | https://app.welcometothejungle.com/jobs/UqQlEtaQ | App | New match: Product Manager at Splice
+- 2026-07-31 | age 101d | https://app.welcometothejungle.com/jobs/9pQBB74M | App | New match: Product Manager at Splice
+- 2026-07-31 | age 99d | https://app.welcometothejungle.com/jobs/OcxuTnFi | App | New match: Senior Product Manager at Amazon
+- 2026-07-31 | age 272d | https://app.welcometothejungle.com/jobs/6RQV2Yko | App | New match: Senior Product Manager at Amazon
+- 2026-07-31 | age 155d | https://app.welcometothejungle.com/jobs/cwPOFXH4 | App | New match: Senior Product Manager at Amazon
+- 2026-07-31 | age 413d | https://app.welcometothejungle.com/jobs/rk7USz-5 | App | New match: Principal Product Manager at Steadily
+- 2026-07-31 | age 99d | https://app.welcometothejungle.com/jobs/EHWFbj6k | App | New match: Principal Product Manager at Steadily
+- 2026-07-31 | age 99d | https://app.welcometothejungle.com/jobs/zXG059HW | App | New match: Principal Product Manager at Steadily
+- 2026-07-31 | age 94d | https://app.welcometothejungle.com/jobs/jwUkRSNK | App | New match: Senior Product Manager at HiBob
+- 2026-07-31 | age 185d | https://app.welcometothejungle.com/jobs/bPNvMbv- | App | New match: Senior Product Manager at HiBob
+- 2026-07-31 | age 184d | https://app.welcometothejungle.com/jobs/4irOSPau | App | New match: Senior Product Manager at HiBob
+- 2026-07-31 | age 97d | https://app.welcometothejungle.com/jobs/2dImc7vs | App | New match: Group Product Manager at The Farmer's Dog
+- 2026-07-31 | age 100d | https://app.welcometothejungle.com/jobs/szS7Uwtl | App | New match: Group Product Manager at The Farmer's Dog
+- 2026-07-31 | age 273d | https://app.welcometothejungle.com/jobs/itZqsY6B | App | New match: Group Product Manager at The Farmer's Dog
+- 2026-07-31 | age 98d | https://app.welcometothejungle.com/jobs/yj_aXt3U | App | New match: Senior Product Manager at Owner.com
+- 2026-07-31 | age 101d | https://app.welcometothejungle.com/jobs/RZ1PaC1d | App | New match: Senior Product Manager at Owner.com
+- 2026-07-31 | age 94d | https://app.welcometothejungle.com/jobs/9jc3-E4I | App | New match: Senior Product Manager at Owner.com
+- 2026-07-31 | age 178d | https://app.welcometothejungle.com/jobs/FdSf_KJq | App | New match: Product Manager at Patreon
+- 2026-07-31 | age 94d | https://app.welcometothejungle.com/jobs/V1REVD1q | App | New match: Product Manager at Patreon
+- 2026-07-31 | age 93d | https://app.welcometothejungle.com/jobs/4vRMrEhU | App | New match: Product Manager at Patreon
+- 2026-07-31 | age 94d | https://app.welcometothejungle.com/jobs/lmlVWNZZ | App | New match: Senior Product Manager at Hims & Hers
+- 2026-07-31 | age 119d | https://app.welcometothejungle.com/jobs/F62ZU5-R | App | New match: Senior Product Manager at Hims & Hers
+- 2026-07-31 | age 98d | https://app.welcometothejungle.com/jobs/SRygqtna | App | New match: Senior Product Manager at Hims & Hers
+- 2026-07-31 | age 92d | https://app.welcometothejungle.com/jobs/T429B54q | App | New match: Senior Product Manager at Dropbox
+- 2026-07-31 | age 92d | https://app.welcometothejungle.com/jobs/y5YRRv3u | App | New match: Senior Product Manager at Dropbox
+- 2026-07-31 | age 94d | https://app.welcometothejungle.com/jobs/itXGhH74 | App | New match: Senior Product Manager at Dropbox
+- 2026-07-31 | age 97d | https://app.welcometothejungle.com/jobs/Wa6fM9Cg | App | New match: Senior Product Manager at MagicLinks
+- 2026-07-31 | age 94d | https://app.welcometothejungle.com/jobs/N2VFUghs | App | New match: Senior Product Manager at MagicLinks
+- 2026-07-31 | age 184d | https://app.welcometothejungle.com/jobs/GVBstLUV | App | New match: Senior Product Manager at MagicLinks
+- 2026-07-31 | age 90d | https://app.welcometothejungle.com/jobs/f7Tn0X7e | App | New match: Staff Product Manager at ClickUp
+- 2026-07-31 | age 92d | https://app.welcometothejungle.com/jobs/x75q-zgh | App | New match: Staff Product Manager at ClickUp
+- 2026-07-31 | age 343d | https://app.welcometothejungle.com/jobs/bnPEwas3 | App | New match: Staff Product Manager at ClickUp
+- 2026-07-31 | age 177d | https://app.welcometothejungle.com/jobs/T8oLWJhm | App | New match: Senior Product Manager at ClickUp
+- 2026-07-31 | age 349d | https://app.welcometothejungle.com/jobs/oaqiFLmB | App | New match: Senior Product Manager at ClickUp
+- 2026-07-31 | age 90d | https://app.welcometothejungle.com/jobs/W19tIjjh | App | New match: Senior Product Manager at ClickUp
+- 2026-07-31 | age 83d | https://stripe.com/jobs/search?gh_jid=7901987 | Stripe | Product Manager, Startup Products
+- 2026-07-31 | age 84d | https://careers.datadoghq.com/detail/7905006/?gh_jid=7905006 | Datadog | Senior Product Manager - Serverless
+- 2026-07-31 | age 79d | https://job-boards.greenhouse.io/gleanwork/jobs/4694761005 | Glean | Product Manager, Agent Security & Governance
+- 2026-07-31 | age 79d | https://job-boards.greenhouse.io/gleanwork/jobs/4694764005 | Glean | Product Manager, AI Quality
+- 2026-07-31 | age 81d | https://jobs.ashbyhq.com/decagon/d53738b5-ca10-4283-be5a-3937aa9e7c59 | Decagon | Senior Agent Product Manager - German Speaking
+- 2026-07-31 | age 80d | https://jobs.ashbyhq.com/decagon/123e4aae-9550-4e69-be08-6789e09db07e | Decagon | Senior Agent Product Manager
+- 2026-07-31 | age 80d | https://stripe.com/jobs/search?gh_jid=7913698 | Stripe | Product Manager, Sail Core
+- 2026-07-31 | age 80d | https://stripe.com/jobs/search?gh_jid=7913702 | Stripe | Staff Product Manager, Dashboard
+- 2026-07-31 | age 80d | https://databricks.com/company/careers/open-positions/job?gh_jid=8397501002 | Databricks | Outbound Product Manager, AI Operations
+- 2026-07-31 | age 80d | https://job-boards.greenhouse.io/mercury/jobs/5993466004 | Mercury | Senior Product Manager - Banking Foundations
+- 2026-07-31 | age 80d | https://jobs.ashbyhq.com/harvey/380f2e8a-2480-4103-8d4e-ce3f083d0fca | Harvey | Staff Product Manager, Enterprise
+- 2026-07-31 | age 78d | https://jobs.ashbyhq.com/harvey/7fd9be3d-7b34-49bc-ba75-f8a90b7269a0 | Harvey | Head of Product, Toronto
+- 2026-07-31 | age 76d | https://jobs.ashbyhq.com/harvey/64cbd898-ae41-4690-b581-270fe6ce1713 | Harvey | Senior Product Manager, Billing
+- 2026-07-31 | age 73d | https://jobs.ashbyhq.com/harvey/ae305f26-bbe0-4db1-a816-b912503ad6b4 | Harvey | Group Product Manager, Knowledge Platform
+- 2026-07-31 | age 72d | https://careers.datadoghq.com/detail/7929980/?gh_jid=7929980 | Datadog | Senior Product Manager - Bring Your Own Cloud (BYOC)
+- 2026-07-31 | age 71d | https://stripe.com/jobs/search?gh_jid=7869917 | Stripe | Product Lead, Support Experience
+- 2026-07-31 | age 71d | https://stripe.com/jobs/search?gh_jid=7947422 | Stripe | Product Manager, Ecosystem Risk
+- 2026-07-31 | age 71d | https://stripe.com/jobs/search?gh_jid=7920028 | Stripe | Product Manager, Support Experience
+- 2026-07-31 | age 71d | https://stripe.com/jobs/search?gh_jid=7920219 | Stripe | Staff Product Manager, Support Experience
+- 2026-07-31 | age 71d | https://jobs.ashbyhq.com/notion/2dd301f6-42da-40a2-a064-0f6fcfbdca77 | Notion | Product Manager, AI Governance and Admin Experience
+- 2026-07-31 | age 71d | https://stripe.com/jobs/search?gh_jid=7943244 | Stripe | Product Manager, Ecosystem Risk
+- 2026-07-31 | age 70d | https://careers.datadoghq.com/detail/7947683/?gh_jid=7947683 | Datadog | Senior Platform Product Manager - AI SDLC Trusted Throughput
+- 2026-07-31 | age 70d | https://jobs.elastic.co/jobs?gh_jid=7950453&gh_jid=7950453 | Elastic | Principal Product Manager, AI agents - Search
+- 2026-07-31 | age 70d | https://jobs.elastic.co/jobs?gh_jid=7950385&gh_jid=7950385 | Elastic | Technical Product Manager
+- 2026-07-31 | age 70d | https://jobs.ashbyhq.com/decagon/4ef4e97e-43b3-420f-be6f-1d0aab181149 | Decagon | Senior Agent Product Manager - Germany
+- 2026-07-31 | age 70d | https://stripe.com/jobs/search?gh_jid=7912407 | Stripe | Staff Product Manager, Adaptive Pricing
+- 2026-07-31 | age 70d | https://stripe.com/jobs/search?gh_jid=7953691 | Stripe | Staff Product Manager, Local Processor Acquiring
+- 2026-07-31 | age 70d | https://jobs.elastic.co/jobs?gh_jid=7940246&gh_jid=7940246 | Elastic | Principal Product Manager, AI agents - Search
+- 2026-07-31 | age 70d | https://jobs.elastic.co/jobs?gh_jid=7950454&gh_jid=7950454 | Elastic | Principal Product Manager, AI agents - Search
+- 2026-07-31 | age 66d | https://jobs.elastic.co/jobs?gh_jid=7956403&gh_jid=7956403 | Elastic | Principal Product Manager Infrastructure, Observability
+- 2026-07-31 | age 65d | https://stripe.com/jobs/search?gh_jid=7927089 | Stripe | Product Manager, Terminal Device Expansion
+- 2026-07-31 | age 65d | https://job-boards.greenhouse.io/algolia/jobs/6006012004 | Algolia | Director, Product Management (AI Search)
+- 2026-07-31 | age 78d | https://jobs.ashbyhq.com/ramp/a3afd259-ba6b-4eb0-a1b6-05d01dddacd8 | Ramp | Product Manager
+- 2026-07-31 | age 63d | https://careers.datadoghq.com/detail/7950121/?gh_jid=7950121 | Datadog | Product Manager II - Security Graph Foundations
+- 2026-07-31 | age 63d | https://job-boards.greenhouse.io/intercom/jobs/5916272 | Intercom | Senior Product Manager
+- 2026-07-31 | age 62d | https://jobs.ashbyhq.com/harvey/e646ca56-2122-4309-b2bb-0be7f26d42cb | Harvey | Head of Product Operations
+- 2026-07-31 | age 62d | https://jobs.ashbyhq.com/harvey/cf370c84-a157-4ecb-ae57-9a84953e0d96 | Harvey | Head of Product Operations
+- 2026-07-31 | age 59d | https://job-boards.greenhouse.io/gleanwork/jobs/4701618005 | Glean | Product Manager, Connectors
+- 2026-07-31 | age 60d | https://careers.datadoghq.com/detail/7065807/?gh_jid=7065807 | Datadog | Senior Product Manager - Database AI Optimization
+- 2026-07-31 | age 59d | https://careers.datadoghq.com/detail/7974481/?gh_jid=7974481 | Datadog | Senior Product Manager - Search
+- 2026-07-31 | age 58d | https://job-boards.greenhouse.io/gleanwork/jobs/4701912005 | Glean | Product Manager, Enterprise Intelligence
+- 2026-07-31 | age 58d | https://jobs.ashbyhq.com/harvey/e89103ca-765f-42f1-882a-80364f3c2321 | Harvey | Staff Product Manager, New Products
+- 2026-07-31 | age 58d | https://stripe.com/jobs/search?gh_jid=7977719 | Stripe | Staff Product Manager, Local Processor Acquiring
+- 2026-07-31 | age 57d | https://job-boards.greenhouse.io/gleanwork/jobs/4702368005 | Glean | Product Manager, Core Experience
+- 2026-07-31 | age 57d | https://job-boards.greenhouse.io/gleanwork/jobs/4702369005 | Glean | Product Manager, Enterprise Intelligence
+- 2026-07-31 | age 57d | https://stripe.com/jobs/search?gh_jid=7819759 | Stripe | Product Lead, Connect
+- 2026-07-31 | age 57d | https://stripe.com/jobs/search?gh_jid=7980498 | Stripe | Staff Product Manager, Cards Monetization
+- 2026-07-31 | age 57d | https://job-boards.greenhouse.io/stackblitz/jobs/4260461009 | StackBlitz | Staff Product Manager
+- 2026-07-31 | age 57d | https://job-boards.greenhouse.io/gleanwork/jobs/4702147005 | Glean | Product Manager, Core Experience
+- 2026-07-31 | age 56d | https://careers.datadoghq.com/detail/7982288/?gh_jid=7982288 | Datadog | Product Manager II, AI & Data Security
+- 2026-07-31 | age 56d | https://job-boards.greenhouse.io/anthropic/jobs/5247640008 | Anthropic | Product Manager, Claude Code Model Performance
+- 2026-07-31 | age 55d | https://job-boards.greenhouse.io/anthropic/jobs/5124623008 | Anthropic | Product Manager, Compute Platform
+- 2026-07-31 | age 52d | https://job-boards.greenhouse.io/anthropic/jobs/4936029008 | Anthropic | Product Manager, Platform
+- 2026-07-31 | age 52d | https://jobs.ashbyhq.com/attio/51876281-f2ca-4375-b07d-af54544fc27c | Attio | Product Lead
+- 2026-07-31 | age 52d | https://job-boards.greenhouse.io/galileo/jobs/8582162002 | Galileo | Lead Product Manager
+- 2026-07-31 | age 53d | https://stripe.com/jobs/search?gh_jid=7570242 | Stripe | Staff Product Manager, Global Expansion
+- 2026-07-31 | age 51d | https://stripe.com/jobs/search?gh_jid=7979422 | Stripe | Product Manager - Compliance, Bridge
+- 2026-07-31 | age 51d | https://jobs.elastic.co/jobs?gh_jid=7992591&gh_jid=7992591 | Elastic | Principal Product Manager Infrastructure, Observability
+- 2026-07-31 | age 51d | https://jobs.elastic.co/jobs?gh_jid=7995180&gh_jid=7995180 | Elastic | Principal Product Manager, AI agents - Search
+- 2026-07-31 | age 50d | https://jobs.elastic.co/jobs?gh_jid=7992592&gh_jid=7992592 | Elastic | Principal Product Manager Infrastructure, Observability
+- 2026-07-31 | age 49d | https://job-boards.greenhouse.io/anthropic/jobs/5253339008 | Anthropic | Product Manager, Enterprise
+- 2026-07-31 | age 49d | https://job-boards.greenhouse.io/anthropic/jobs/5254623008 | Anthropic | Product Manager, GTM Experiences
+- 2026-07-31 | age 49d | https://job-boards.greenhouse.io/anthropic/jobs/5139628008 | Anthropic | Product Manager, Safeguards Rare Harms
+- 2026-07-31 | age 49d | https://stripe.com/jobs/search?gh_jid=7984866 | Stripe | Product Manager, Ecosystem Risk
+- 2026-07-31 | age 49d | https://stripe.com/jobs/search?gh_jid=7981330 | Stripe | Product Manager, Link - Local Payment Methods
+- 2026-07-31 | age 49d | https://jobs.elastic.co/jobs?gh_jid=7995182&gh_jid=7995182 | Elastic | Principal Product Manager, AI agents - Search
+- 2026-07-31 | age 49d | https://jobs.elastic.co/jobs?gh_jid=7995187&gh_jid=7995187 | Elastic | Principal Product Manager, AI agents - Search
+- 2026-07-31 | age 49d | https://jobs.elastic.co/jobs?gh_jid=7995181&gh_jid=7995181 | Elastic | Principal Product Manager, AI agents - Search
+- 2026-07-31 | age 49d | https://jobs.elastic.co/jobs?gh_jid=7995139&gh_jid=7995139 | Elastic | Principal Product Manager, AI agents - Search
+- 2026-07-31 | age 49d | https://jobs.elastic.co/jobs?gh_jid=7995138&gh_jid=7995138 | Elastic | Principal Product Manager, AI agents - Search
+- 2026-07-31 | ats: req gone | https://jobs.ashbyhq.com/braintrust/ceb8971e-ddde-4150-a34a-2f1aadbb998e | Braintrust | Product Manager, PLG
+- 2026-07-31 | ats: req gone | https://jobs.ashbyhq.com/cohere/44af407e-28a2-4589-bede-6c5e8ee305bc | Cohere | Director of Product, North
+- 2026-07-31 | ats: req gone | https://job-boards.greenhouse.io/gleanwork/jobs/4710996005 | Glean | Product Manager, API Platform
+- 2026-07-31 | age 92d | https://www.indeed.com/viewjob?jk=d28a75d795a8f38b | Netflix | Product Manager L6, Data Platform - Analytics Experience
+- 2026-07-31 | age 197d | https://jobs.ashbyhq.com/perplexity/5ec96ca1-319a-4b85-99ce-e06629099cf9 | Perplexity | Product Marketing Manager
+- 2026-07-31 | age 48d | https://jobs.ashbyhq.com/attio/779defe3-be99-478e-8328-223ae504950f | Attio | Senior/Lead Product Marketing Manager
+- 2026-07-31 | age 78d | https://jobs.ashbyhq.com/cohere/5cf3bd63-cf1d-441a-9db5-2032ca8449b8 | Cohere | Product Marketing Manager
+- 2026-07-31 | age 262d | https://jobs.ashbyhq.com/replit/234c9a82-2857-4691-af83-308100806df3 | Replit | Senior/Product Marketing Manager
+- 2026-07-31 | age 107d | https://jobs.ashbyhq.com/character/5ae538da-6b75-4b10-9c3e-a2a500b63575 | Character.AI | Product Marketing Manager
+- 2026-07-31 | age 107d | https://jobs.ashbyhq.com/modal/e784797b-2578-4668-b1f6-1a1b57d1f589 | Modal | Product Marketing Manager
+- 2026-07-31 | age 50d | https://www.brex.com/careers/8446669002?gh_jid=8446669002 | Brex | Director, Product Marketing
+- 2026-07-31 | age 48d | https://jobs.ashbyhq.com/attio/7d26f135-045a-4ceb-aaf5-9dc2cc13243e | Attio | Senior/Lead Product Marketing Manager
+- 2026-07-31 | age 50d | https://www.brex.com/careers/8447171002?gh_jid=8447171002 | Brex | Director, Product Marketing
+- 2026-07-31 | age 143d | https://jobs.ashbyhq.com/abridge/c45524b6-96b2-49f0-9cd5-176b998d6ba7 | Abridge | Product Lead - Core Product Experiences
+- 2026-07-31 | age 149d | https://jobs.ashbyhq.com/abridge/991c2527-c2f9-41bb-a68f-282581b78794 | Abridge | Product Lead, Revenue Cycle Management (New Bets)
+- 2026-07-31 | age 119d | https://jobs.ashbyhq.com/baseten/3027e0bc-731f-4fef-b081-2031590766fd | Baseten | Product Manager, Inference Platform
+- 2026-07-31 | age 196d | https://jobs.ashbyhq.com/cerebras/538ef11a-dfaa-47f1-8557-790199a769d1 | Cerebras | AI Models, Product Manager
+- 2026-07-31 | age 156d | https://jobs.ashbyhq.com/cerebras/3eeb99eb-0998-4fa3-91f6-adae42ea58c3 | Cerebras | Senior Product Marketing Manager, AI Inference
+- 2026-07-31 | age 310d | https://jobs.ashbyhq.com/cerebras/8f7c4fa6-cb09-460c-98e1-d9f4f7928f28 | Cerebras | Product Manager, Strategic Verticals
+- 2026-07-31 | age 115d | https://jobs.ashbyhq.com/drata/cf5e1a06-8720-4e5c-93c6-5494c39c862c | Drata | Principal Product Manager, Agentic AI Platform
+- 2026-07-31 | age 65d | https://jobs.ashbyhq.com/drata/6cf0ce98-95ac-4455-8e7e-2fa69839fa91 | Drata | Head of Product, Assurance
+- 2026-07-31 | age 51d | https://jobs.ashbyhq.com/drata/0dd897fb-3279-4268-aab3-8fdb5fbe052a | Drata | Principal Product Marketing Manager
+- 2026-07-31 | age 56d | https://job-boards.greenhouse.io/fireworksai/jobs/4008626009 | Fireworks AI | Forward Deployed Product Manager
+- 2026-07-31 | ats: req gone | https://job-boards.eu.greenhouse.io/parloa/jobs/4903064101 | Parloa | Senior Product Marketing Manager
+- 2026-07-31 | age 99d | https://jobs.ashbyhq.com/render/d5f62097-29f5-4078-ad24-3b604380c1c0 | Render | Staff / Principal Product Manager, Platform & Infrastructure
+- 2026-07-31 | age 98d | https://jobs.ashbyhq.com/semgrep/fedd22ca-0772-4660-99ca-484e89566094 | Semgrep | Senior/Staff Product Manager
+- 2026-07-31 | age 258d | https://jobs.ashbyhq.com/sentry/d96096f1-f662-4581-8706-2f088bc43211 | Sentry | Senior Enterprise Product Marketing Manager
+- 2026-07-31 | age 93d | https://jobs.ashbyhq.com/supabase/b8010a28-109c-46a9-b8b7-c7f9b24077fa | Supabase | Product Manager - Security & Trust (EMEA/AMER)
+- 2026-07-31 | age 60d | https://jobs.ashbyhq.com/supabase/47bcfdb8-b954-423e-8a9e-85256434575c | Supabase | Product Manager - Infrastructure
+- 2026-07-31 | age 63d | https://jobs.ashbyhq.com/supabase/184c3ad5-5d5f-44a1-98f7-65ff6f287b2f | Supabase | Product Manager - Interfaces
+- 2026-07-31 | age 70d | https://jobs.ashbyhq.com/temporal/7cdf200e-5afa-47a2-9a45-8548ce6c9203 | Temporal | Senior Product Manager, Scalability & Compute
+- 2026-07-31 | age 174d | https://jobs.ashbyhq.com/temporal/b8f5607f-85ce-4182-9c1f-8fd399ba5fe6 | Temporal | Senior Staff Technical Product Marketing Manager, AI
+- 2026-07-31 | age 92d | https://jobs.ashbyhq.com/temporal/b6f06de9-fc02-493c-8aef-abaf8495572f | Temporal | Staff Product Manager, Agent Platform
+- 2026-07-31 | age 92d | https://jobs.ashbyhq.com/temporal/7592248c-719a-485c-a1a9-9285f99ed56b | Temporal | Staff Product Manager, Core Primitives
+- 2026-07-31 | age 104d | https://jobs.ashbyhq.com/writer/3b214f7c-963c-4bf6-847d-d863afcc6327 | Writer | Senior product marketing manager, platform & LLMs
+- 2026-07-31 | ats: req gone | https://jobs.ashbyhq.com/writer/b55f56da-373b-417f-ab31-e30863952f68 | Writer | Senior product marketing manager
+- 2026-07-31 | age 73d | https://www.indeed.com/viewjob?jk=86056f048ca111cd | nan | Head of Product
+- 2026-07-31 | age 126d | https://job-boards.greenhouse.io/democracypreppublicschools/jobs/7669726 | Democracy Prep Public Schools | Bronx Elementary School Teacher
+- 2026-07-31 | age 87d | https://job-boards.greenhouse.io/democracypreppublicschools/jobs/7818516 | Democracy Prep Public Schools | DP Empowered: Student Success Teacher
+- 2026-07-31 | age 72d | https://job-boards.greenhouse.io/democracypreppublicschools/jobs/7942610 | Democracy Prep Public Schools | Elementary Physical Education Teacher (2026-2027 School Year)
+- 2026-07-31 | age 126d | https://job-boards.greenhouse.io/democracypreppublicschools/jobs/7600383 | Democracy Prep Public Schools | Elementary Teacher (2026-2027 School Year)
+- 2026-07-31 | age 126d | https://job-boards.greenhouse.io/democracypreppublicschools/jobs/7659336 | Democracy Prep Public Schools | ENL Teacher (2026-2027 School Year)
+- 2026-07-31 | age 126d | https://job-boards.greenhouse.io/democracypreppublicschools/jobs/7669679 | Democracy Prep Public Schools | General Arts Teacher (2026-2027 School Year)
+- 2026-07-31 | age 72d | https://job-boards.greenhouse.io/democracypreppublicschools/jobs/7943612 | Democracy Prep Public Schools | High School History Teacher (2026-2027 School Year)
+- 2026-07-31 | age 84d | https://job-boards.greenhouse.io/democracypreppublicschools/jobs/7862859 | Democracy Prep Public Schools | Korean Summer Academy Teacher
+- 2026-07-31 | age 93d | https://job-boards.greenhouse.io/democracypreppublicschools/jobs/7864419 | Democracy Prep Public Schools | Middle School ELA Teacher (2026-2027 School Year)
+- 2026-07-31 | age 125d | https://job-boards.greenhouse.io/democracypreppublicschools/jobs/7669698 | Democracy Prep Public Schools | Middle School History Teacher
+- 2026-07-31 | age 125d | https://job-boards.greenhouse.io/democracypreppublicschools/jobs/7611327 | Democracy Prep Public Schools | Middle School Math Teacher
+- 2026-07-31 | age 93d | https://job-boards.greenhouse.io/democracypreppublicschools/jobs/7864455 | Democracy Prep Public Schools | Middle School Math Teacher (2026-2027 School Year)
+- 2026-07-31 | age 93d | https://job-boards.greenhouse.io/democracypreppublicschools/jobs/7864445 | Democracy Prep Public Schools | Middle School Science Teacher (2026-2027 School Year)
+- 2026-07-31 | age 72d | https://job-boards.greenhouse.io/democracypreppublicschools/jobs/7669652 | Democracy Prep Public Schools | Physical Education Teacher (2026-2027 School Year)
+- 2026-07-31 | age 125d | https://job-boards.greenhouse.io/democracypreppublicschools/jobs/7373844 | Democracy Prep Public Schools | Pre-K Teacher
+- 2026-07-31 | age 918d | https://jobs.lever.co/rocketship/046991e4-f03a-42ad-9192-4abe33fa9128 | Rocketship Public Schools | Elementary Athletics Instructor
+- 2026-07-31 | age 289d | https://jobs.lever.co/rocketship/16221d6e-422b-4097-a82f-0bbfedd2ddb3 | Rocketship Public Schools | Elementary Teacher
+- 2026-07-31 | age 100d | https://jobs.lever.co/rocketship/26028271-ece3-4b05-a780-4189f3ab6e53 | Rocketship Public Schools | Elementary Teacher (Northeast Nashville)
+- 2026-07-31 | age 287d | https://jobs.lever.co/rocketship/26ce9f1b-bfda-4a3f-90b4-97c4f7909c31 | Rocketship Public Schools | English as a Second Language Teacher
+- 2026-07-31 | age 1911d | https://jobs.lever.co/rocketship/af2a685d-b576-4699-b659-56d8030bcd56 | Rocketship Public Schools | Enrichment Instructor
+- 2026-07-31 | age 143d | https://jobs.lever.co/rocketship/e70d2984-e3d4-4590-9fc1-60bc9b58d984 | Rocketship Public Schools | PreK Assistant Teacher
+- 2026-07-31 | age 157d | https://jobs.lever.co/rocketship/9dafd42b-ca07-4d01-8c81-37b193e2b7de | Rocketship Public Schools | PreK Teacher
+- 2026-07-31 | age 1428d | https://jobs.lever.co/rocketship/e7252e68-8624-4909-8a49-4ded964717dc | Rocketship Public Schools | TK Assistant Teacher
+- 2026-07-31 | age 287d | https://jobs.lever.co/rocketship/79bf3ce6-465a-4902-bcbe-6445e4df77b7 | Rocketship Public Schools | TK Teacher
+- 2026-07-31 | age 48d | https://jobs.ashbyhq.com/propel/fa7ca24a-e80e-4706-982f-82a3f058776a | Propel | Product Lead, Grocery
+- 2026-07-31 | ats: req gone | https://job-boards.greenhouse.io/goguardian/jobs/4684465006 | GoGuardian | Product Marketing Manager
+- 2026-07-31 | age 86d | https://job-boards.greenhouse.io/generalassembly/jobs/7874893 | General Assembly | Lead Instructor: AI-Enabled Product Manager
+- 2026-07-31 | age 86d | https://job-boards.greenhouse.io/generalassembly/jobs/7874911 | General Assembly | Lead Instructor: AI-Enabled Product Marketing Manager
+- 2026-07-31 | age 70d | https://jobs.ashbyhq.com/preply/9f1a3e22-0cf9-4db9-9113-2bab975154cd | Preply | Senior Product Manager - Applied AI Learning
+- 2026-07-31 | age 57d | https://jobs.ashbyhq.com/preply/1a0ae995-7347-42fa-bd25-1da05651264e | Preply | Senior Product Manager - Martech
+- 2026-07-31 | age 157d | https://jobs.ashbyhq.com/human/e069a329-83f9-4639-aae6-fd86e691bd72 | HUMAN Security | Senior Product Manager, Client Side Defense
+- 2026-07-31 | age 49d | https://jobs.ashbyhq.com/human/8c730e47-959e-4dc5-8ee3-de8a70d9ec03 | HUMAN Security | Staff Product Manager
+- 2026-07-31 | age 76d | https://jobs.ashbyhq.com/instructure/c30b4f6d-7e07-4f08-a27e-1246d9210e0f | Instructure | Senior Product Manager (Insights & Analytics)
+- 2026-07-31 | age 49d | https://jobs.lever.co/dlocal/82af4022-3088-4513-b540-289a13ce2e9f | dLocal | Senior Product Manager - Virtual Accounts
+- 2026-07-31 | age 74d | https://www.indeed.com/viewjob?jk=810344d363bcdbe1 | nan | Technical AI/ML Product Manager
+- 2026-07-31 | page: insufficient content — likely nav/footer only | https://careers.onepeloton.com/en/all-jobs/?gh_jid=8093029 | Peloton | Lead Product Manager
+- 2026-07-31 | age 76d | https://www.indeed.com/viewjob?jk=68d06dc0d52e8e6b | nan | Product Manager / Product Operations
+- 2026-07-31 | not a posting (search url) | https://www.linkedin.com/jobs/search?keywords=Senior+Product+Manager&distance=25&geoId=102448103&f_TPR=a1776908108-&f_WT=1%2C3%2C2&sortBy=R&origin=JOB_ALERT_EMAIL&originToLandingJobPostings=4405637387%2C4384399572&lipi=urn%3Ali%3Apage%3Aemail_email_job_alert_digest_01%3BahtWmyUPTgagw6%2FsUHGpNg%3D%3D&midToken=AQFM8jFGgiFQcA&midSig=0MXGzcRxzhXsc1&trkEmail=eml-email_job_alert_digest_01-secondary_job_list_0-0-see_all_jobs_button_text_ssid_7693276394_fmid_gkdyp%7Emod9wc2g%7Eyv-null-gkdyp%7Emod9wc2g%7Eyv-null-null&eid=gkdyp-mod9wc2g-yv&otpToken=MTAwMjE2ZTIxNzJlY2VjN2JlMmYwMmVkNDExZWUyYjM4ZmM5ZDI0MzkwYWM4NTY4NzhjZjA0Njk0ZTVlNTVmMWZjZDY4MzkxNTJkYWM1ZDk2N2JjZjc4NjQ2NDkyY2QwYTZhYWI1NGMyNTQ3MTM2MGE2LDEsMQ%3D%3D | Unknown | Huckleberry Labs is hiring a Senior Product Manager - Core Experiences (Remote)
+- 2026-07-31 | not a posting (search url) | https://www.linkedin.com/jobs/search?keywords=Senior+Product+Manager&distance=25&geoId=102448103&f_TPR=a1776997714-&f_WT=1%2C3%2C2&sortBy=R&origin=JOB_ALERT_EMAIL&originToLandingJobPostings=4406163760%2C4388186497&lipi=urn%3Ali%3Apage%3Aemail_email_job_alert_digest_01%3BkvMckX%2FZRli3SKKYQiPFJA%3D%3D&midToken=AQFM8jFGgiFQcA&midSig=3x70pypn7VYIc1&trkEmail=eml-email_job_alert_digest_01-secondary_job_list_0-0-see_all_jobs_button_text_ssid_7693276394_fmid_gkdyp%7Emoel1v16%7E3q-null-gkdyp%7Emoel1v16%7E3q-null-null&eid=gkdyp-moel1v16-3q&otpToken=MTAwMjE2ZTIxNzJlY2VjN2JlMmYwMmVkNDExZmU0YjI4ZGM5ZDI0NDljYTg4NTY4NzhjZjA0Njk0ZTVlNTVmMWZjODhiMGU1NjRmMGRlZTE3MTYzMDgzYjFlYWYwNGM5N2Y3OTQwNzc1OTNlZDhkNmY2LDEsMQ%3D%3D | Unknown | Capital Group is hiring a AI Product Management & Enablement Principal
+- 2026-07-31 | no JD after 95d | https://jobot.com/apply/ai-ml-solutions-architect/d1c118e901?eid=138cf98fa787&uid=f2658430e2&jid=d1c118e901 | Jobot | VP of Product Development and Production opportunities need to be filled
+- 2026-07-31 | no JD after 95d | https://jobot.com/apply/vp-of-product-development-and-production/3896b3a901?eid=138cf98fa787&uid=f2658430e2&jid=3896b3a901 | Jobot | VP of Product Development and Production opportunities need to be filled
+- 2026-07-31 | no JD after 95d | https://jobot.com/apply/technical-sourcer-%E2%80%93-software/0b110aa801?eid=138cf98fa787&uid=f2658430e2&jid=0b110aa801 | Jobot | VP of Product Development and Production opportunities need to be filled
+- 2026-07-31 | no JD after 95d | https://jobot.com/apply/head-of-sales-us-west/0671e1a001?eid=138cf98fa787&uid=f2658430e2&jid=0671e1a001 | Jobot | VP of Product Development and Production opportunities need to be filled
+- 2026-07-31 | no JD after 95d | https://jobot.com/apply/vp-of-fundraising/ad66f4a001?eid=138cf98fa787&uid=f2658430e2&jid=ad66f4a001 | Jobot | VP of Product Development and Production opportunities need to be filled
+- 2026-07-31 | no JD after 95d | https://jobot.com/apply/senior-ai-engineer/188871f901?eid=138cf98fa787&uid=f2658430e2&jid=188871f901 | Jobot | VP of Product Development and Production opportunities need to be filled
+- 2026-07-31 | no JD after 95d | https://jobot.com/apply/director-of-client-relations-nuclear-industry/a72324b401?eid=138cf98fa787&uid=f2658430e2&jid=a72324b401 | Jobot | VP of Product Development and Production opportunities need to be filled
+- 2026-07-31 | no JD after 95d | https://jobot.com/apply/manager-software-engineering-hands-on-cloud-saas-ai-driven-development/a9232ab601?eid=138cf98fa787&uid=f2658430e2&jid=a9232ab601 | Jobot | VP of Product Development and Production opportunities need to be filled
+- 2026-07-31 | no JD after 95d | https://jobot.com/apply/principal-solutions-architect-data-engineering/7e2030a301?eid=138cf98fa787&uid=f2658430e2&jid=7e2030a301 | Jobot | VP of Product Development and Production opportunities need to be filled
+- 2026-07-31 | no JD after 95d | https://jobot.com/apply/business-development-executive-paper-packaging-sales/c78998a101?eid=138cf98fa787&uid=f2658430e2&jid=c78998a101 | Jobot | VP of Product Development and Production opportunities need to be filled
+- 2026-07-31 | no JD after 95d | https://jobot.com/apply/sr-software-engineer-feature-focused-net-c-ai/e5e7078c01?eid=138cf98fa787&uid=f2658430e2&jid=e5e7078c01 | Jobot | VP of Product Development and Production opportunities need to be filled
+- 2026-07-31 | no JD after 95d | https://jobot.com/apply/product-manager-steel-casting/411736ae01?eid=138cf98fa787&uid=f2658430e2&jid=411736ae01 | Jobot | VP of Product Development and Production opportunities need to be filled
+- 2026-07-31 | no JD after 92d | https://www.linkedin.com/comm/jobs/view/4406973374/?trackingId=wg4vvBaEZnCpWuPJUUYwIA%3D%3D&refId=eRmQBh8UB%2BpLIOi3B2zDfg%3D%3D&lipi=urn%3Ali%3Apage%3Aemail_email_job_alert_digest_01%3BwhJmBWyrTdKaDESAiwrfoQ%3D%3D&midToken=AQFM8jFGgiFQcA&midSig=1MXUnkH5kp3Yg1&trkEmail=eml-email_job_alert_digest_01-primary_job_list-0-jobcard_body_text_2_jobid_4406973374_ssid_7693276394_fmid_gkdyp%7Emolq94ae%7Eo4-null-gkdyp%7Emolq94ae%7Eo4-null-null&eid=gkdyp-molq94ae-o4&otpToken=MTAwMjE2ZTIxNzJlY2VjN2JlMmYwMmVkNDExYmUxYmM4ZGM5ZDU0OTllYWU4NTY4NzhjZjA0Njk0ZTVlNTVmMWZjYjdiNzllMTJjNWViODY1YjExYTYyMDlhYmMwM2JkZjM0OGZkNjQ3NjNjYTQ1YWUzLDEsMQ%3D%3D | Unknown | Senior Product Manager at Microsoft
+- 2026-07-31 | no JD after 92d | https://www.linkedin.com/comm/jobs/view/4407049307/?trackingId=med1ubIyeHzYIbhrfNuK4Q%3D%3D&refId=eRmQBh8UB%2BpLIOi3B2zDfg%3D%3D&lipi=urn%3Ali%3Apage%3Aemail_email_job_alert_digest_01%3BwhJmBWyrTdKaDESAiwrfoQ%3D%3D&midToken=AQFM8jFGgiFQcA&midSig=1MXUnkH5kp3Yg1&trkEmail=eml-email_job_alert_digest_01-primary_job_list-0-jobcard_body_text_5_jobid_4407049307_ssid_7693276394_fmid_gkdyp%7Emolq94ae%7Eo4-null-gkdyp%7Emolq94ae%7Eo4-null-null&eid=gkdyp-molq94ae-o4&otpToken=MTAwMjE2ZTIxNzJlY2VjN2JlMmYwMmVkNDExYmUxYmM4ZGM5ZDU0OTllYWU4NTY4NzhjZjA0Njk0ZTVlNTVmMWZjYjdiNzllMTJjNWViODY1YjExYTYyMDlhYmMwM2JkZjM0OGZkNjQ3NjNjYTQ1YWUzLDEsMQ%3D%3D | Unknown | Senior Product Manager at Microsoft
+- 2026-07-31 | not a posting (search url) | https://www.linkedin.com/comm/jobs/search?keywords=Senior+Product+Manager&distance=25&geoId=102448103&f_TPR=a1777425976-&f_WT=1%2C3%2C2&sortBy=R&origin=JOB_ALERT_EMAIL&originToLandingJobPostings=4372241987%2C4406060163%2C4406973374%2C4408551540%2C4406059174%2C4407049307&lipi=urn%3Ali%3Apage%3Aemail_email_job_alert_digest_01%3BwhJmBWyrTdKaDESAiwrfoQ%3D%3D&midToken=AQFM8jFGgiFQcA&midSig=1MXUnkH5kp3Yg1&trkEmail=eml-email_job_alert_digest_01-primary_job_list-0-see_all_jobs_text_ssid_7693276394_fmid_gkdyp%7Emolq94ae%7Eo4-null-gkdyp%7Emolq94ae%7Eo4-null-null&eid=gkdyp-molq94ae-o4&otpToken=MTAwMjE2ZTIxNzJlY2VjN2JlMmYwMmVkNDExYmUxYmM4ZGM5ZDU0OTllYWU4NTY4NzhjZjA0Njk0ZTVlNTVmMWZjYjdiNzllMTJjNWViODY1YjExYTYyMDlhYmMwM2JkZjM0OGZkNjQ3NjNjYTQ1YWUzLDEsMQ%3D%3D | Unknown | Senior Product Manager at Microsoft
+- 2026-07-31 | no JD after 92d | https://www.linkedin.com/comm/jobs/alerts?lipi=urn%3Ali%3Apage%3Aemail_email_job_alert_digest_01%3BwhJmBWyrTdKaDESAiwrfoQ%3D%3D&midToken=AQFM8jFGgiFQcA&midSig=1MXUnkH5kp3Yg1&trkEmail=eml-email_job_alert_digest_01-footer-0-manage_alerts_button_text_ssid_7693276394_fmid_gkdyp%7Emolq94ae%7Eo4-null-gkdyp%7Emolq94ae%7Eo4-null-null&eid=gkdyp-molq94ae-o4&otpToken=MTAwMjE2ZTIxNzJlY2VjN2JlMmYwMmVkNDExYmUxYmM4ZGM5ZDU0OTllYWU4NTY4NzhjZjA0Njk0ZTVlNTVmMWZjYjdiNzllMTJjNWViODY1YjExYTYyMDlhYmMwM2JkZjM0OGZkNjQ3NjNjYTQ1YWUzLDEsMQ%3D%3D | Unknown | Senior Product Manager at Microsoft
+- 2026-07-31 | not a posting (search url) | https://www.linkedin.com/jobs/search?keywords=Senior+Product+Manager&distance=25&geoId=102448103&f_TPR=a1777771301-&f_WT=1%2C3%2C2&sortBy=R&origin=JOB_ALERT_EMAIL&originToLandingJobPostings=4408381332%2C4405461200&lipi=urn%3Ali%3Apage%3Aemail_email_job_alert_digest_01%3BSN7Ki1JzT%2BKq5bJtn10FEg%3D%3D&midToken=AQFM8jFGgiFQcA&midSig=1p8gMRAkMh9Ig1&trkEmail=eml-email_job_alert_digest_01-secondary_job_list_0-0-see_all_jobs_button_text_ssid_7693276394_fmid_gkdyp%7Emorkaulq%7E3d-null-gkdyp%7Emorkaulq%7E3d-null-null&eid=gkdyp-morkaulq-3d&otpToken=MTAwMjE2ZTIxNzJlY2VjN2JlMmYwMmVkNDExN2U1YjU4ZmM5ZDQ0MDkwYWM4NTY4NzhjZjA0Njk0ZTVlNTVmMWZjYTBiZGI4MTNlZmMzZDM3ODJiYWZiZDJmYjVmOWM1NzFhYTJmOWI4NWE4YzQ2NmQ1LDEsMQ%3D%3D | Unknown | Product Manager, Media Platform at Netflix
+- 2026-07-31 | no JD after 86d | https://www.linkedin.com/comm/jobs/view/4408977555/?trackingId=gxbXJU5TZt5VjZx%2FhlYOaQ%3D%3D&refId=43cxduEjp4EPE%2BAHCubRiQ%3D%3D&lipi=urn%3Ali%3Apage%3Aemail_email_job_alert_digest_01%3ByO3HvVHtSmOMJ0rr%2Brx7ag%3D%3D&midToken=AQFM8jFGgiFQcA&midSig=0_3Bo1oxHpccg1&trkEmail=eml-email_job_alert_digest_01-secondary_job_list_0-0-jobcard_body_text_ssid_7693276394_fmid_gkdyp%7Emouaw803%7Ei5-null-gkdyp%7Emouaw803%7Ei5-null-null&eid=gkdyp-mouaw803-i5&otpToken=MTAwMjE2ZTIxNzJlY2VjN2JlMmYwMmVkNGUxZWVmYjI4OWM5ZDE0MzlkYTc4NTY4NzhjZjA0Njk0ZTVlNTVmMWZjODY5MGJlNmZmOWQwZGY0MDg4ZmZiNmRiMzNmZTMxMTIzM2I2YzRmNDY1ZGVmMjg4LDEsMQ%3D%3D | Unknown | AI Product Manager
+- 2026-07-31 | no JD after 86d | https://www.linkedin.com/comm/jobs/view/4402479437/?trackingId=GY%2FDT4d5EIyxlnRe%2BeDwcg%3D%3D&refId=43cxduEjp4EPE%2BAHCubRiQ%3D%3D&lipi=urn%3Ali%3Apage%3Aemail_email_job_alert_digest_01%3ByO3HvVHtSmOMJ0rr%2Brx7ag%3D%3D&midToken=AQFM8jFGgiFQcA&midSig=0_3Bo1oxHpccg1&trkEmail=eml-email_job_alert_digest_01-secondary_job_list_0-0-jobcard_body_text_ssid_7693276394_fmid_gkdyp%7Emouaw803%7Ei5-null-gkdyp%7Emouaw803%7Ei5-null-null&eid=gkdyp-mouaw803-i5&otpToken=MTAwMjE2ZTIxNzJlY2VjN2JlMmYwMmVkNGUxZWVmYjI4OWM5ZDE0MzlkYTc4NTY4NzhjZjA0Njk0ZTVlNTVmMWZjODY5MGJlNmZmOWQwZGY0MDg4ZmZiNmRiMzNmZTMxMTIzM2I2YzRmNDY1ZGVmMjg4LDEsMQ%3D%3D | Unknown | AI Product Manager
+- 2026-07-31 | not a posting (search url) | https://www.linkedin.com/jobs/search?keywords=Senior+Product+Manager&distance=25&geoId=102448103&f_TPR=a1777945687-&f_WT=1%2C3%2C2&sortBy=R&origin=JOB_ALERT_EMAIL&originToLandingJobPostings=4408977555%2C4402479437&lipi=urn%3Ali%3Apage%3Aemail_email_job_alert_digest_01%3ByO3HvVHtSmOMJ0rr%2Brx7ag%3D%3D&midToken=AQFM8jFGgiFQcA&midSig=0_3Bo1oxHpccg1&trkEmail=eml-email_job_alert_digest_01-secondary_job_list_0-0-see_all_jobs_button_text_ssid_7693276394_fmid_gkdyp%7Emouaw803%7Ei5-null-gkdyp%7Emouaw803%7Ei5-null-null&eid=gkdyp-mouaw803-i5&otpToken=MTAwMjE2ZTIxNzJlY2VjN2JlMmYwMmVkNGUxZWVmYjI4OWM5ZDE0MzlkYTc4NTY4NzhjZjA0Njk0ZTVlNTVmMWZjODY5MGJlNmZmOWQwZGY0MDg4ZmZiNmRiMzNmZTMxMTIzM2I2YzRmNDY1ZGVmMjg4LDEsMQ%3D%3D | Unknown | AI Product Manager
+- 2026-07-31 | no JD after 86d | https://www.linkedin.com/jobs/jam/manage/7693276394?lipi=urn%3Ali%3Apage%3Aemail_email_job_alert_digest_01%3ByO3HvVHtSmOMJ0rr%2Brx7ag%3D%3D&midToken=AQFM8jFGgiFQcA&midSig=0_3Bo1oxHpccg1&trkEmail=eml-email_job_alert_digest_01-secondary_job_list_0-0-edit_alert_button_text_ssid_7693276394_fmid_gkdyp%7Emouaw803%7Ei5-null-gkdyp%7Emouaw803%7Ei5-null-null&eid=gkdyp-mouaw803-i5&otpToken=MTAwMjE2ZTIxNzJlY2VjN2JlMmYwMmVkNGUxZWVmYjI4OWM5ZDE0MzlkYTc4NTY4NzhjZjA0Njk0ZTVlNTVmMWZjODY5MGJlNmZmOWQwZGY0MDg4ZmZiNmRiMzNmZTMxMTIzM2I2YzRmNDY1ZGVmMjg4LDEsMQ%3D%3D | Unknown | AI Product Manager
+- 2026-07-31 | no JD after 86d | https://www.linkedin.com/comm/jobs/view/4408015389/?trackingId=J2ZyjApKSCmb899YYRTCKg%3D%3D&refId=jbsZ%2BkDtCnCIMNscibuxSw%3D%3D&lipi=urn%3Ali%3Apage%3Aemail_email_job_alert_digest_01%3ByO3HvVHtSmOMJ0rr%2Brx7ag%3D%3D&midToken=AQFM8jFGgiFQcA&midSig=0_3Bo1oxHpccg1&trkEmail=eml-email_job_alert_digest_01-secondary_job_list_1-0-jobcard_body_text_ssid_7693276386_fmid_gkdyp%7Emouaw803%7Ei5-null-gkdyp%7Emouaw803%7Ei5-null-null&eid=gkdyp-mouaw803-i5&otpToken=MTAwMjE2ZTIxNzJlY2VjN2JlMmYwMmVkNGUxZWVmYjI4OWM5ZDE0MzlkYTc4NTY4NzhjZjA0Njk0ZTVlNTVmMWZjODY5MGJlNmZmOWQwZGY0MDg4ZmZiNmRiMzNmZTMxMTIzM2I2YzRmNDY1ZGVmMjg4LDEsMQ%3D%3D | Unknown | AI Product Manager
+- 2026-07-31 | no JD after 86d | https://www.linkedin.com/jobs/jam/manage/7693276386?lipi=urn%3Ali%3Apage%3Aemail_email_job_alert_digest_01%3ByO3HvVHtSmOMJ0rr%2Brx7ag%3D%3D&midToken=AQFM8jFGgiFQcA&midSig=0_3Bo1oxHpccg1&trkEmail=eml-email_job_alert_digest_01-secondary_job_list_1-0-edit_alert_button_text_ssid_7693276386_fmid_gkdyp%7Emouaw803%7Ei5-null-gkdyp%7Emouaw803%7Ei5-null-null&eid=gkdyp-mouaw803-i5&otpToken=MTAwMjE2ZTIxNzJlY2VjN2JlMmYwMmVkNGUxZWVmYjI4OWM5ZDE0MzlkYTc4NTY4NzhjZjA0Njk0ZTVlNTVmMWZjODY5MGJlNmZmOWQwZGY0MDg4ZmZiNmRiMzNmZTMxMTIzM2I2YzRmNDY1ZGVmMjg4LDEsMQ%3D%3D | Unknown | AI Product Manager
+- 2026-07-31 | not a posting (search url) | https://www.linkedin.com/jobs/search?keywords=Senior+Product+Manager&distance=25&geoId=102571732&f_TPR=a1777945687-&f_WT=1%2C3&sortBy=R&origin=JOB_ALERT_EMAIL&originToLandingJobPostings=4408015389%2C4408165654&lipi=urn%3Ali%3Apage%3Aemail_email_job_alert_digest_01%3ByO3HvVHtSmOMJ0rr%2Brx7ag%3D%3D&midToken=AQFM8jFGgiFQcA&midSig=0_3Bo1oxHpccg1&trkEmail=eml-email_job_alert_digest_01-secondary_job_list_1-0-see_all_jobs_button_text_ssid_7693276386_fmid_gkdyp%7Emouaw803%7Ei5-null-gkdyp%7Emouaw803%7Ei5-null-null&eid=gkdyp-mouaw803-i5&otpToken=MTAwMjE2ZTIxNzJlY2VjN2JlMmYwMmVkNGUxZWVmYjI4OWM5ZDE0MzlkYTc4NTY4NzhjZjA0Njk0ZTVlNTVmMWZjODY5MGJlNmZmOWQwZGY0MDg4ZmZiNmRiMzNmZTMxMTIzM2I2YzRmNDY1ZGVmMjg4LDEsMQ%3D%3D | Unknown | AI Product Manager
+- 2026-07-31 | no JD after 84d | https://www.linkedin.com/comm/jobs/view/4353141016/?trackingId=NJNdEKWvSOqrjdkc1Xyvbg%3D%3D&refId=FtQpn%2FRBTMGhdjCRkzQ1Fw%3D%3D&eBP=CwEAAAGeBUw8u83Yq3FkJJ-LNzaQVFftpE2XXqbUVpKcKoVjp-3M7LxiIRvxz3zSQ3I8NxBWYlTbbMaW6hMJHJoT2tzvdkTJNOCn1RoQqO2wGbdyoLnMZ6UV-Z1TVvEbdLBXBlMvcP3JCXw3Qd6KkbMwPWl1TvQwF44Ij_qXIreHsiTPmvaCiDuZq-X8qLC7iu69wNdsXZFZ6NL6BZe2XG7jHTpgqjHOaM_2c8PSkp0ti137jQrf-Uu25bcE8QcWeLO1jC_j3Yoxdnp9T0Ktd7m7qH2Q0Y5wbrDZctit762YFge7PHXOY8i1X6dP5cxQQql9oZpKDXp9XvwZGDWPh7QBj_z56Vwto6i9h_wRd_XFw4BcRJ91WAo2TZJ29n_9PgGUc-rxQe0ZopiSyGocnU9DFXeIiYTAGKCFh_EI_gC5&lipi=urn%3Ali%3Apage%3Aemail_jobs_jymbii_digest%3BusrIy58gSDabwHc3OEIjNw%3D%3D&midToken=AQFM8jFGgiFQcA&midSig=3L8X_j2AI9fsg1&trkEmail=eml-jobs_jymbii_digest-jymbii-0-view_job-null-gkdyp%7Emoxeck1n%7Edy-null-null&eid=gkdyp-moxeck1n-dy&otpToken=MTAwMjE2ZTIxNzJlY2VjN2JlMmYwMmVkNGUxY2UwYjc4N2M5ZDA0Nzk4YWY4NTY4NzhjZjA0Njk0ZTVlNTVmMWZjYjI5Nzg5MWFmOGViZmY1ZGZiZDYyODk3NGUyMWI3MmIzNmFjNGRkMjNjODU1MTQ0LDEsMQ%3D%3D | Unknown | Netflix is hiring a Group Product Manager, New Content Exploration
+- 2026-07-31 | no JD after 84d | https://www.linkedin.com/comm/jobs/view/4409986136/?trackingId=bP2emSyhRMKfCAfznqWpNQ%3D%3D&refId=908Uou8qRhy5aPiBZkDiSw%3D%3D&eBP=CwEAAAGeBUw8u_2IZFIjMGFMSbhsQCHkb41VfFxG7yDSVysKamcatsm1V4gYpJQbW1sXqa49rKABXARpu31zWmw3mUa9GJZTbYzg9PFUKBlHUTYFn_9jX2qk_0nTccdX7AfQW9DXPtg4PC8d2-lgTLCWb5Kw6WFyd9I4i_ZuT5O9ywbvU4mi2090Sm07dRSKvId02r3w-n3PtInBHiDbt1R8wVtP8i40qIYovFjGJp0FraZmSSlRCBNzQAeegB8BPU_p9clFz5PJe3aH4_6s12dlQhvAv0vzGFxWXcBdxde_ZnRQvKf2cIcas-WcIsZDdyU-LNGMQLSCJ3ueJWuV-GG8ipFRcH_dybFdJi9Td572_6MWsOOP5xOdMsjgU3I5K4AkPlf99CrD8wSStiGigKQ6BJoi1Z3hdKVSFTm2R6nK&lipi=urn%3Ali%3Apage%3Aemail_jobs_jymbii_digest%3BusrIy58gSDabwHc3OEIjNw%3D%3D&midToken=AQFM8jFGgiFQcA&midSig=3L8X_j2AI9fsg1&trkEmail=eml-jobs_jymbii_digest-jymbii-0-view_job-null-gkdyp%7Emoxeck1n%7Edy-null-null&eid=gkdyp-moxeck1n-dy&otpToken=MTAwMjE2ZTIxNzJlY2VjN2JlMmYwMmVkNGUxY2UwYjc4N2M5ZDA0Nzk4YWY4NTY4NzhjZjA0Njk0ZTVlNTVmMWZjYjI5Nzg5MWFmOGViZmY1ZGZiZDYyODk3NGUyMWI3MmIzNmFjNGRkMjNjODU1MTQ0LDEsMQ%3D%3D | Unknown | Netflix is hiring a Group Product Manager, New Content Exploration
+- 2026-07-31 | no JD after 84d | https://www.linkedin.com/comm/jobs/view/4397696955/?trackingId=4N0PlQ9iQ4yGVap2aLxgPw%3D%3D&refId=P%2Fs50TKkT%2FCdYOT2SRInYA%3D%3D&eBP=CwEAAAGeBUw8u9BclDUR2Mk1WZfrc8eXLl-cDvQbW1XpD-n4uTKT9x7Enn2dmaAO3XMSukHg7pkeiGkQp_Y_fV5bLmsAse2PIZu0wnkG7kZOiX9MBSx--_7IPkhKkLiCrnBFDsyOIuwYTfySoq2NnTn1f49MgpDdemNb1ADmqQ4Jaj1iP5djfHF0wYXkMtW4FAwMRLHNP-LtcDpdUfPsZ9cR2GhSv0WNoun6qi9tkbUIiLKpAOiByKPnNG-psF8eK5vg5snoLbLuLPeugeu-GXRL7PM__Vgubshl3ykmgsGV7Eunbe8pSEXBDqtBrb3lbO8Cm99VTuJH4-6g0FG6Qsf_QFT1fYuWuNmoWrbxo44H51Huybp24FmbUihmmEty5EOKlVbYlx5N8eWI3Poyy4lVEzh0hmr2BEp1jfrC0bmG&lipi=urn%3Ali%3Apage%3Aemail_jobs_jymbii_digest%3BusrIy58gSDabwHc3OEIjNw%3D%3D&midToken=AQFM8jFGgiFQcA&midSig=3L8X_j2AI9fsg1&trkEmail=eml-jobs_jymbii_digest-jymbii-0-view_job-null-gkdyp%7Emoxeck1n%7Edy-null-null&eid=gkdyp-moxeck1n-dy&otpToken=MTAwMjE2ZTIxNzJlY2VjN2JlMmYwMmVkNGUxY2UwYjc4N2M5ZDA0Nzk4YWY4NTY4NzhjZjA0Njk0ZTVlNTVmMWZjYjI5Nzg5MWFmOGViZmY1ZGZiZDYyODk3NGUyMWI3MmIzNmFjNGRkMjNjODU1MTQ0LDEsMQ%3D%3D | Unknown | Netflix is hiring a Group Product Manager, New Content Exploration
+- 2026-07-31 | no JD after 84d | https://www.linkedin.com/comm/jobs/alerts?lipi=urn%3Ali%3Apage%3Aemail_jobs_jymbii_digest%3BusrIy58gSDabwHc3OEIjNw%3D%3D&midToken=AQFM8jFGgiFQcA&midSig=3L8X_j2AI9fsg1&trkEmail=eml-jobs_jymbii_digest-null-0-null-null-gkdyp%7Emoxeck1n%7Edy-null-null&eid=gkdyp-moxeck1n-dy&otpToken=MTAwMjE2ZTIxNzJlY2VjN2JlMmYwMmVkNGUxY2UwYjc4N2M5ZDA0Nzk4YWY4NTY4NzhjZjA0Njk0ZTVlNTVmMWZjYjI5Nzg5MWFmOGViZmY1ZGZiZDYyODk3NGUyMWI3MmIzNmFjNGRkMjNjODU1MTQ0LDEsMQ%3D%3D | Unknown | Netflix is hiring a Group Product Manager, New Content Exploration
+- 2026-07-31 | no JD after 73d | https://jobot.com/apply/director-of-engineering-startup-experience-reqd-100-remote/92e34d5a06?eid=d12810da0c87&uid=f2658430e2&jid=92e34d5a06 | Jobot | More Jobs Like Head of Product
+- 2026-07-31 | no JD after 73d | https://jobot.com/apply/manager-software-engineering-hands-on-cloud-saas-ai-driven-development/a9232ab601?eid=d12810da0c87&uid=f2658430e2&jid=a9232ab601 | Jobot | More Jobs Like Head of Product
+- 2026-07-31 | no JD after 73d | https://jobot.com/apply/vp-of-product-ai-learning-enablement/1d94875f06?eid=d12810da0c87&uid=f2658430e2&jid=1d94875f06 | Jobot | More Jobs Like Head of Product
+- 2026-07-31 | no JD after 73d | https://jobot.com/apply/head-of-product/7dc0ac5e06?eid=d12810da0c87&uid=f2658430e2&jid=7dc0ac5e06 | Jobot | More Jobs Like Head of Product
+- 2026-07-31 | no JD after 73d | https://jobot.com/apply/product-manager-refractory-industry/e78e9a5a06?eid=d12810da0c87&uid=f2658430e2&jid=e78e9a5a06 | Jobot | More Jobs Like Head of Product
+- 2026-07-31 | no JD after 73d | https://jobot.com/apply/senior-staff-product-designer/806c1c0201?eid=d12810da0c87&uid=f2658430e2&jid=806c1c0201 | Jobot | More Jobs Like Head of Product
+- 2026-07-31 | no JD after 73d | https://jobot.com/apply/vp-of-fundraising/ad66f4a001?eid=d12810da0c87&uid=f2658430e2&jid=ad66f4a001 | Jobot | More Jobs Like Head of Product
+- 2026-07-31 | no JD after 73d | https://jobot.com/apply/ai-ml-solutions-architect/d1c118e901?eid=d12810da0c87&uid=f2658430e2&jid=d1c118e901 | Jobot | More Jobs Like Head of Product
+- 2026-07-31 | no JD after 73d | https://jobot.com/apply/community-partnerships-manager-home-healthcare-sales/ea0e1da001?eid=d12810da0c87&uid=f2658430e2&jid=ea0e1da001 | Jobot | More Jobs Like Head of Product
+- 2026-07-31 | no JD after 73d | https://jobot.com/apply/director-of-client-relations-nuclear-industry/a72324b401?eid=d12810da0c87&uid=f2658430e2&jid=a72324b401 | Jobot | More Jobs Like Head of Product
+- 2026-07-31 | no JD after 73d | https://jobot.com/apply/sr-ai-software-engineer-c-net-infrastructure-startup-exp-reqd-100-remote/3838265d06?eid=d12810da0c87&uid=f2658430e2&jid=3838265d06 | Jobot | More Jobs Like Head of Product
+- 2026-07-31 | no JD after 73d | https://jobot.com/apply/director-of-technology/bda8bb5f06?eid=d12810da0c87&uid=f2658430e2&jid=bda8bb5f06 | Jobot | More Jobs Like Head of Product
+- 2026-07-31 | no JD after 60d | https://jobot.com/apply/copy-of-key-account-manager-walmart-target/3698825806?eid=d532e589de86&uid=30a7b94baa&jid=3698825806 | Jobot | New Product Manager-Refractory Industry opportunity
+- 2026-07-31 | no JD after 60d | https://jobot.com/apply/product-manager-refractory-industry/e78e9a5a06?eid=d532e589de86&uid=30a7b94baa&jid=e78e9a5a06 | Jobot | New Product Manager-Refractory Industry opportunity
+- 2026-07-31 | no JD after 60d | https://jobot.com/apply/technical-product-manager-engine-cooling-systems/8662ce5a06?eid=d532e589de86&uid=30a7b94baa&jid=8662ce5a06 | Jobot | New Product Manager-Refractory Industry opportunity
+- 2026-07-31 | no JD after 60d | https://jobot.com/apply/head-of-product/7dc0ac5e06?eid=d532e589de86&uid=30a7b94baa&jid=7dc0ac5e06 | Jobot | New Product Manager-Refractory Industry opportunity
+- 2026-07-31 | no JD after 60d | https://jobot.com/apply/director-of-engineering-startup-experience-reqd-100-remote/92e34d5a06?eid=d532e589de86&uid=30a7b94baa&jid=92e34d5a06 | Jobot | New Product Manager-Refractory Industry opportunity
+- 2026-07-31 | no JD after 60d | https://jobot.com/apply/senior-staff-product-designer/806c1c0201?eid=d532e589de86&uid=30a7b94baa&jid=806c1c0201 | Jobot | New Product Manager-Refractory Industry opportunity
+- 2026-07-31 | no JD after 60d | https://jobot.com/apply/strategic-account-director-data-ai/9705685606?eid=d532e589de86&uid=30a7b94baa&jid=9705685606 | Jobot | New Product Manager-Refractory Industry opportunity
+- 2026-07-31 | no JD after 60d | https://jobot.com/apply/director-of-client-relations-nuclear-industry/a72324b401?eid=d532e589de86&uid=30a7b94baa&jid=a72324b401 | Jobot | New Product Manager-Refractory Industry opportunity
+- 2026-07-31 | no JD after 60d | https://jobot.com/apply/head-of-sales-us-west/0671e1a001?eid=d532e589de86&uid=30a7b94baa&jid=0671e1a001 | Jobot | New Product Manager-Refractory Industry opportunity
+- 2026-07-31 | no JD after 60d | https://jobot.com/apply/community-partnerships-manager-home-healthcare-sales/ea0e1da001?eid=d532e589de86&uid=30a7b94baa&jid=ea0e1da001 | Jobot | New Product Manager-Refractory Industry opportunity
+- 2026-07-31 | no JD after 60d | https://jobot.com/apply/product-manager-steel-casting/411736ae01?eid=d532e589de86&uid=30a7b94baa&jid=411736ae01 | Jobot | New Product Manager-Refractory Industry opportunity
+- 2026-07-31 | no JD after 60d | https://jobot.com/apply/manager-software-engineering-hands-on-cloud-saas-ai-driven-development/a9232ab601?eid=d532e589de86&uid=30a7b94baa&jid=a9232ab601 | Jobot | New Product Manager-Refractory Industry opportunity
+- 2026-07-31 | no JD after 56d | https://jobot.com/apply/head-of-product/7dc0ac5e06?eid=22bd4ea7f786&uid=f2658430e2&jid=7dc0ac5e06 | Jobot | New Head of Product opportunity. Apply Now.
+- 2026-07-31 | no JD after 56d | https://jobot.com/apply/senior-staff-product-designer/806c1c0201?eid=22bd4ea7f786&uid=f2658430e2&jid=806c1c0201 | Jobot | New Head of Product opportunity. Apply Now.
+- 2026-07-31 | no JD after 56d | https://jobot.com/apply/director-of-technology/bda8bb5f06?eid=22bd4ea7f786&uid=f2658430e2&jid=bda8bb5f06 | Jobot | New Head of Product opportunity. Apply Now.
+- 2026-07-31 | no JD after 56d | https://jobot.com/apply/copy-of-key-account-manager-walmart-target/3698825806?eid=22bd4ea7f786&uid=f2658430e2&jid=3698825806 | Jobot | New Head of Product opportunity. Apply Now.
+- 2026-07-31 | no JD after 56d | https://jobot.com/apply/vp-of-growth/08333b5506?eid=22bd4ea7f786&uid=f2658430e2&jid=08333b5506 | Jobot | New Head of Product opportunity. Apply Now.
+- 2026-07-31 | no JD after 56d | https://jobot.com/apply/manager-software-engineering-hands-on-cloud-saas-ai-driven-development/a9232ab601?eid=22bd4ea7f786&uid=f2658430e2&jid=a9232ab601 | Jobot | New Head of Product opportunity. Apply Now.
+- 2026-07-31 | no JD after 56d | https://jobot.com/apply/product-manager-refractory-industry/e78e9a5a06?eid=22bd4ea7f786&uid=f2658430e2&jid=e78e9a5a06 | Jobot | New Head of Product opportunity. Apply Now.
+- 2026-07-31 | no JD after 56d | https://jobot.com/apply/head-of-sales-us-west/0671e1a001?eid=22bd4ea7f786&uid=f2658430e2&jid=0671e1a001 | Jobot | New Head of Product opportunity. Apply Now.
+- 2026-07-31 | no JD after 56d | https://jobot.com/apply/director-of-client-relations-nuclear-industry/a72324b401?eid=22bd4ea7f786&uid=f2658430e2&jid=a72324b401 | Jobot | New Head of Product opportunity. Apply Now.
+- 2026-07-31 | no JD after 56d | https://jobot.com/apply/integrated-campaign-manager/d96df05506?eid=22bd4ea7f786&uid=f2658430e2&jid=d96df05506 | Jobot | New Head of Product opportunity. Apply Now.
+- 2026-07-31 | no JD after 56d | https://jobot.com/apply/community-partnerships-manager-home-healthcare-sales/ea0e1da001?eid=22bd4ea7f786&uid=f2658430e2&jid=ea0e1da001 | Jobot | New Head of Product opportunity. Apply Now.
+- 2026-07-31 | no JD after 56d | https://jobot.com/apply/sr-ai-software-engineer-c-net-infrastructure-startup-exp-reqd-100-remote/3838265d06?eid=22bd4ea7f786&uid=f2658430e2&jid=3838265d06 | Jobot | New Head of Product opportunity. Apply Now.
+- 2026-07-31 | no JD after 53d | https://jobot.com/apply/head-of-sales-us-west/0671e1a001?eid=48c96bbb8286&uid=f2658430e2&jid=0671e1a001 | Jobot | New opportunity as a Copy of Key Account Manager - Walmart/Target
+- 2026-07-31 | no JD after 53d | https://jobot.com/apply/product-manager-refractory-industry/e78e9a5a06?eid=48c96bbb8286&uid=f2658430e2&jid=e78e9a5a06 | Jobot | New opportunity as a Copy of Key Account Manager - Walmart/Target
+- 2026-07-31 | no JD after 53d | https://jobot.com/apply/vp-of-growth/08333b5506?eid=48c96bbb8286&uid=f2658430e2&jid=08333b5506 | Jobot | New opportunity as a Copy of Key Account Manager - Walmart/Target
+- 2026-07-31 | no JD after 53d | https://jobot.com/apply/manager-software-engineering-hands-on-cloud-saas-ai-driven-development/a9232ab601?eid=48c96bbb8286&uid=f2658430e2&jid=a9232ab601 | Jobot | New opportunity as a Copy of Key Account Manager - Walmart/Target
+- 2026-07-31 | no JD after 53d | https://jobot.com/apply/director-of-engineering-startup-experience-reqd-100-remote/92e34d5a06?eid=48c96bbb8286&uid=f2658430e2&jid=92e34d5a06 | Jobot | New opportunity as a Copy of Key Account Manager - Walmart/Target
+- 2026-07-31 | no JD after 53d | https://jobot.com/apply/copy-of-key-account-manager-walmart-target/3698825806?eid=48c96bbb8286&uid=f2658430e2&jid=3698825806 | Jobot | New opportunity as a Copy of Key Account Manager - Walmart/Target
+- 2026-07-31 | no JD after 53d | https://jobot.com/apply/integrated-campaign-manager/d96df05506?eid=48c96bbb8286&uid=f2658430e2&jid=d96df05506 | Jobot | New opportunity as a Copy of Key Account Manager - Walmart/Target
+- 2026-07-31 | no JD after 53d | https://jobot.com/apply/community-partnerships-manager-home-healthcare-sales/ea0e1da001?eid=48c96bbb8286&uid=f2658430e2&jid=ea0e1da001 | Jobot | New opportunity as a Copy of Key Account Manager - Walmart/Target
+- 2026-07-31 | no JD after 53d | https://jobot.com/apply/manager-social-media-sporting-goods-remote/5e1d0a5c06?eid=48c96bbb8286&uid=f2658430e2&jid=5e1d0a5c06 | Jobot | New opportunity as a Copy of Key Account Manager - Walmart/Target
+- 2026-07-31 | no JD after 53d | https://jobot.com/apply/director-of-client-relations-nuclear-industry/a72324b401?eid=48c96bbb8286&uid=f2658430e2&jid=a72324b401 | Jobot | New opportunity as a Copy of Key Account Manager - Walmart/Target
+- 2026-07-31 | no JD after 53d | https://jobot.com/apply/senior-staff-product-designer/806c1c0201?eid=48c96bbb8286&uid=f2658430e2&jid=806c1c0201 | Jobot | New opportunity as a Copy of Key Account Manager - Walmart/Target
+- 2026-07-31 | no JD after 53d | https://jobot.com/apply/director-of-technology/bda8bb5f06?eid=48c96bbb8286&uid=f2658430e2&jid=bda8bb5f06 | Jobot | New opportunity as a Copy of Key Account Manager - Walmart/Target
+- 2026-07-31 | not a posting (search url) | https://stripe.com/jobs/search?gh_jid=7994443 | Stripe | Product Manager, Global Payouts – Cross-Border & Enterprise Capabilities
+- 2026-07-31 | not a posting (search url) | https://stripe.com/jobs/search?gh_jid=8014786 | Stripe | Product Lead, Data Products
+- 2026-07-31 | not a posting (search url) | https://stripe.com/jobs/search?gh_jid=8009671 | Stripe | Product Manager, Global Marketplaces
+- 2026-07-31 | not a posting (search url) | https://stripe.com/jobs/search?gh_jid=8018427 | Stripe | Product Manager, Local Processor Acquiring
+- 2026-07-31 | not a posting (search url) | https://stripe.com/jobs/search?gh_jid=8027435 | Stripe | Product Lead, EMEA Payments
+- 2026-07-31 | not a posting (search url) | https://stripe.com/jobs/search?gh_jid=8010011 | Stripe | Product Manager, EMEA Local Payment Methods
+- 2026-07-31 | no JD after 35d | https://jobot.com/apply/head-of-product/7dc0ac5e06?eid=757345a22686&uid=f2658430e2&jid=7dc0ac5e06 | Jobot | Product Manager-Refractory Industry opportunities are available
+- 2026-07-31 | no JD after 35d | https://jobot.com/apply/director-of-client-relations-nuclear-industry/a72324b401?eid=757345a22686&uid=f2658430e2&jid=a72324b401 | Jobot | Product Manager-Refractory Industry opportunities are available
+- 2026-07-31 | no JD after 35d | https://jobot.com/apply/product-manager-refractory-industry/e78e9a5a06?eid=757345a22686&uid=f2658430e2&jid=e78e9a5a06 | Jobot | Product Manager-Refractory Industry opportunities are available
+- 2026-07-31 | no JD after 35d | https://jobot.com/apply/integrated-campaign-manager/d96df05506?eid=757345a22686&uid=f2658430e2&jid=d96df05506 | Jobot | Product Manager-Refractory Industry opportunities are available
+- 2026-07-31 | no JD after 35d | https://jobot.com/apply/community-partnerships-manager-home-healthcare-sales/ea0e1da001?eid=757345a22686&uid=f2658430e2&jid=ea0e1da001 | Jobot | Product Manager-Refractory Industry opportunities are available
+- 2026-07-31 | no JD after 35d | https://jobot.com/apply/vice-president-enterprise-sales-%E2%80%93-specialty-pharmacy-healthcare-analytics/3659df5206?eid=757345a22686&uid=f2658430e2&jid=3659df5206 | Jobot | Product Manager-Refractory Industry opportunities are available
+- 2026-07-31 | no JD after 35d | https://jobot.com/apply/head-of-field-architecture-utility-industry/f0d0515106?eid=757345a22686&uid=f2658430e2&jid=f0d0515106 | Jobot | Product Manager-Refractory Industry opportunities are available
+- 2026-07-31 | no JD after 35d | https://jobot.com/apply/fractional-vp-of-sales/e48fec4f06?eid=757345a22686&uid=f2658430e2&jid=e48fec4f06 | Jobot | Product Manager-Refractory Industry opportunities are available
+- 2026-07-31 | no JD after 35d | https://jobot.com/apply/sr-ai-software-engineer-c-net-infrastructure-startup-exp-reqd-100-remote/3838265d06?eid=757345a22686&uid=f2658430e2&jid=3838265d06 | Jobot | Product Manager-Refractory Industry opportunities are available
+- 2026-07-31 | no JD after 35d | https://jobot.com/apply/ml-solutions-architect/d1c118e901?eid=757345a22686&uid=f2658430e2&jid=d1c118e901 | Jobot | Product Manager-Refractory Industry opportunities are available
+- 2026-07-31 | no JD after 35d | https://jobot.com/apply/senior-account-executive/e10b09af01?eid=757345a22686&uid=f2658430e2&jid=e10b09af01 | Jobot | Product Manager-Refractory Industry opportunities are available
+- 2026-07-31 | no JD after 35d | https://jobot.com/apply/sales-marketing-manager-manufacturing-sensor-products/bbe8775b06?eid=757345a22686&uid=f2658430e2&jid=bbe8775b06 | Jobot | Product Manager-Refractory Industry opportunities are available
+- 2026-07-31 | not a posting (search url) | https://stripe.com/jobs/search?gh_jid=8043083 | Stripe | Staff Product Manager, Issuing
+- 2026-07-31 | not a posting (search url) | https://stripe.com/jobs/search?gh_jid=7517535 | Stripe | Staff Product Manager, ML Foundations and GenAI
+- 2026-07-31 | not a posting (search url) | https://stripe.com/jobs/search?gh_jid=8040052 | Stripe | Staff Product Manager, Risk Product Experience
+- 2026-07-31 | not a posting (search url) | https://jobs.elastic.co/jobs?gh_jid=8028261&gh_jid=8028261 | Elastic | Senior Product Manager - Self service cloud
+- 2026-07-31 | no JD after 31d | https://jobot.com/apply/head-of-product/7dc0ac5e06?eid=023c3e2f3086&uid=f2658430e2&jid=7dc0ac5e06 | Jobot | More Jobs Like Integrated Campaign Manager
+- 2026-07-31 | no JD after 31d | https://jobot.com/apply/integrated-campaign-manager/d96df05506?eid=023c3e2f3086&uid=f2658430e2&jid=d96df05506 | Jobot | More Jobs Like Integrated Campaign Manager
+- 2026-07-31 | no JD after 31d | https://jobot.com/apply/vice-president-enterprise-sales-%E2%80%93-specialty-pharmacy-healthcare-analytics/3659df5206?eid=023c3e2f3086&uid=f2658430e2&jid=3659df5206 | Jobot | More Jobs Like Integrated Campaign Manager
+- 2026-07-31 | no JD after 31d | https://jobot.com/apply/fractional-vp-of-sales/e48fec4f06?eid=023c3e2f3086&uid=f2658430e2&jid=e48fec4f06 | Jobot | More Jobs Like Integrated Campaign Manager
+- 2026-07-31 | no JD after 31d | https://jobot.com/apply/head-of-field-architecture-utility-industry/f0d0515106?eid=023c3e2f3086&uid=f2658430e2&jid=f0d0515106 | Jobot | More Jobs Like Integrated Campaign Manager
+- 2026-07-31 | no JD after 31d | https://jobot.com/apply/senior-account-executive/26d7554e06?eid=023c3e2f3086&uid=f2658430e2&jid=26d7554e06 | Jobot | More Jobs Like Integrated Campaign Manager
+- 2026-07-31 | no JD after 31d | https://jobot.com/apply/product-manager/2257d54e06?eid=023c3e2f3086&uid=f2658430e2&jid=2257d54e06 | Jobot | More Jobs Like Integrated Campaign Manager
+- 2026-07-31 | no JD after 31d | https://jobot.com/apply/sr-ai-software-engineer-c-net-infrastructure-startup-exp-reqd-100-remote/3838265d06?eid=023c3e2f3086&uid=f2658430e2&jid=3838265d06 | Jobot | More Jobs Like Integrated Campaign Manager
+- 2026-07-31 | no JD after 31d | https://jobot.com/apply/community-partnerships-manager-home-healthcare-sales/ea0e1da001?eid=023c3e2f3086&uid=f2658430e2&jid=ea0e1da001 | Jobot | More Jobs Like Integrated Campaign Manager
+- 2026-07-31 | no JD after 31d | https://jobot.com/apply/director-of-client-relations-nuclear-industry/a72324b401?eid=023c3e2f3086&uid=f2658430e2&jid=a72324b401 | Jobot | More Jobs Like Integrated Campaign Manager
+- 2026-07-31 | no JD after 31d | https://jobot.com/apply/sales-marketing-manager-manufacturing-sensor-products/bbe8775b06?eid=023c3e2f3086&uid=f2658430e2&jid=bbe8775b06 | Jobot | More Jobs Like Integrated Campaign Manager
+- 2026-07-31 | no JD after 31d | https://jobot.com/apply/business-development-sales-representative-printed-products-team/07323d5c06?eid=023c3e2f3086&uid=f2658430e2&jid=07323d5c06 | Jobot | More Jobs Like Integrated Campaign Manager
+- 2026-07-31 | no JD after 28d | https://jobot.com/apply/head-of-product/7dc0ac5e06?eid=a91c933ddc89&uid=f2658430e2&jid=7dc0ac5e06 | Jobot | Keep Going With More Jobs Like Senior Product Manager
+- 2026-07-31 | no JD after 28d | https://jobot.com/apply/head-of-sales-us-west/0671e1a001?eid=a91c933ddc89&uid=f2658430e2&jid=0671e1a001 | Jobot | Keep Going With More Jobs Like Senior Product Manager
+- 2026-07-31 | no JD after 28d | https://jobot.com/apply/head-of-field-architecture-utility-industry/f0d0515106?eid=a91c933ddc89&uid=f2658430e2&jid=f0d0515106 | Jobot | Keep Going With More Jobs Like Senior Product Manager
+- 2026-07-31 | no JD after 28d | https://jobot.com/apply/senior-product-manager/9025004e06?eid=a91c933ddc89&uid=f2658430e2&jid=9025004e06 | Jobot | Keep Going With More Jobs Like Senior Product Manager
+- 2026-07-31 | no JD after 28d | https://jobot.com/apply/director-of-client-relations-nuclear-industry/a72324b401?eid=a91c933ddc89&uid=f2658430e2&jid=a72324b401 | Jobot | Keep Going With More Jobs Like Senior Product Manager
+- 2026-07-31 | no JD after 28d | https://jobot.com/apply/product-manager/2257d54e06?eid=a91c933ddc89&uid=f2658430e2&jid=2257d54e06 | Jobot | Keep Going With More Jobs Like Senior Product Manager
+- 2026-07-31 | no JD after 28d | https://jobot.com/apply/market-development-specialist/9145204e06?eid=a91c933ddc89&uid=f2658430e2&jid=9145204e06 | Jobot | Keep Going With More Jobs Like Senior Product Manager
+- 2026-07-31 | no JD after 28d | https://jobot.com/apply/senior-account-executive/26d7554e06?eid=a91c933ddc89&uid=f2658430e2&jid=26d7554e06 | Jobot | Keep Going With More Jobs Like Senior Product Manager
+- 2026-07-31 | no JD after 28d | https://jobot.com/apply/manager-digital-experience-web-strategy/9a86e74d06?eid=a91c933ddc89&uid=f2658430e2&jid=9a86e74d06 | Jobot | Keep Going With More Jobs Like Senior Product Manager
+- 2026-07-31 | no JD after 28d | https://jobot.com/apply/community-partnerships-manager-home-healthcare-sales/ea0e1da001?eid=a91c933ddc89&uid=f2658430e2&jid=ea0e1da001 | Jobot | Keep Going With More Jobs Like Senior Product Manager
+- 2026-07-31 | no JD after 28d | https://jobot.com/apply/fractional-vp-of-sales/e48fec4f06?eid=a91c933ddc89&uid=f2658430e2&jid=e48fec4f06 | Jobot | Keep Going With More Jobs Like Senior Product Manager
+- 2026-07-31 | no JD after 28d | https://jobot.com/apply/vice-president-enterprise-payer-sales-market-access-%E2%80%93-specialty-pharmacy-analytics/3659df5206?eid=a91c933ddc89&uid=f2658430e2&jid=3659df5206 | Jobot | Keep Going With More Jobs Like Senior Product Manager
+- 2026-07-31 | no JD after 24d | https://jobot.com/apply/head-of-sales-us-west/0671e1a001?eid=1086fdfaf489&uid=f2658430e2&jid=0671e1a001 | Jobot | New Product Manager-Refractory Industry opportunity
+- 2026-07-31 | no JD after 24d | https://jobot.com/apply/product-manager-refractory-industry/e78e9a5a06?eid=1086fdfaf489&uid=f2658430e2&jid=e78e9a5a06 | Jobot | New Product Manager-Refractory Industry opportunity
+- 2026-07-31 | no JD after 24d | https://jobot.com/apply/manager-digital-experience-web-strategy/9a86e74d06?eid=1086fdfaf489&uid=f2658430e2&jid=9a86e74d06 | Jobot | New Product Manager-Refractory Industry opportunity
+- 2026-07-31 | no JD after 24d | https://jobot.com/apply/head-of-product/7dc0ac5e06?eid=1086fdfaf489&uid=f2658430e2&jid=7dc0ac5e06 | Jobot | New Product Manager-Refractory Industry opportunity
+- 2026-07-31 | no JD after 24d | https://jobot.com/apply/senior-account-executive/26d7554e06?eid=1086fdfaf489&uid=f2658430e2&jid=26d7554e06 | Jobot | New Product Manager-Refractory Industry opportunity
+- 2026-07-31 | no JD after 24d | https://jobot.com/apply/market-development-specialist/9145204e06?eid=1086fdfaf489&uid=f2658430e2&jid=9145204e06 | Jobot | New Product Manager-Refractory Industry opportunity
+- 2026-07-31 | no JD after 24d | https://jobot.com/apply/integrated-campaign-manager/d96df05506?eid=1086fdfaf489&uid=f2658430e2&jid=d96df05506 | Jobot | New Product Manager-Refractory Industry opportunity
+- 2026-07-31 | no JD after 24d | https://jobot.com/apply/fractional-vp-of-sales/e48fec4f06?eid=1086fdfaf489&uid=f2658430e2&jid=e48fec4f06 | Jobot | New Product Manager-Refractory Industry opportunity
+- 2026-07-31 | no JD after 24d | https://jobot.com/apply/head-of-field-architecture-utility-industry/f0d0515106?eid=1086fdfaf489&uid=f2658430e2&jid=f0d0515106 | Jobot | New Product Manager-Refractory Industry opportunity
+- 2026-07-31 | no JD after 24d | https://jobot.com/apply/founding-enterprise-sales-executive-%E2%80%93-payers-pbms-specialty-pharmacy-healthcare-analytics/3659df5206?eid=1086fdfaf489&uid=f2658430e2&jid=3659df5206 | Jobot | New Product Manager-Refractory Industry opportunity
+- 2026-07-31 | no JD after 24d | https://jobot.com/apply/community-partnerships-manager-home-healthcare-sales/ea0e1da001?eid=1086fdfaf489&uid=f2658430e2&jid=ea0e1da001 | Jobot | New Product Manager-Refractory Industry opportunity
+- 2026-07-31 | no JD after 24d | https://jobot.com/apply/product-manager/2257d54e06?eid=1086fdfaf489&uid=f2658430e2&jid=2257d54e06 | Jobot | New Product Manager-Refractory Industry opportunity
+- 2026-07-31 | no JD after 21d | https://jobot.com/apply/head-of-product/7dc0ac5e06?eid=c29fd1be9d89&uid=f2658430e2&jid=7dc0ac5e06 | Jobot | Apply for Senior Product Manager
+- 2026-07-31 | no JD after 21d | https://jobot.com/apply/senior-product-manager/9025004e06?eid=c29fd1be9d89&uid=f2658430e2&jid=9025004e06 | Jobot | Apply for Senior Product Manager
+- 2026-07-31 | no JD after 21d | https://jobot.com/apply/market-development-specialist/9145204e06?eid=c29fd1be9d89&uid=f2658430e2&jid=9145204e06 | Jobot | Apply for Senior Product Manager
+- 2026-07-31 | no JD after 21d | https://jobot.com/apply/senior-account-executive/26d7554e06?eid=c29fd1be9d89&uid=f2658430e2&jid=26d7554e06 | Jobot | Apply for Senior Product Manager
+- 2026-07-31 | no JD after 21d | https://jobot.com/apply/head-of-sales-us-west/0671e1a001?eid=c29fd1be9d89&uid=f2658430e2&jid=0671e1a001 | Jobot | Apply for Senior Product Manager
+- 2026-07-31 | no JD after 21d | https://jobot.com/apply/manager-digital-experience-web-strategy/9a86e74d06?eid=c29fd1be9d89&uid=f2658430e2&jid=9a86e74d06 | Jobot | Apply for Senior Product Manager
+- 2026-07-31 | no JD after 21d | https://jobot.com/apply/community-partnerships-manager-home-healthcare-sales/ea0e1da001?eid=c29fd1be9d89&uid=f2658430e2&jid=ea0e1da001 | Jobot | Apply for Senior Product Manager
+- 2026-07-31 | no JD after 21d | https://jobot.com/apply/integrated-campaign-manager/d96df05506?eid=c29fd1be9d89&uid=f2658430e2&jid=d96df05506 | Jobot | Apply for Senior Product Manager
+- 2026-07-31 | no JD after 21d | https://jobot.com/apply/fractional-vp-of-sales/e48fec4f06?eid=c29fd1be9d89&uid=f2658430e2&jid=e48fec4f06 | Jobot | Apply for Senior Product Manager
+- 2026-07-31 | no JD after 21d | https://jobot.com/apply/head-of-field-architecture-utility-industry/f0d0515106?eid=c29fd1be9d89&uid=f2658430e2&jid=f0d0515106 | Jobot | Apply for Senior Product Manager
+- 2026-07-31 | no JD after 21d | https://jobot.com/apply/product-manager/2257d54e06?eid=c29fd1be9d89&uid=f2658430e2&jid=2257d54e06 | Jobot | Apply for Senior Product Manager
+- 2026-07-31 | no JD after 21d | https://jobot.com/apply/founding-enterprise-sales-executive-%E2%80%93-payers-pbms-specialty-pharmacy-healthcare-analytics/3659df5206?eid=c29fd1be9d89&uid=f2658430e2&jid=3659df5206 | Jobot | Apply for Senior Product Manager
+- 2026-07-31 | not a posting (search url) | https://jobs.elastic.co/jobs?gh_jid=8041211&gh_jid=8041211 | Elastic | Senior Product Manager - Self service cloud
+- 2026-07-31 | not a posting (search url) | https://jobs.elastic.co/jobs?gh_jid=8041209&gh_jid=8041209 | Elastic | Senior Product Manager - Self service cloud
+- 2026-07-31 | not a posting (search url) | https://jobs.elastic.co/jobs?gh_jid=8041202&gh_jid=8041202 | Elastic | Senior Product Manager - Self service cloud
+- 2026-07-31 | no JD after 18d | https://jobs.smartrecruiters.com/my-applications/CityOfNewYork/244b7a66-12b5-45ec-8e41-04d86b5b225c?dcr_ci=CityOfNewYork | Smartrecruiters | The City of New York. We have received your application. Thank you!
+- 2026-07-31 | not a posting (search url) | https://jobs.elastic.co/jobs?gh_jid=8041203&gh_jid=8041203 | Elastic | Senior Product Manager - Self service cloud
+- 2026-07-31 | not a posting (search url) | https://stripe.com/jobs/search?gh_jid=8064526 | Stripe | AI Product Manager, Professional Services
+- 2026-07-31 | not a posting (search url) | https://stripe.com/jobs/search?gh_jid=8064900 | Stripe | Product Manager, Cash Platform
+- 2026-07-31 | not a posting (search url) | https://jobs.elastic.co/jobs?gh_jid=8041208&gh_jid=8041208 | Elastic | Senior Product Manager - Self service cloud
+- 2026-07-31 | not a posting (search url) | https://stripe.com/jobs/search?gh_jid=8041655 | Stripe | Product Manager, E-Invoicing
+- 2026-07-31 | not a posting (search url) | https://jobs.elastic.co/jobs?gh_jid=8066510&gh_jid=8066510 | Elastic | Senior Product Manager, Logs - Observability
+- 2026-07-31 | not a posting (search url) | https://jobs.elastic.co/jobs?gh_jid=8070011&gh_jid=8070011 | Elastic | Principal Product Manager Agents and Context - Elasticsearch
+- 2026-07-31 | not a posting (search url) | https://jobs.elastic.co/jobs?gh_jid=8066508&gh_jid=8066508 | Elastic | Senior Product Manager, Logs - Observability
+- 2026-07-31 | not a posting (search url) | https://jobs.elastic.co/jobs?gh_jid=7602101&gh_jid=7602101 | Elastic | Principal Product Manager Agents and Context - Elasticsearch
+- 2026-07-31 | not a posting (search url) | https://jobs.elastic.co/jobs?gh_jid=8066516&gh_jid=8066516 | Elastic | Senior Product Manager, Logs - Observability
+- 2026-07-31 | no JD after 14d | https://jobot.com/apply/product-manager-refractory-industry/e78e9a5a06?eid=5cf2322a6389&uid=f2658430e2&jid=e78e9a5a06 | Jobot | New opportunity as a Product Manager-Refractory Industry
+- 2026-07-31 | no JD after 14d | https://jobot.com/apply/senior-product-manager/9025004e06?eid=5cf2322a6389&uid=f2658430e2&jid=9025004e06 | Jobot | New opportunity as a Product Manager-Refractory Industry
+- 2026-07-31 | no JD after 14d | https://jobot.com/apply/head-of-product/7dc0ac5e06?eid=5cf2322a6389&uid=f2658430e2&jid=7dc0ac5e06 | Jobot | New opportunity as a Product Manager-Refractory Industry
+- 2026-07-31 | no JD after 14d | https://jobot.com/apply/head-of-sales-us-west/0671e1a001?eid=5cf2322a6389&uid=f2658430e2&jid=0671e1a001 | Jobot | New opportunity as a Product Manager-Refractory Industry
+- 2026-07-31 | no JD after 14d | https://jobot.com/apply/director-of-social-media/0754d34b06?eid=5cf2322a6389&uid=f2658430e2&jid=0754d34b06 | Jobot | New opportunity as a Product Manager-Refractory Industry
+- 2026-07-31 | no JD after 14d | https://jobot.com/apply/market-development-specialist/9145204e06?eid=5cf2322a6389&uid=f2658430e2&jid=9145204e06 | Jobot | New opportunity as a Product Manager-Refractory Industry
+- 2026-07-31 | no JD after 14d | https://jobot.com/apply/head-of-field-architecture-utility-industry/f0d0515106?eid=5cf2322a6389&uid=f2658430e2&jid=f0d0515106 | Jobot | New opportunity as a Product Manager-Refractory Industry
+- 2026-07-31 | no JD after 14d | https://jobot.com/apply/fractional-vp-of-sales/e48fec4f06?eid=5cf2322a6389&uid=f2658430e2&jid=e48fec4f06 | Jobot | New opportunity as a Product Manager-Refractory Industry
+- 2026-07-31 | no JD after 14d | https://jobot.com/apply/manager-digital-experience-web-strategy/9a86e74d06?eid=5cf2322a6389&uid=f2658430e2&jid=9a86e74d06 | Jobot | New opportunity as a Product Manager-Refractory Industry
+- 2026-07-31 | no JD after 14d | https://jobot.com/apply/senior-account-executive/26d7554e06?eid=5cf2322a6389&uid=f2658430e2&jid=26d7554e06 | Jobot | New opportunity as a Product Manager-Refractory Industry
+- 2026-07-31 | no JD after 14d | https://jobot.com/apply/senior-content-strategist/8624034c06?eid=5cf2322a6389&uid=f2658430e2&jid=8624034c06 | Jobot | New opportunity as a Product Manager-Refractory Industry
+- 2026-07-31 | no JD after 14d | https://jobot.com/apply/integrated-campaign-manager/d96df05506?eid=5cf2322a6389&uid=f2658430e2&jid=d96df05506 | Jobot | New opportunity as a Product Manager-Refractory Industry
+- 2026-07-31 | not a posting (search url) | https://jobs.elastic.co/jobs?gh_jid=8066512&gh_jid=8066512 | Elastic | Senior Product Manager, Logs - Observability
+- 2026-07-31 | not a posting (search url) | https://jobs.elastic.co/jobs?gh_jid=8066646&gh_jid=8066646 | Elastic | Senior Product Manager, Logs - Observability
+- 2026-07-31 | not a posting (search url) | https://jobs.elastic.co/jobs?gh_jid=8053907&gh_jid=8053907 | Elastic | Senior Product Manager, Logs - Observability
+- 2026-07-31 | not a posting (search url) | https://stripe.com/jobs/search?gh_jid=8065034 | Stripe | Product Manager, Connect
+- 2026-07-31 | no JD after 11d | https://jobot.com/apply/senior-product-manager/9025004e06?eid=3dc5ed8c6989&uid=f2658430e2&jid=9025004e06 | Jobot | Apply for Senior Product Manager
+- 2026-07-31 | no JD after 11d | https://jobot.com/apply/head-of-product/7dc0ac5e06?eid=3dc5ed8c6989&uid=f2658430e2&jid=7dc0ac5e06 | Jobot | Apply for Senior Product Manager
+- 2026-07-31 | no JD after 11d | https://jobot.com/apply/market-development-specialist/9145204e06?eid=3dc5ed8c6989&uid=f2658430e2&jid=9145204e06 | Jobot | Apply for Senior Product Manager
+- 2026-07-31 | no JD after 11d | https://jobot.com/apply/director-of-social-media/0754d34b06?eid=3dc5ed8c6989&uid=f2658430e2&jid=0754d34b06 | Jobot | Apply for Senior Product Manager
+- 2026-07-31 | no JD after 11d | https://jobot.com/apply/head-of-sales-us-west/0671e1a001?eid=3dc5ed8c6989&uid=f2658430e2&jid=0671e1a001 | Jobot | Apply for Senior Product Manager
+- 2026-07-31 | no JD after 11d | https://jobot.com/apply/senior-account-executive/26d7554e06?eid=3dc5ed8c6989&uid=f2658430e2&jid=26d7554e06 | Jobot | Apply for Senior Product Manager
+- 2026-07-31 | no JD after 11d | https://jobot.com/apply/product-manager/2257d54e06?eid=3dc5ed8c6989&uid=f2658430e2&jid=2257d54e06 | Jobot | Apply for Senior Product Manager
+- 2026-07-31 | no JD after 11d | https://jobot.com/apply/manager-digital-experience-web-strategy/9a86e74d06?eid=3dc5ed8c6989&uid=f2658430e2&jid=9a86e74d06 | Jobot | Apply for Senior Product Manager
+- 2026-07-31 | no JD after 11d | https://jobot.com/apply/senior-content-strategist/8624034c06?eid=3dc5ed8c6989&uid=f2658430e2&jid=8624034c06 | Jobot | Apply for Senior Product Manager
+- 2026-07-31 | no JD after 11d | https://jobot.com/apply/integrated-campaign-manager/d96df05506?eid=3dc5ed8c6989&uid=f2658430e2&jid=d96df05506 | Jobot | Apply for Senior Product Manager
+- 2026-07-31 | no JD after 11d | https://jobot.com/apply/head-of-field-architecture-utility-industry/f0d0515106?eid=3dc5ed8c6989&uid=f2658430e2&jid=f0d0515106 | Jobot | Apply for Senior Product Manager
+- 2026-07-31 | no JD after 11d | https://jobot.com/apply/fractional-vp-of-sales/e48fec4f06?eid=3dc5ed8c6989&uid=f2658430e2&jid=e48fec4f06 | Jobot | Apply for Senior Product Manager
+- 2026-07-31 | not a posting (search url) | https://stripe.com/jobs/search?gh_jid=8081418 | Stripe | Product Manager, Global Expansion (MENA)
+- 2026-07-31 | not a posting (search url) | https://jobs.elastic.co/jobs?gh_jid=8067977 | Elastic | Principal Product Manager, Telemetry Collection - Observability
+- 2026-07-31 | not a posting (search url) | https://jobs.elastic.co/jobs?gh_jid=8081008 | Elastic | Principal Product Manager, Telemetry Collection - Observability
+- 2026-07-31 | not a posting (search url) | https://jobs.elastic.co/jobs?gh_jid=8081012 | Elastic | Principal Product Manager, Telemetry Collection - Observability
+- 2026-07-31 | not a posting (search url) | https://jobs.elastic.co/jobs?gh_jid=8081013 | Elastic | Principal Product Manager, Telemetry Collection - Observability
+- 2026-07-31 | not a posting (search url) | https://stripe.com/jobs/search?gh_jid=7947510 | Stripe | Consumer Product Marketing Lead, Link
+- 2026-07-31 | not a posting (search url) | https://stripe.com/jobs/search?gh_jid=7990812 | Stripe | GTM Product Marketing Manager, Commerce Experiences
+- 2026-07-31 | not a posting (search url) | https://stripe.com/jobs/search?gh_jid=6348471 | Stripe | Product Marketing Manager
+- 2026-07-31 | not a posting (search url) | https://stripe.com/jobs/search?gh_jid=7913503 | Stripe | Product Marketing Manager, Apps and Ecosystem
+- 2026-07-31 | not a posting (search url) | https://stripe.com/jobs/search?gh_jid=8060324 | Stripe | Product Marketing Manager, Bridge/Stablecoins
+- 2026-07-31 | not a posting (search url) | https://stripe.com/jobs/search?gh_jid=8013981 | Stripe | Product Marketing Manager, Global Selling
+- 2026-07-31 | not a posting (search url) | https://stripe.com/jobs/search?gh_jid=8014761 | Stripe | Product Marketing Manager, Market Intelligence
+- 2026-07-31 | not a posting (search url) | https://stripe.com/jobs/search?gh_jid=7832098 | Stripe | Product Marketing Manager, Portfolio Pricing
+- 2026-07-31 | not a posting (search url) | https://stripe.com/jobs/search?gh_jid=7961101 | Stripe | Product Marketing Manager, Radar
+- 2026-07-31 | not a posting (search url) | https://jobs.elastic.co/jobs?gh_jid=8088818 | Elastic | Senior Product Manager, Control Plane - Platform
+- 2026-07-31 | not a posting (search url) | https://jobs.elastic.co/jobs?gh_jid=8093933 | Elastic | Senior Product Manager, Control Plane - Platform
+- 2026-07-31 | not a posting (search url) | https://zetaschools.org/careers?gh_jid=5117038003 | Zeta Charter Schools | Basketball Instructor
+- 2026-07-31 | not a posting (search url) | https://zetaschools.org/careers?gh_jid=5794563003 | Zeta Charter Schools | Cello Teacher
+- 2026-07-31 | not a posting (search url) | https://zetaschools.org/careers?gh_jid=7766042003 | Zeta Charter Schools | Elementary School Teacher – Bronx, NYC
+- 2026-07-31 | not a posting (search url) | https://zetaschools.org/careers?gh_jid=7797922003 | Zeta Charter Schools | Elementary School Teacher - NYC
+- 2026-07-31 | not a posting (search url) | https://zetaschools.org/careers?gh_jid=7768281003 | Zeta Charter Schools | Entry-Level Early Childhood Resident Teacher
+- 2026-07-31 | not a posting (search url) | https://zetaschools.org/careers?gh_jid=7605906003 | Zeta Charter Schools | Entry-Level Middle School Resident Teacher
+- 2026-07-31 | not a posting (search url) | https://zetaschools.org/careers?gh_jid=7731307003 | Zeta Charter Schools | Entry-Level Resident Teacher
+- 2026-07-31 | not a posting (search url) | https://zetaschools.org/careers?gh_jid=7605901003 | Zeta Charter Schools | Entry-Level Science Resident Teacher
+- 2026-07-31 | not a posting (search url) | https://zetaschools.org/careers?gh_jid=5421165003 | Zeta Charter Schools | Middle School English Language Arts (ELA) Teacher - NYC
+- 2026-07-31 | not a posting (search url) | https://zetaschools.org/careers?gh_jid=5455398003 | Zeta Charter Schools | Middle School History Teacher - NYC
+- 2026-07-31 | not a posting (search url) | https://zetaschools.org/careers?gh_jid=7777473003 | Zeta Charter Schools | Middle School Humanities Teacher - NYC
+- 2026-07-31 | not a posting (search url) | https://zetaschools.org/careers?gh_jid=5421183003 | Zeta Charter Schools | Middle School Science Teacher - NYC [$5,000 Signing Bonus]
+- 2026-07-31 | not a posting (search url) | https://zetaschools.org/careers?gh_jid=6021647003 | Zeta Charter Schools | Middle School STEM Teacher - NYC [$5,000 Signing Bonus]
+- 2026-07-31 | not a posting (search url) | https://zetaschools.org/careers?gh_jid=7810452003 | Zeta Charter Schools | Music Teacher [Queens Flushing] - Specialty Program Teacher [$5,000 Signing Bonus]
+- 2026-07-31 | not a posting (search url) | https://zetaschools.org/careers?gh_jid=4196594003 | Zeta Charter Schools | Music Teacher - Specialty Program Teacher [$5,000 Signing Bonus]
+- 2026-07-31 | not a posting (search url) | https://zetaschools.org/careers?gh_jid=5585390003 | Zeta Charter Schools | Orchestra Teacher - Specialty Program Teacher
+- 2026-07-31 | not a posting (search url) | https://zetaschools.org/careers?gh_jid=6259912003 | Zeta Charter Schools | Piano Teacher
+- 2026-07-31 | not a posting (search url) | https://zetaschools.org/careers?gh_jid=5367863003 | Zeta Charter Schools | Pre-K Head Teacher [New York State Certified]
+- 2026-07-31 | not a posting (search url) | https://zetaschools.org/careers?gh_jid=5367867003 | Zeta Charter Schools | SETSS Teacher
+- 2026-07-31 | not a posting (search url) | https://zetaschools.org/careers?gh_jid=4963189003 | Zeta Charter Schools | Violin Teacher [Part Time]
+- 2026-07-31 | not a posting (search url) | https://zetaschools.org/careers?gh_jid=5693678003 | Zeta Charter Schools | Violin Teacher - Specialty Program Teacher
+- 2026-07-31 | not a posting (search url) | https://stripe.com/jobs/search?gh_jid=8093374 | Stripe | Product Marketing Manager, Startup Segment
+- 2026-07-31 | not a posting (search url) | https://www.clever.com/about/careers?gh_jid=7958645 | Clever | Senior Product Manager, Classroom Experience
+- 2026-07-31 | not a posting (search url) | https://www.ixl.com/company/jobs?gh_jid=8481127002 | IXL Learning | IXL Product Manager
+- 2026-07-31 | not a posting (search url) | https://www.ixl.com/company/jobs?gh_jid=8444833002 | IXL Learning | Product Manager, Digital Marketing Enablement
+- 2026-07-31 | not a posting (search url) | https://www.ixl.com/company/jobs?gh_jid=8444854002 | IXL Learning | Product Manager, District Integrations
+- 2026-07-31 | not a posting (search url) | https://www.ixl.com/company/jobs?gh_jid=8444868002 | IXL Learning | Product Manager, Education.com
+- 2026-07-31 | not a posting (search url) | https://www.ixl.com/company/jobs?gh_jid=8444887002 | IXL Learning | Product Manager, Wyzant
+- 2026-07-31 | not a posting (search url) | https://stripe.com/jobs/search?gh_jid=8097731 | Stripe | Product Marketing Manager, Startup Segment

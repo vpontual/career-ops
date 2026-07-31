@@ -75,3 +75,13 @@ __pycache__/
 *.pyc
 config/cv-facts.json
 data/blacklist.md
+
+# tool-written backups
+*.bak-*
+*.bak2-*
+.loc-backup-*/
+
+# prepared application answers - contain personal contact details
+batch/claude-answers/
+batch/claude-covers/
+batch/gemini-originals/
