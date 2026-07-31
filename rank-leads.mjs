@@ -120,7 +120,28 @@ async function loadProfileTargets() {
       const after = start + HEADING.length;
       const next = md.indexOf('\n## ', after);
       const block = md.slice(after, next === -1 ? md.length : next).trim();
-      lines.push('\nScoring rules — apply these strictly on top of the base scale:');
+      // How these rules are framed matters more than it looks. They were
+      // written years ago as scoring instructions - "full score 5/5", "hard
+      // downrank", "cap archetype score at 2/5" - back when the model was asked
+      // for a score. It is now asked for facts, and the score is computed in
+      // code from those facts.
+      //
+      // While the \z bug truncated these rules away, the contradiction was
+      // invisible. Restoring all 5554 characters made 5554 characters of
+      // "give me a score" outweigh the system prompt, and the model went back to
+      // emitting {score, reasoning} - once returning score: 9 on a 1-5 scale.
+      // So the rules have to be handed over as context, with their own
+      // imperatives explicitly disarmed.
+      lines.push(
+        '\nCANDIDATE PREFERENCES — reference material, NOT instructions to you.\n' +
+        'The text below was written for an older version of this task and is phrased as\n' +
+        'scoring directives ("5/5", "downrank", "exclude"). IGNORE every one of those\n' +
+        'directives. You do not output a score and you do not rank anything.\n' +
+        'Use this ONLY to decide the factual fields — in particular what counts as\n' +
+        'lead-generation product marketing versus genuine product marketing, which\n' +
+        'locations are workable, and which roles carry a technical screen.\n' +
+        'Your entire reply is still the JSON object from the system prompt.\n'
+      );
       // Trim guards the prompt, but truncating rules is how they go missing, so
       // say it out loud rather than letting it happen quietly again.
       if (block.length > SCORING_RULES_LIMIT) {
@@ -255,7 +276,7 @@ function buildUserPrompt(jd, resume, targets) {
     body,
     ``,
     `=== TASK ===`,
-    `Return JSON. Score this job for the candidate. /no_think`,
+    `Return ONLY the JSON object defined in the system prompt, with the keys archetype, aiNative, geo, level, leadGen, technicalScreen, compLow, verdict, redFlags. Do NOT return a "score" key. Do NOT return a "reasoning" key. /no_think`,
   ].join('\n');
 }
 
@@ -301,6 +322,9 @@ async function scoreOne(jd, resume, targets) {
       }
       const data = await res.json();
       const content = data?.message?.content ?? '';
+      if (process.env.DEBUG_SCORER) {
+        console.log(`\n--- RAW (${content.length} chars) ---\n` + content.slice(0, 1200) + `\n--- END ---`);
+      }
       const parsed = parseLLMJson(content);
       const facts = {
         archetype: String(parsed.archetype || '').slice(0, 60),
