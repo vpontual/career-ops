@@ -28,8 +28,9 @@ interface QueueItem {
 }
 
 interface Glassdoor {
-  rating: number;
-  reviews: number;
+  rating: number | null;
+  reviews: number | null;
+  scope?: string;
   recommend: number | null;
   workLife: number | null;
   culture: number | null;
@@ -150,6 +151,25 @@ function GlassdoorPanel({ gd }: { gd: Glassdoor }) {
     gd.career != null ? ["career", gd.career] as const : null,
   ].filter(Boolean) as (readonly [string, number])[];
 
+  // A company with no Glassdoor presence is not a neutral result — it means no
+  // salary, culture or turnover signal exists to check — so it gets its own
+  // rendering rather than an empty panel or a crash on a null rating.
+  if (gd.rating == null) {
+    return (
+      <div className="mt-3 rounded-md border border-slate-800 bg-slate-900/40 px-3 py-2.5">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <span className="text-[11px] uppercase tracking-wider font-mono text-slate-500">
+            Glassdoor
+          </span>
+          <span className="px-2 py-0.5 rounded border text-xs text-slate-400 border-slate-700 bg-slate-800/40">
+            no presence — nothing to check
+          </span>
+        </div>
+        {gd.note && <p className="mt-2 text-xs leading-relaxed text-slate-400">{gd.note}</p>}
+      </div>
+    );
+  }
+
   return (
     <div className="mt-3 rounded-md border border-slate-800 bg-slate-900/40 px-3 py-2.5">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -164,8 +184,14 @@ function GlassdoorPanel({ gd }: { gd: Glassdoor }) {
 
         <span className={`px-2 py-0.5 rounded border text-xs ${stars(gd.rating)}`}>
           working here {gd.rating.toFixed(1)}/5
-          <span className="text-slate-500"> · {gd.reviews} reviews</span>
+          {gd.reviews != null && <span className="text-slate-500"> · {gd.reviews} reviews</span>}
         </span>
+
+        {gd.scope && gd.scope !== "company" && (
+          <span className="px-2 py-0.5 rounded border text-xs text-violet-300 border-violet-400/30 bg-violet-400/10">
+            rated by {gd.scope}
+          </span>
+        )}
 
         {gd.recommend != null && (
           <span className={`px-2 py-0.5 rounded border text-xs ${pct(gd.recommend)}`}>

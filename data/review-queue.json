@@ -18,7 +18,24 @@
       "notes": "No cover letter field exists. Required: resume, work auth, cities, source. Mostly dropdowns. || INTERVIEW: HM screen > engineering collab > analytical deep dive > technical round > case study. Technical round is whiteboard system design / explain architecture you have owned - a strength, not a risk. Analytical round is the unknown. NO live coding reported. GO. || TAKE-HOME: case study is reported as an onsite round, i.e. live. No take-home reported. CLEAREST OF THE SIX - confirm with recruiter.",
       "decision": null,
       "decidedAt": null,
-      "track": "pm"
+      "track": "pm",
+      "glassdoor": {
+        "rating": 4.0,
+        "reviews": 1926,
+        "recommend": 75,
+        "workLife": null,
+        "culture": null,
+        "career": null,
+        "interview": {
+          "positive": 39,
+          "difficulty": 3.0,
+          "reviews": null,
+          "role": "Product Manager"
+        },
+        "url": "https://www.glassdoor.com/Reviews/Datadog-Reviews-E762009.htm",
+        "note": "Strong company, hard door. 78% positive business outlook. But PM candidates rate the interview only 39% positive and take an average of 43 days to get hired, against 26 days company-wide \u2014 the PM loop is materially longer and less liked than the rest of Datadog.",
+        "scope": "company"
+      }
     },
     {
       "slug": "deepgram-senior-product-manager-enterprise",
@@ -120,7 +137,19 @@
       "notes": "PRODUCT MARKETING. Cleared the lead-gen filter: 25 responsibility bullets, exactly one touches campaigns and it is partnering with marketing rather than owning demand gen. Freshest role on the board at 5d. || INTERVIEW: no public data for PMM (the documented Mercury loop is engineering-only: Haskell, coding rounds). ASK THE RECRUITER for the full format before investing. || TAKE-HOME: unknown.",
       "decision": null,
       "decidedAt": null,
-      "track": "pm"
+      "track": "pm",
+      "glassdoor": {
+        "rating": 4.4,
+        "reviews": 114,
+        "recommend": 82,
+        "workLife": 4.0,
+        "culture": 4.1,
+        "career": 4.1,
+        "interview": null,
+        "url": "https://www.glassdoor.com/Reviews/Mercury-Reviews-E3583070.htm",
+        "note": "The best-rated company anywhere in your queue. Comp and benefits rated 4.6/5, the highest figure in the whole set. Reviews cite transparent leadership, autonomy and genuine work-life balance.",
+        "scope": "company"
+      }
     },
     {
       "slug": "suno-senior-product-marketing-manager",
@@ -171,7 +200,19 @@
       "notes": "TEACHING TRACK. Requirements verified: bachelor's degree ONLY - no certification, no master's, no teaching experience, no education background. Teach right away. || DILIGENCE - READ BEFORE APPLYING: 42% turnover, the highest of any NYC charter per state DOE (SA claims 17% excluding intra-network transfers). One SA high school reported 70% of staff not returning. Days run before 7am to ~5pm. Pay below comparable professional roles. Reviews call the workload 'crushing, exhausting, burns people out very quickly'; some first-year teachers quit teaching entirely. FAIR COUNTERPOINT: the model is deliberately built to survive turnover - standardized curriculum means a new teacher is not improvising, which is genuinely easier walking in cold. || CV: teaching variant now attached. || RESOLVED: NO cover letter field. Required: full street address, city, state, zip, country, and 'Have you completed your Bachelor's Degree?' Nothing to write. || MANHATTAN RESEARCH DONE. Success Academy runs 59 schools citywide; the Manhattan campuses are Harlem (ten of them), Hell's Kitchen, Hudson Yards, Midtown West, Union Square, Upper West and Washington Heights. || COMMUTE IS ACTUALLY A REASON TO PICK MANHATTAN: you are at 22 W 15th St, and there is a Union Square campus plus Hudson Yards and Midtown West nearby. For a day that starts before 7am that matters more than it sounds. || IT DOES SET YOU UP TO TEACH FAST - four weeks of structured training before you are alone with a class: one week off-site on a college campus doing seminars and mock lessons with school leaders, then three weeks teaching SA summer-school students. No certification required, no education background required; they market explicitly to career changers. You would be in a classroom by August. || BUT IT DOES NOT PRODUCE A CREDENTIAL. I found no evidence Success Academy sponsors or leads to New York State certification. So this buys classroom experience, not a portable qualification. That is the opposite trade from Transitional B / NYC Teaching Fellows, which is slower and demands a master's in education but ends with you certified. Decide which of those two you actually want before applying. || PAY IS BELOW THE FLOOR YOU NAMED: reported average SA salary in Manhattan is about $55,059 a year, with Associate Teacher around $52,427. That is under your ~$60K pivot floor, and Democracy Prep pays a first-year UNCERTIFIED teacher $68,707 for the same no-certification entry. || NEEDS YOU - SALARY ANSWER TENSION: I had pre-filled $70,000-$85,000, anchored on Democracy Prep. Against an SA band in the low-to-mid $50s that may screen you out on its own. Either lower it to roughly $60,000-$70,000 to stay inside their range, or keep the higher number and accept that it is a filter. Tell me which. || THE WAY OUT TO CERTIFIED IS NOT NYCTF - IT IS TRANSITIONAL A (CTE). New York has a CTE certification route built for exactly your profile: people with business and industry experience entering teaching. A district hires you on a Transitional A certificate, valid three years, during which you complete initial-certification requirements while employed and paid. The pathway options are graded by education plus experience, and OPTION J is 'bachelor's degree or higher IN THE CTE FIELD plus one year of work experience'. Your NYU Stern MBA is a graduate degree in business, and Business & Marketing is the CTE field, so you would clear Option J on the credential and overshoot the experience requirement fifteen times over. Option B is 'high school diploma plus four years work experience', which shows how low the industry bar is. || WHY THAT BEATS 'a year at SA then NYCTF': Transitional A puts you in a PUBLIC school on public pay with a pension, does not require a master's in education the way Transitional B and NYCTF do, does not wait for NYCTF's annual cycle, and lets you teach business, a subject you actually know, rather than elementary generalist. A year at Success Academy buys classroom experience and no credential, so it delays certification rather than advancing it. || ON ME: verify with NYSED Office of Teaching Initiatives that an MBA counts as 'in the CTE field' for Business & Marketing under Option J, and source NYC DOE CTE high schools hiring business teachers - Transitional A only activates when a district hires you under it.",
       "decision": null,
       "decidedAt": null,
-      "track": "teaching"
+      "track": "teaching",
+      "glassdoor": {
+        "rating": 2.0,
+        "reviews": 351,
+        "recommend": 9,
+        "workLife": 1.3,
+        "culture": 1.6,
+        "career": 2.4,
+        "interview": null,
+        "url": "https://www.glassdoor.com/Reviews/Success-Academy-Charter-Schools-Teacher-Reviews-EI_IE381408.0,31_KO32,39.htm",
+        "note": "\u26a0 THE WORST RATING IN THE QUEUE BY A WIDE MARGIN, and this is teachers rating it, not the org overall. 2.0/5 across 351 teacher reviews. Only 9% would recommend it to a friend. Work-life balance 1.3/5 and culture 1.6/5 are the lowest numbers I have seen on any employer in this search. Review titles are not subtle. This is worse than the ~2.5 I reported earlier \u2014 I had the wrong figure. Set against ~$55K pay and no certification pathway, the case for this role is speed and nothing else.",
+        "scope": "TEACHERS specifically"
+      }
     },
     {
       "slug": "democracy-prep-bronx-elementary-teacher",
@@ -188,7 +229,19 @@
       "notes": "TEACHING TRACK. || DILIGENCE DONE. PAY: first-year UNCERTIFIED $68,707, first-year certified $75,250, capping at $137,729; the schedule scales on certification status and lead-teaching years. So your $60K floor is cleared. CERTIFICATION: bachelor's required, state certification only PREFERRED - being uncertified is a pay tier here, not a gate, which resolves the screening flag on this card. || CULTURE - WORSE THAN SUCCESS ACADEMY ON THE QUALITATIVE AXIS: teachers rate it 2.5/5 across 145 reviews. Quotes: 'the administration is inhumane towards both teachers and students, and it's run like an Amazon warehouse'; 'micromanaging of leadership is toxic and lesson plans are critiqued down to the word'. One review reports 6 of 25 teammates remaining after under two years, and retention is described as the network's greatest struggle. || RESOLVED: cover letter optional, none attached. || SCREENING RISK, same shape as Suno: the form asks 'Do you hold any professional teaching certifications?' (no) and 'How many years of full-time teaching experience do you have?' (zero). Both are honest zeros. If they gate on either, this screens out - better learned now than at round three.",
       "decision": null,
       "decidedAt": null,
-      "track": "teaching"
+      "track": "teaching",
+      "glassdoor": {
+        "rating": 2.7,
+        "reviews": 172,
+        "recommend": 39,
+        "workLife": 1.7,
+        "culture": null,
+        "career": null,
+        "interview": null,
+        "url": "https://www.glassdoor.com/Reviews/Democracy-Prep-Public-Schools-Teacher-Reviews-EI_IE284340.0,29_KO30,37.htm",
+        "note": "\u26a0 Poor, though clearly better than Success Academy. 2.7/5 across 172 teacher reviews, 39% would recommend, work-life balance 1.7/5, comp 2.9/5. A second Glassdoor page reports 2.5 across 145. Recurring themes are micromanagement and turnover.",
+        "scope": "TEACHERS specifically"
+      }
     },
     {
       "slug": "code-for-america-lead-product-manager",
@@ -205,7 +258,19 @@
       "notes": "NONPROFIT TRACK - the standout. Civic tech, a genuine product role, remote US, mission is government services that actually work for people. Closest thing to a direct translation of his PM skills into community impact.  || RESOLVED: comp $128,945-$157,850, Remote US. Below the $150K PM floor at the midpoint but well inside the ~$60K pivot floor. Cover letter is optional so none attached. Required free-text: 'Why are you interested in working for Code for America?' and a question about your insurance or healthcare background - note that second one, it suggests this team sits closer to safety-net health programs than to generic civic tech.",
       "decision": null,
       "decidedAt": null,
-      "track": "nonprofit"
+      "track": "nonprofit",
+      "glassdoor": {
+        "rating": 3.3,
+        "reviews": 48,
+        "recommend": 41,
+        "workLife": 3.6,
+        "culture": 3.2,
+        "career": 2.9,
+        "interview": null,
+        "url": "https://www.glassdoor.com/Reviews/Code-for-America-Reviews-E554293.htm",
+        "note": "\u26a0 Weaker than its reputation suggests. Only 41% would recommend it, and career opportunities rate 2.9/5. Several recent reviews are pointedly critical of leadership. Mission is real; the workplace reviews are middling.",
+        "scope": "company"
+      }
     },
     {
       "slug": "propel-product-lead-grocery",
@@ -222,7 +287,19 @@
       "notes": "NONPROFIT TRACK. Propel builds the EBT/food-benefits app used by millions of low-income households. Note: a public benefit corporation, not a 501(c)(3) - real impact, but for-profit, so comp should be closer to market.  || RESOLVED: comp $190K-$250K plus equity - the HIGHEST BAND IN THE WHOLE QUEUE, above Primary's $150-200K. Remote US, full time. No cover letter field, but FOUR REQUIRED ESSAYS which I originally missed by inferring from the Ashby posting API instead of inspecting the form: what interests you in Propel; a time you worked with a commercial partner and where your interests conflicted; a metric you defined that misled you; and how you use AI tools day to day including where it was NOT useful. All four are drafted - the commercial-partner one is Dash Button with the SKU-selection conflict, and the AI one closes on 'I ship continuously by directing agents'.",
       "decision": null,
       "decidedAt": null,
-      "track": "nonprofit"
+      "track": "nonprofit",
+      "glassdoor": {
+        "rating": 4.1,
+        "reviews": 19,
+        "recommend": 82,
+        "workLife": null,
+        "culture": null,
+        "career": null,
+        "interview": null,
+        "url": "https://www.glassdoor.com/Reviews/Propel-Reviews-E1847074.htm",
+        "note": "4.1/5 with 82% recommending, though only 19 reviews so treat it as directional. Employees consistently cite the mission \u2014 helping low-income Americans navigate benefits \u2014 and describe the team as humble and user-focused. 68% positive business outlook. This remains the highest-paid role in the queue.",
+        "scope": "company"
+      }
     },
     {
       "slug": "mozilla-director-product-gaming",
@@ -290,7 +367,19 @@
       "notes": "VENTURE TRACK. On the technical axis this may be a CLOSER match than Primary. Their thesis, verbatim: 'Every team deploying models on edge devices rebuilds memory management, platform abstraction, and monitoring logic from scratch. The hardware is fragmenting across dozens of chipsets and runtimes. No single vendor's tools cover the stack.' You are living that: two Jetson Nanos, an Orin AGX and a DGX Spark, four chipsets, mixed Ollama and vLLM runtimes, behind a routing gateway you built precisely because no vendor's tools covered it. You have already built the abstraction layer they are describing as the opportunity. || NEEDS YOU - THIS IS A FOUNDER ROLE, NOT AN OPERATOR ROLE. You would be founding the company, not advising on it. Different risk profile from Primary's OIR entirely. Comp is not stated, and studio founder packages are usually a modest salary plus meaningful equity, so the $150K floor probably does not apply the way it does elsewhere. Decide whether you want founder risk before I prepare anything. || ADJACENT: Forum has other studio founder roles open - Robotics Middleware, Agentic Incident Management (manufacturing), AI Labor & Financial Operations. All Remote US. || RESOLVED: comp NOT stated. Remote US, full time. || NEEDS YOU BEFORE I PREPARE ANYTHING - this is a founder seat and you have not decided whether you want founder risk. Drafting an application before that decision is wasted work. || FORM INSPECTED: required questions are Pronouns, Background, 'Why did you pick this concept? Do you have domain expertise in this area?', 'Why is being a founder the right step for you right now?', how you heard about Forum, plus a stage checkbox (brainstorming / already have a co-founder / other). || I AM NOT DRAFTING 'why is being a founder the right step for you right now' - that is a conviction about your own life and I would be inventing it. Tell me your actual answer and I will shape it. The concept and domain-expertise question I CAN write, and it is your strongest card: four chipsets, mixed runtimes, and the abstraction layer you already built because no vendor's tools covered your fleet.",
       "decision": null,
       "decidedAt": null,
-      "track": "venture"
+      "track": "venture",
+      "glassdoor": {
+        "rating": null,
+        "reviews": null,
+        "recommend": null,
+        "workLife": null,
+        "culture": null,
+        "career": null,
+        "interview": null,
+        "url": "",
+        "note": "No Glassdoor presence for the studio programme. Venture studio seats are not conventional employment, so employer reviews would not tell you much even if they existed \u2014 diligence the partners and the terms instead.",
+        "scope": "none available"
+      }
     },
     {
       "slug": "company-ventures-eir",
@@ -307,7 +396,19 @@
       "notes": "VENTURE TRACK. NYC, full time, EIR at a real firm (~$150mm AUM, runs Grand Central Tech; portfolio includes Maven, Eden Health, Octave). || HONEST CAVEAT: the studio is Terrarium and it is DIGITAL HEALTH specifically. You have no healthcare background. That is a genuine domain gap, not a framing problem, and it is a materially weaker fit than Primary or the Forum edge role. Listed because the format is right and NYC EIR seats are rare, not because the match is strong. Comp not stated. || RESOLVED: comp NOT stated. NYC, full time. || NEEDS YOU BEFORE I PREPARE ANYTHING - the digital-health domain gap is real and you may simply want to skip this one. || FORM INSPECTED, AND IT CONFIRMS THE GATE: required questions are a status radio (founder mode / transitioning out / founder curious / researching), 'Why do you want to start a company?', and 'What problem in healthcare are you most excited to solve?'. That last one is not a soft preference - they are asking for a healthcare thesis. You do not have one, and I will not manufacture one. My recommendation is to skip this unless you genuinely have a healthcare problem you care about, in which case tell me and I will build the answer around it.",
       "decision": null,
       "decidedAt": null,
-      "track": "venture"
+      "track": "venture",
+      "glassdoor": {
+        "rating": null,
+        "reviews": null,
+        "recommend": null,
+        "workLife": null,
+        "culture": null,
+        "career": null,
+        "interview": null,
+        "url": "",
+        "note": "No Glassdoor presence for the EIR programme, same reasoning as Forum. Diligence the terms, not the employer.",
+        "scope": "none available"
+      }
     },
     {
       "slug": "posse-career-program-specialist-nyc",
@@ -324,7 +425,19 @@
       "notes": "NONPROFIT TRACK - the standout of the Posse batch. The Career Program helps Posse Scholars transition from leaders on campus to leaders in the workforce, which is mentoring and teaching by another name. || WHY IT FITS: their qualifications list says 'experience working in corporate settings is a plus'. That line is written for someone like you - 15 years of corporate product roles is the asset here, not a thing to explain away. Bachelor's required (you exceed it), workshop facilitation preferred (that is the Conexant and Amazon partner-training work), and four languages help with NYC scholars and families. || GAPS, HONESTLY: 'experience working with youth strongly preferred' - you have none. Salesforce and event planning are listed and you have neither. Comp not stated on the page; Glassdoor puts Posse senior trainers around $72K, which clears your ~$60K pivot floor. || ON ME: full posting read, comp confirmation, application format. Custom form, not an ATS, so it needs a manual inspect-form pass before I claim it is prepared.",
       "decision": null,
       "decidedAt": null,
-      "track": "nonprofit"
+      "track": "nonprofit",
+      "glassdoor": {
+        "rating": 3.6,
+        "reviews": 139,
+        "recommend": null,
+        "workLife": null,
+        "culture": null,
+        "career": null,
+        "interview": null,
+        "url": "https://www.glassdoor.com/Reviews/Posse-Foundation-Reviews-E328019.htm",
+        "note": "3.6/5 across 139 reviews, compensation 3.4/5. \u26a0 Read the review titles before committing: the most-surfaced one is 'The people are great, but the program is built for burnout'. A recurring pattern of loving the mission and leaving anyway.",
+        "scope": "company"
+      }
     },
     {
       "slug": "posse-director-nyc",
@@ -358,7 +471,19 @@
       "notes": "TEACHING TRACK - independent school route, which needs no NYS certification. || THE HONEST PICTURE: the NYSAIS board has 20 openings right now and this is the ONLY one in a subject you can teach. Your Spanish is fluent so the subject is real, but K-5 elementary Spanish is a long way from senior product management and I am not going to dress that up. It is a genuine give-back option, not a career move. || ON ME: which school, comp, and whether they want prior classroom experience.",
       "decision": null,
       "decidedAt": null,
-      "track": "teaching"
+      "track": "teaching",
+      "glassdoor": {
+        "rating": null,
+        "reviews": null,
+        "recommend": null,
+        "workLife": null,
+        "culture": null,
+        "career": null,
+        "interview": null,
+        "url": "",
+        "note": "Not a single employer \u2014 NYSAIS is an association of independent schools, so a rating only exists once a specific school is identified. Re-check when the school is named.",
+        "scope": "none available"
+      }
     },
     {
       "slug": "nycps-cte-business-teacher-industry-pathway",
@@ -375,7 +500,19 @@
       "notes": "TEACHING TRACK - THIS DOMINATES BOTH CHARTER OPTIONS AND IT HAS A DEADLINE OF AUGUST 6. || BUSINESS IS A NYC CTE SUBJECT. VP's assumption that high schools have no business class is wrong for CTE programs specifically: NYC DOE names its CTE industries as architecture, construction, BUSINESS, healthcare and information technology. Not every comprehensive high school offers it, but the CTE programs and CTE high schools do. || NYC DOE HAS A PAGE FOR EXACTLY HIS PROFILE, 'Pathways for Industry Professionals': 'Aspiring CTE teachers with professional experience in a relevant field can apply directly for certification from NYSED. Once hired, CTE teachers earn a full-time teacher salary and benefits.' No education degree required. || PAY, AND THIS IS THE HEADLINE: the UFT schedule pays a teacher with a MASTER'S and no prior teaching experience $80,166 starting as of 2026-09-14. New teachers can also claim credit for up to 7.5 years of prior experience (to step 8B), so his 15 years may push him above that. Compare: Success Academy Manhattan averages about $55,059 and Democracy Prep pays an uncertified first-year $68,707. The public route pays roughly $25K MORE than Success Academy, adds a pension and union protection, AND leads to certification instead of nowhere. Ignore the ZipRecruiter figure of $58,304 for 'CTE business teacher' - the UFT schedule is the authoritative source and it is far higher. || NEEDS YOU: the NYCPS Teacher Application deadline is AUGUST 6, eight days out. Everything else in the queue can wait a week; this cannot. || ON ME: walk the actual application, and confirm whether the MBA satisfies the Option J 'degree in the CTE field' test or whether he enters via Option B (high school diploma plus 4 years experience), which he clears regardless. || EXPERIENCE VERIFICATION - NO SCHEDULE C NEEDED (VP's call, and the numbers back it): his W-2 employer years alone total about 12 (Conexant 2008-2011, Pace 2011-2013, Amazon 2015-2016, Kwik 2017-2018, Gravetti 2018-2020, Reco.AI 2020-2022). Every pathway needs at most 4 years, so Option B clears with 8 years spare and Option J with 11. Claim employer years only; leave the 2023-present independent period off the experience form. The real friction is employer reachability rather than paperwork type - Conexant was absorbed into NXP then Trident, and Gravetti and Kwik may be unreachable - so lead with Reco.AI, Gravetti and Amazon.",
       "decision": null,
       "decidedAt": null,
-      "track": "teaching"
+      "track": "teaching",
+      "glassdoor": {
+        "rating": 3.4,
+        "reviews": 948,
+        "recommend": null,
+        "workLife": null,
+        "culture": null,
+        "career": null,
+        "interview": null,
+        "url": "https://www.glassdoor.com/Reviews/New-York-City-Department-of-Education-Reviews-E105247.htm",
+        "note": "Teachers rate NYC DOE 3.4/5 across 948 reviews; the org overall sits at 3.7/5 across 4,460. Not glowing \u2014 complaints centre on administration and support \u2014 but it is a full point and a half above Success Academy, pays about $25K more, carries a pension and a union, and actually leads to certification. On this evidence the public route beats both charters on every axis except speed.",
+        "scope": "TEACHERS specifically"
+      }
     },
     {
       "slug": "suno-staff-product-manager",
@@ -514,7 +651,19 @@
       "notes": "Stealth AI-security startup, NYC, Director level, ~$180K. The product is an autonomous system that models attack paths and orchestrates agents to validate them - genuinely agentic, not AI-flavoured. Early stage, which matches your stated preference over big-company roles. || This one only exists because I chased a data bug: jobspy returns missing cells as pandas NaN, which is truthy, so twelve stored JDs had a company literally named 'nan'. This scored 5 while being unidentifiable. Bug fixed, two other real companies recovered (Niural, PactFi). || RISK: stealth-mode startup, so no Glassdoor, no funding record you can check, and the JD names no investors. Diligence before interviewing, not before applying. || ON ME: inspect the form.",
       "coverLetter": "absent",
       "decision": null,
-      "decidedAt": null
+      "decidedAt": null,
+      "glassdoor": {
+        "rating": null,
+        "reviews": null,
+        "recommend": null,
+        "workLife": null,
+        "culture": null,
+        "career": null,
+        "interview": null,
+        "url": "",
+        "note": "No Glassdoor presence \u2014 stealth-mode startup, no reviews, no salary data, no investor record in the JD. Nothing here is negative; there is simply nothing to check. Diligence this one by talking to people, before interviewing rather than before applying.",
+        "scope": "none available"
+      }
     },
     {
       "slug": "render-staff-product-manager-agent-systems-observability",
@@ -531,7 +680,19 @@
       "notes": "Highest band on the list at $218K. The JD asks for LLM economics and OpenTelemetry fluency and 7+ years in observability, which on paper you do not have - but this is the one role where your homelab is the qualification rather than a hobby: a mixed vLLM/Ollama fleet, llm-gateway routing across four inference nodes, GPU utilisation dashboards, health alerting. That IS agent and systems observability, run in production, by you. || RISK: they may still screen for the literal 7 years. This is the stretch application of the batch - worth sending, not worth counting on. || Render also has a Staff/Principal PM, Platform & Infrastructure (remote US) the scanner missed. || ON ME: inspect the form.",
       "coverLetter": "absent",
       "decision": null,
-      "decidedAt": null
+      "decidedAt": null,
+      "glassdoor": {
+        "rating": 4.2,
+        "reviews": 12,
+        "recommend": 77,
+        "workLife": null,
+        "culture": null,
+        "career": null,
+        "interview": null,
+        "url": "https://www.glassdoor.com/Reviews/Render-Reviews-E2213176.htm",
+        "note": "4.2/5 but only 12 reviews, so this is the weakest sample in the queue. The reviews split hard: one camp describes a mature, low-ego, sustainable culture with generous comp; the other describes burnout at an all-time high and more people leaving than hiring can replace. Both are recent. Worth asking about attrition directly.",
+        "scope": "company"
+      }
     },
     {
       "slug": "socure-product-lead-workforce-solutions",
@@ -548,7 +709,19 @@
       "notes": "AI-native identity verification, Series D+, $170K-$220K, NYC. Solid fit on domain and level. || ON ME: this arrived as an Indeed scrape and an Indeed viewjob page is not an application form. I still have to find the company's real posting and inspect it. Do not approve this one yet.",
       "coverLetter": "absent",
       "decision": null,
-      "decidedAt": null
+      "decidedAt": null,
+      "glassdoor": {
+        "rating": 3.3,
+        "reviews": 227,
+        "recommend": 59,
+        "workLife": 3.1,
+        "culture": 3.1,
+        "career": 3.5,
+        "interview": null,
+        "url": "https://www.glassdoor.com/Reviews/Socure-Reviews-E1627708.htm",
+        "note": "\u26a0 Mediocre and contested. 3.3/5 across 227 reviews, 59% recommend, culture and work-life both 3.1. Comp rates better at 3.8. Reviews are unusually polarised, and at least one accuses the positive ones of being fake \u2014 which is itself a signal worth noting.",
+        "scope": "company"
+      }
     },
     {
       "slug": "amazon-principal-pmt-autos-ai",
@@ -565,7 +738,24 @@
       "notes": "$198K floor, Principal IC, no red flags, and you are ex-Amazon - internal referral and alumni routing are both open to you here. Oldest of the set at 30 days, so verify it is still real before investing. || ON ME: this arrived as an Indeed scrape and an Indeed viewjob page is not an application form. I still have to find the company's real posting and inspect it. Do not approve this one yet.",
       "coverLetter": "absent",
       "decision": null,
-      "decidedAt": null
+      "decidedAt": null,
+      "glassdoor": {
+        "rating": 3.1,
+        "reviews": 125,
+        "recommend": null,
+        "workLife": null,
+        "culture": null,
+        "career": null,
+        "interview": {
+          "positive": 47,
+          "difficulty": 3.4,
+          "reviews": null,
+          "role": "Principal Product Manager"
+        },
+        "url": "https://www.glassdoor.com/Reviews/Amazon-Principal-Product-Manager-Reviews-EI_IE6036.0,6_KO7,32.htm",
+        "note": "\u26a0 Note the scope: Amazon overall rates about 3.8, but Principal Product Managers rate it 3.1/5 across 125 reviews \u2014 the people in your exact role are the least happy. Principal PM candidates rate the interview 47% positive at 3.4/5 difficulty. You already know the Amazon loop from the inside, which is worth more here than any rating.",
+        "scope": "PRINCIPAL PMs specifically"
+      }
     },
     {
       "slug": "prime-matter-labs-product-lead-element-ai",
@@ -582,7 +772,19 @@
       "notes": "Profitable manufacturer building an internal AI platform - the hardware-plus-software-plus-AI shape maps unusually well onto Conexant, Pace and Kwik. Band is quoted $150K-$300K, which is too wide to read. || ON ME: this arrived as an Indeed scrape and an Indeed viewjob page is not an application form. I still have to find the company's real posting and inspect it. Do not approve this one yet.",
       "coverLetter": "absent",
       "decision": null,
-      "decidedAt": null
+      "decidedAt": null,
+      "glassdoor": {
+        "rating": null,
+        "reviews": null,
+        "recommend": null,
+        "workLife": null,
+        "culture": null,
+        "career": null,
+        "interview": null,
+        "url": "",
+        "note": "No meaningful Glassdoor presence. Described as a profitable manufacturer rather than a funded startup, so the usual startup review sites will not cover it either.",
+        "scope": "none available"
+      }
     },
     {
       "slug": "niural-director-of-product",
@@ -599,7 +801,19 @@
       "notes": "AI-native fintech, Director level, $180K floor, NYC. Recovered from the same 'nan' company bug as Latent Defense. || ON ME: this arrived as an Indeed scrape and an Indeed viewjob page is not an application form. I still have to find the company's real posting and inspect it. Do not approve this one yet.",
       "coverLetter": "absent",
       "decision": null,
-      "decidedAt": null
+      "decidedAt": null,
+      "glassdoor": {
+        "rating": null,
+        "reviews": null,
+        "recommend": null,
+        "workLife": null,
+        "culture": null,
+        "career": null,
+        "interview": null,
+        "url": "",
+        "note": "No meaningful Glassdoor presence \u2014 too small and too new. No culture or turnover signal available.",
+        "scope": "none available"
+      }
     }
   ],
   "tracks": {
