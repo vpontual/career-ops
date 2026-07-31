@@ -209,7 +209,7 @@ const SYSTEM_PROMPT = `You are a job-fit ANALYST, not a scorer. Do not rate the 
   "leadGen": <true if a Product Marketing title is really demand generation, pipeline, campaigns, or sales enablement rather than explaining the product to customers>,
   "technicalScreen": <true if the JD requires coding tests, take-home assignments, SQL tests, or live technical exercises>,
   "compLow": <lowest stated base salary as a plain number, or null if not stated>,
-  "verdict": "<one short sentence: what this role actually is>",
+  "verdict": "<A FULL SENTENCE of at least 12 words describing what this role actually is — the product, the seniority, and the company stage. NOT a rating. NOT a label. \"Strong Match\", \"Good fit\" and \"Senior PM role\" are all WRONG ANSWERS. Good example: \"Staff PM owning the agent-evaluation surface at a Series C developer-tools company, reporting to the Head of Product.\">",
   "redFlags": "<empty string or 1-2 concrete concerns>"
 }
 
@@ -344,7 +344,7 @@ function buildUserPrompt(jd, resume, targets) {
     body,
     ``,
     `=== TASK ===`,
-    `Return ONLY the JSON object defined in the system prompt, with the keys archetype, aiNative, geo, level, leadGen, technicalScreen, compLow, verdict, redFlags. Do NOT return a "score" key. Do NOT return a "reasoning" key. /no_think`,
+    `Return ONLY the JSON object defined in the system prompt, with the keys archetype, aiNative, geo, level, leadGen, technicalScreen, compLow, verdict, redFlags. Do NOT return a "score" key. Do NOT return a "reasoning" key. The verdict must be a real sentence describing the role, not a two-word rating — 370 of the last 403 replies said only "Strong Match", which is useless. /no_think`,
   ].join('\n');
 }
 
