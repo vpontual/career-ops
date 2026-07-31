@@ -85,3 +85,4 @@ data/blacklist.md
 batch/claude-answers/
 batch/claude-covers/
 batch/gemini-originals/
+*.bak*
