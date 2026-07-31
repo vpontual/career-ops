@@ -36,6 +36,7 @@ const SCORES_PATH = path.join(ROOT, 'data', 'lead-scores.json');
 const INBOX_LEADS_PATH = path.join(ROOT, 'data', 'inbox-leads.md');
 const LOG_PATH = path.join(ROOT, 'logs', 'rank-leads.log');
 
+const SCORING_RULES_LIMIT = parseInt(process.env.SCORING_RULES_LIMIT ?? '12000', 10);
 const MAX_AGE_DAYS = parseInt(process.env.MAX_AGE_DAYS ?? '30', 10);
 const STALE_AGE_DAYS = parseInt(process.env.STALE_AGE_DAYS ?? '5', 10);
 const OLLAMA_URL = process.env.OLLAMA_URL;
@@ -104,12 +105,30 @@ async function loadProfileTargets() {
   const profileMdPath = path.join(ROOT, 'modes', '_profile.md');
   if (existsSync(profileMdPath)) {
     const md = await readFile(profileMdPath, 'utf-8');
-    const scoringMatch = md.match(/## Your Scoring Rules \(Override\)([\s\S]*?)(?=^## |\z)/m);
-    if (scoringMatch) {
+    // Extract by index, not by regex. The previous pattern ended with `\z`,
+    // which is a Perl/Ruby anchor and NOT valid JavaScript - in JS it is simply
+    // the literal letter z. So the lookahead read `(?=^## |z)` and the scoring
+    // rules were truncated at the first lowercase z in the text, which falls
+    // inside the word "organizational" about 750 characters in. Roughly 85% of
+    // these rules had never reached the model: the whole geographic section,
+    // the product-marketing rules, and the interview-format constraints were
+    // all silently absent, which is why it invented a "remote preference" that
+    // VP does not have.
+    const HEADING = '## Your Scoring Rules (Override)';
+    const start = md.indexOf(HEADING);
+    if (start !== -1) {
+      const after = start + HEADING.length;
+      const next = md.indexOf('\n## ', after);
+      const block = md.slice(after, next === -1 ? md.length : next).trim();
       lines.push('\nScoring rules — apply these strictly on top of the base scale:');
-      // Trim to ~6000 chars. Was 2500, which the rules had already nearly
-      // filled — appending silently truncated new rules out of the prompt.
-      lines.push(scoringMatch[1].trim().slice(0, 6000));
+      // Trim guards the prompt, but truncating rules is how they go missing, so
+      // say it out loud rather than letting it happen quietly again.
+      if (block.length > SCORING_RULES_LIMIT) {
+        console.warn(`  ⚠ scoring rules are ${block.length} chars, over the ${SCORING_RULES_LIMIT} limit — ${block.length - SCORING_RULES_LIMIT} chars will NOT reach the model`);
+      }
+      lines.push(block.slice(0, SCORING_RULES_LIMIT));
+    } else {
+      console.warn('  ⚠ no scoring-rules section found in _profile.md — scoring with base rules only');
     }
     // Language capability not in profile.yml — inject explicitly
     lines.push('\nLanguage note: candidate is fluent in French, Spanish, and Portuguese. Uprank roles that require or benefit from these languages.');
