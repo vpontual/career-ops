@@ -398,8 +398,14 @@ async function scoreOne(jd, resume, targets) {
         archetype: normalizeArchetype(parsed.archetype),
         archetypeRaw: String(parsed.archetype || '').slice(0, 40),  // what it actually said
         aiNative: parsed.aiNative === true,
-        geo: normalizeGeo(parsed.geo),
-        geoRaw: String(parsed.geo || '').slice(0, 60),  // keep what it actually said, for auditing
+        // Location comes from the ATS record, NOT from the model. Brex posts the
+        // same role as a separate req per city and lists all its offices in the
+        // body text, so the model read "hybrid in SF, Seattle, or NYC" and
+        // answered "NYC" for every one of them - including the San Francisco
+        // req. The posting's own location field is authoritative and free.
+        geo: normalizeGeo(jd.location || parsed.geo),
+        geoRaw: String(jd.location || parsed.geo || '').slice(0, 60),
+        geoModel: String(parsed.geo || '').slice(0, 40),  // what the model guessed, for auditing
         level: String(parsed.level || 'at').slice(0, 12),
         leadGen: parsed.leadGen === true,
         technicalScreen: parsed.technicalScreen === true,

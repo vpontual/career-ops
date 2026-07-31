@@ -17,6 +17,7 @@
  */
 
 import { readFile, writeFile } from 'fs/promises';
+import { readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -46,7 +47,15 @@ const moves = [];
 
 for (const [k, v] of Object.entries(scores)) {
   if (!('aiNative' in v)) { skipped++; continue; }   // pre-facts entry, leave alone
-  const raw = v.geoRaw ?? v.geo;
+  // Prefer the JD's own Location header over anything cached from the model.
+  // That header is what the ATS reported and it is the only trustworthy source
+  // when a company posts one role per city.
+  let raw = v.geoRaw ?? v.geo;
+  try {
+    const head = readFileSync(path.join(ROOT, 'jds', k), 'utf8').slice(0, 600);
+    const m = /^\*\*Location:\*\* (.+)$/m.exec(head);
+    if (m && m[1].trim()) raw = m[1].trim();
+  } catch {}
   const geo = mod.normalizeGeo(raw);
   const archetype = mod.normalizeArchetype(v.archetypeRaw ?? v.archetype);
   const facts = { ...v, geo, archetype };
