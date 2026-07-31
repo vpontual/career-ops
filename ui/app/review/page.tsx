@@ -286,9 +286,9 @@ function NoteBlocks({ notes }: { notes: string }) {
 export default async function ReviewPage({
   searchParams,
 }: {
-  searchParams: Promise<{ track?: string }>;
+  searchParams: Promise<{ track?: string; decided?: string }>;
 }) {
-  const { track: trackParam } = await searchParams;
+  const { track: trackParam, decided: decidedParam } = await searchParams;
   const queue = await loadQueue();
 
   if (!queue || !queue.items?.length) {
@@ -309,9 +309,20 @@ export default async function ReviewPage({
   const grouped: Record<string, Loaded[]> = {};
   for (const it of items) (grouped[it.track || "pm"] ||= []).push(it);
 
-  const present = TRACK_ORDER.filter(t => grouped[t]?.length);
+  // A decided role is finished business. Leaving approved and rejected cards in
+  // the list means the queue only ever grows, and the two roles dropped today
+  // for having the wrong location would sit among the live ones forever.
+  //
+  // They are hidden, not deleted: the reasoning on a rejection is the most
+  // useful thing about it later, and keeping the record is also what stops the
+  // same role being re-added by a future scan.
+  const showDecided = decidedParam === "1";
+  const visible = (t: string) => (grouped[t] ?? []).filter(i => showDecided || !i.decision);
+
+  const present = TRACK_ORDER.filter(t => visible(t).length);
   const active = present.includes(trackParam ?? "") ? (trackParam as string) : present[0] ?? "pm";
-  const shown = grouped[active] ?? [];
+  const shown = visible(active);
+  const decidedCount = items.filter(i => i.decision).length;
   const pendingIn = (t: string) => (grouped[t] ?? []).filter(i => !i.decision).length;
   const totalPending = items.filter(i => !i.decision).length;
 
@@ -341,7 +352,7 @@ export default async function ReviewPage({
           return (
             <Link
               key={t}
-              href={`/review?track=${t}`}
+              href={`/review?track=${t}${showDecided ? "&decided=1" : ""}`}
               className={
                 "-mb-px flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium transition " +
                 (isActive
@@ -365,6 +376,26 @@ export default async function ReviewPage({
 
       {queue.tracks?.[active] && (
         <p className="mb-6 mt-3 text-sm text-slate-500">{queue.tracks[active]}</p>
+      )}
+
+      {decidedCount > 0 && (
+        <p className="mb-5 text-xs text-slate-500">
+          {showDecided ? (
+            <>
+              Showing {decidedCount} decided role{decidedCount === 1 ? "" : "s"} alongside the live queue.{" "}
+              <Link href={`/review?track=${active}`} className="text-blue-300 hover:text-blue-200">
+                hide them
+              </Link>
+            </>
+          ) : (
+            <>
+              {decidedCount} decided role{decidedCount === 1 ? "" : "s"} hidden (applied, rejected, on hold).{" "}
+              <Link href={`/review?track=${active}&decided=1`} className="text-blue-300 hover:text-blue-200">
+                show
+              </Link>
+            </>
+          )}
+        </p>
       )}
 
       <div className="space-y-5">
