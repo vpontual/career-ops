@@ -20,8 +20,18 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 QUEUE = os.path.join(ROOT, "data", "review-queue.json")
 SKIP = ("first name", "last name", "full name", "name", "email", "phone", "resume",
         "cover letter", "linkedin", "website", "pronouns", "preferred first name")
-# Marker a human/Claude writes into answers.md once the live form has been read.
-INSPECTED = re.compile(r"#\s*Form:.*(inspect|no cover letter|required)", re.I)
+# Marker written into answers.md once the live form has actually been opened.
+#
+# This used to require a literal "# Form:" heading, which made the gate a test of
+# document layout rather than of whether the form was read - three genuinely
+# inspected roles failed it. It now accepts any explicit inspection statement,
+# but requires a DATE alongside it, so the marker records when the form was seen
+# rather than merely asserting that it was.
+INSPECTED = re.compile(
+    r"(?:#\s*Form:.*(?:inspect|no cover letter|required)"
+    r"|form\s+inspected\D{0,20}\d{4}-\d{2}-\d{2})",
+    re.I,
+)
 
 
 def gh_required(slug, jid):

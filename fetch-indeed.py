@@ -104,6 +104,20 @@ def load_title_filter():
                ["marketing", "sales", "growth", "engineer"]
 
 
+
+def cell(row, key):
+    """Read a jobspy cell as clean text. Missing values arrive as float NaN,
+    which is truthy, so the usual `or ""` guard passes it through and str()
+    renders it as the word "nan"."""
+    value = row.get(key)
+    if value is None:
+        return ""
+    text = str(value).strip()
+    if text.lower() in ("nan", "none", "<na>"):
+        return ""
+    return text
+
+
 def title_passes(title, pos, neg):
     t = (title or "").lower()
     if neg and any(n in t for n in neg):
@@ -199,9 +213,9 @@ def main():
 
         kept = 0
         for _, r in df.iterrows():
-            url = str(r.get("job_url") or "").strip()
-            title = str(r.get("title") or "").strip()
-            company = str(r.get("company") or "").strip()
+            url = cell(r, "job_url")
+            title = cell(r, "title")
+            company = cell(r, "company")
             if not url or not title or not company:
                 continue
             if url in seen or url in run_seen:
