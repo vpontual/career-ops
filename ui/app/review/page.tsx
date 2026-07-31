@@ -24,6 +24,24 @@ interface QueueItem {
   decision: string | null;
   decidedAt: string | null;
   track?: string;
+  glassdoor?: Glassdoor;
+}
+
+interface Glassdoor {
+  rating: number;
+  reviews: number;
+  recommend: number | null;
+  workLife: number | null;
+  culture: number | null;
+  career: number | null;
+  interview: {
+    positive: number;
+    difficulty: number | null;
+    reviews: number | null;
+    role: string;
+  } | null;
+  url: string;
+  note?: string;
 }
 
 interface Queue {
@@ -105,6 +123,86 @@ function Badge({ label, color, title }: { label: string; color: string; title?: 
 // Notes are authored as "LABEL: text || LABEL: text". Rendering that as one
 // paragraph made the risk warnings invisible, so each segment becomes its own
 // callout and anything flagged RISK / EXCLUDED / DILIGENCE gets colour.
+// Glassdoor is two separate judgements and they disagree often enough to be
+// worth showing side by side: what it is like to WORK there, and what it is
+// like to be INTERVIEWED there. Suno is 3.7 to work at and 22% positive to
+// interview with; a single blended number would hide exactly that.
+function stars(n: number) {
+  return n >= 4.0
+    ? "text-emerald-300 border-emerald-400/30 bg-emerald-400/10"
+    : n >= 3.5
+    ? "text-amber-300 border-amber-400/30 bg-amber-400/10"
+    : "text-rose-300 border-rose-400/30 bg-rose-400/10";
+}
+
+function pct(n: number) {
+  return n >= 70
+    ? "text-emerald-300 border-emerald-400/30 bg-emerald-400/10"
+    : n >= 40
+    ? "text-amber-300 border-amber-400/30 bg-amber-400/10"
+    : "text-rose-300 border-rose-400/30 bg-rose-400/10";
+}
+
+function GlassdoorPanel({ gd }: { gd: Glassdoor }) {
+  const sub = [
+    gd.workLife != null ? ["work/life", gd.workLife] as const : null,
+    gd.culture != null ? ["culture", gd.culture] as const : null,
+    gd.career != null ? ["career", gd.career] as const : null,
+  ].filter(Boolean) as (readonly [string, number])[];
+
+  return (
+    <div className="mt-3 rounded-md border border-slate-800 bg-slate-900/40 px-3 py-2.5">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <a
+          href={gd.url}
+          target="_blank"
+          rel="noopener"
+          className="text-[11px] uppercase tracking-wider font-mono text-slate-500 hover:text-blue-300"
+        >
+          Glassdoor ↗
+        </a>
+
+        <span className={`px-2 py-0.5 rounded border text-xs ${stars(gd.rating)}`}>
+          working here {gd.rating.toFixed(1)}/5
+          <span className="text-slate-500"> · {gd.reviews} reviews</span>
+        </span>
+
+        {gd.recommend != null && (
+          <span className={`px-2 py-0.5 rounded border text-xs ${pct(gd.recommend)}`}>
+            {gd.recommend}% recommend
+          </span>
+        )}
+
+        {gd.interview ? (
+          <span className={`px-2 py-0.5 rounded border text-xs ${pct(gd.interview.positive)}`}>
+            interview {gd.interview.positive}% positive
+            {gd.interview.difficulty != null && (
+              <span className="text-slate-500"> · {gd.interview.difficulty}/5 hard</span>
+            )}
+            <span className="text-slate-500"> · {gd.interview.role}</span>
+          </span>
+        ) : (
+          <span className="px-2 py-0.5 rounded border text-xs text-slate-500 border-slate-700 bg-slate-800/40">
+            no interview rating for this role
+          </span>
+        )}
+      </div>
+
+      {sub.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-mono text-slate-500">
+          {sub.map(([label, value]) => (
+            <span key={label}>
+              {label} <span className={value >= 4.0 ? "text-emerald-400" : value >= 3.5 ? "text-amber-400" : "text-rose-400"}>{value.toFixed(1)}</span>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {gd.note && <p className="mt-2 text-xs leading-relaxed text-slate-400">{gd.note}</p>}
+    </div>
+  );
+}
+
 function NoteBlocks({ notes }: { notes: string }) {
   const segments = notes.split("||").map(s => s.trim()).filter(Boolean);
   if (!segments.length) return null;
@@ -294,6 +392,8 @@ export default async function ReviewPage({
                   }
                 />
               </div>
+
+              {item.glassdoor && <GlassdoorPanel gd={item.glassdoor} />}
 
               {item.notes && <NoteBlocks notes={item.notes} />}
 

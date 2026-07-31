@@ -392,7 +392,23 @@
       "notes": "TOP OF THE LIST. Consumer AI at scale, NYC, $180K floor, and the scorer flagged no red flags at all - one of only four in the whole rescore. Suno is generative music: the product IS the model, which is the thesis you have been hunting. || Verified live on Ashby today. Note there is a second Staff PM req in Los Angeles - this is the NYC one, do not apply to both. || FORM INSPECTED 2026-07-31 - and it has a REQUIRED ESSAY the posting API never showed: 'Why are you interested in this role at Suno?' Drafted in answers.md, along with the years-of-experience field and the work-from-office checkbox. || NEEDS YOU: confirm you want to claim 15 years of product management. Your W-2 product years run 2008-2022; counting the independent period gives ~18. I used 15 to match the CV. || ON ME: interview-process research, not done yet. || \u26a0 INTERVIEW PROCESS \u2014 NO PM DATA, AND A PROCESS WARNING. No first-hand PM interview report exists. Their published engineering loop is coding-heavy (60min coding, then 2 coding + ML system design + craft + behavioral), but every source that describes it says it covers engineering only. Median time to hire is 17 days, the fastest of the four. || THE WARNING: Glassdoor rates the Suno interview experience 22.7% POSITIVE across 23 reviews, difficulty 2.91/5, with Manager-level candidates rating it hardest. For comparison Webflow PM sits at 100% positive. || Read that carefully: 23 reviews is a small sample and it spans all roles, so it is a caution rather than a verdict. But a fifth of candidates leaving happy is unusual and worth knowing before you invest. It says nothing about the job itself, which remains the strongest role in the queue.",
       "coverLetter": "absent",
       "decision": null,
-      "decidedAt": null
+      "decidedAt": null,
+      "glassdoor": {
+        "rating": 3.7,
+        "reviews": 27,
+        "recommend": 71,
+        "workLife": null,
+        "culture": null,
+        "career": null,
+        "interview": {
+          "positive": 22,
+          "difficulty": 2.91,
+          "reviews": 23,
+          "role": "all roles"
+        },
+        "url": "https://www.glassdoor.com/Reviews/Suno-Reviews-E10318172.htm",
+        "note": "The gap is the signal: 3.7 as a place to work, but only 22% rate the interview positively. People seem to like it once inside and dislike getting in. 67% positive business outlook, the lowest of the four. Employee reviews split between the product and team on one side and management style on the other."
+      }
     },
     {
       "slug": "harvey-senior-staff-product-manager-vault",
@@ -409,7 +425,18 @@
       "notes": "AI-native legal, one of the strongest-funded application-layer AI companies. Vault is their document workspace, so this is document-grounded LLM product work - the closest thing on this list to what you actually build. || RISK: comp floor $177.7K is low for a Staff title with your years; treat the band as an opening position, not the offer. || Harvey also has Staff PM, New Verticals in NYC and an Innovation PM in NYC that the scanner never picked up - I found them checking this one. Say the word and I will work those up too. || FORM INSPECTED 2026-07-31 - no essays, no cover letter field. All fields prefilled in answers.md. || The decisive answer is the location radio: Harvey wants 3 days a week in their NYC office, which is your mode 3 of 3. Answering 'only able to work remotely' would very likely end it. || ON ME: interview-process research, not done yet. || INTERVIEW PROCESS \u2014 CLEANEST OF THE FOUR, but PM-specific detail is thin. 3-5 rounds over 2-4 weeks, starting with a recruiter screen covering background, why Harvey, level and location. No take-home reported anywhere. || The coding screen you will read about in Harvey guides is explicitly ENGINEERING-ONLY; those guides state they do not cover PM hiring. Non-engineering roles are described as 'case-style questions' asked live, which is a conversation, not homework. || Expect substantive product questions on their actual domain: grounding answers in source text, evaluating outputs for hallucination, document-processing pipelines, chunking, handling conflicting clauses. You can answer these from what you have actually built. || CAVEAT: no first-hand PM interview report exists for Harvey. Treat 'no take-home' as likely, not certain.",
       "coverLetter": "absent",
       "decision": null,
-      "decidedAt": null
+      "decidedAt": null,
+      "glassdoor": {
+        "rating": 4.3,
+        "reviews": 51,
+        "recommend": 82,
+        "workLife": 3.3,
+        "culture": 4.2,
+        "career": 4.4,
+        "interview": null,
+        "url": "https://www.glassdoor.com/Reviews/HARVEY-Reviews-E8126873.htm",
+        "note": "Best company rating of the four and the worst work-life balance of the four (3.3) - that combination is the whole story. Comp rated 4.3, career opportunities 4.4, 81% positive business outlook. Reviews are polarized: meaningful work and growth against intensity and pace. No interview rating exists for PM."
+      }
     },
     {
       "slug": "middesk-product-manager",
@@ -426,7 +453,18 @@
       "notes": "Explicit AI/agent ownership in the JD, funded fintech infrastructure, no red flags. Their only open PM req. || RISK: title is plain 'Product Manager' and the floor is $155K, the lowest of the tier-5 set. Worth asking what level this maps to before investing in interviews. || FORM INSPECTED 2026-07-31 - no essays, no cover letter field, all fields prefilled in answers.md. || The form carries an unusually long voluntary demographic section (age, gender, transgender status, sexual orientation, race). All optional; defaulted to 'I prefer not to answer' throughout unless you say otherwise. || ON ME: interview-process research, not done yet. || \u26a0 INTERVIEW PROCESS \u2014 POSSIBLE TAKE-HOME. 5-6 rounds: recruiter screen -> technical/case/skills round -> behavioral -> final onsite or virtual at their NYC office with the hiring manager and product leadership -> offer. Take-home assignments are reported as OCCASIONAL, usually at the final or technical stage, on product strategy or entity-management design. The final round also expects you to present a product strategy. || A final-round presentation is normal PM practice and not the thing you objected to; an occasional take-home is. RECOMMEND: ask the recruiter directly, in the first call, whether the loop includes a take-home. That question costs nothing and it is the cheapest way to avoid the BCG repeat.",
       "coverLetter": "absent",
       "decision": null,
-      "decidedAt": null
+      "decidedAt": null,
+      "glassdoor": {
+        "rating": 4.1,
+        "reviews": 26,
+        "recommend": 76,
+        "workLife": 3.8,
+        "culture": 4.0,
+        "career": 3.9,
+        "interview": null,
+        "url": "https://www.glassdoor.com/Reviews/Middesk-Reviews-E3244626.htm",
+        "note": "The most evenly good of the four - nothing outstanding, nothing alarming, and the best work-life balance in the set at 3.8. Comp rated 4.0. No interview rating exists for PM, which given the reported 5-6 rounds is worth asking about."
+      }
     },
     {
       "slug": "webflow-staff-product-manager-ai",
@@ -443,7 +481,23 @@
       "notes": "READY TO SUBMIT - nothing needed from you. Greenhouse form fully inspected: 8 required fields, all standard (name, email, resume, work authorization, sponsorship, where you heard about us). NO COVER LETTER FIELD, so per your rule none will be written. || $187K floor, remote-US, posted 1 day ago. Scorer found no red flags. || There is also a Senior PM, AI at Webflow at a $165K floor - same team, lower band. Applying to the Staff req only. || \u26a0 INTERVIEW PROCESS \u2014 TAKE-HOME CONFIRMED, YOUR CALL. Loop is: recruiter call -> 30min hiring-manager Zoom -> ASSESSMENT PROJECT -> final round of 3-4 back-to-back interviews. Two independent sources describe the assessment: 'propose a framework in 3-4 slides', and a Glassdoor candidate asked to 'draft an onboarding plan and structure design reviews'. Roughly 4 weeks end to end. PM candidates rate difficulty 3/5 and the experience 100% positive. || This is unpaid work product mid-loop, which is your BCG DV line. It is far smaller than a weekend case - a few slides, not a deck - but it is the same shape. Three options: skip the role; apply and decline the assessment if it comes; or apply and offer your shipped work instead (veepeenini, newsfeed, llm-gateway are real products with real users, which is a stronger artifact than a hypothetical framework). I would not submit this one without you choosing.",
       "coverLetter": "absent",
       "decision": null,
-      "decidedAt": null
+      "decidedAt": null,
+      "glassdoor": {
+        "rating": 3.7,
+        "reviews": 142,
+        "recommend": null,
+        "workLife": 4.0,
+        "culture": 3.8,
+        "career": 3.6,
+        "interview": {
+          "positive": 100,
+          "difficulty": 3.0,
+          "reviews": null,
+          "role": "Product Manager"
+        },
+        "url": "https://www.glassdoor.com/Reviews/Webflow-Reviews-E890506.htm",
+        "note": "A second Glassdoor page reports 3.6 across 152 reviews - the count moves, the picture does not. PM candidates rate the interview 100% positive at 3/5 difficulty, so the take-home is not making people unhappy."
+      }
     },
     {
       "slug": "latent-defense-director-of-product",

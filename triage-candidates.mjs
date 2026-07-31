@@ -10,6 +10,19 @@
  *
  * Prints one line per candidate with the facts the new scorer recorded, so the
  * shortlist can be judged before spending research time on it.
+ *
+ * TRIAGE CHECKLIST - what has to be added by hand before a role is queued:
+ *   1. Verify the posting is live and resolve a real apply URL (an Indeed
+ *      viewjob page is not an application form).
+ *   2. Inspect the actual form. Posting APIs hide required essays.
+ *   3. Interview process: rounds, and whether there is a take-home. VP will not
+ *      produce unpaid work product for an interview.
+ *   4. Glassdoor, as a `glassdoor` object on the queue item: company rating and
+ *      review count, recommend %, work/life, culture, career, and the interview
+ *      rating FOR THE ROLE if one exists. Working there and interviewing there
+ *      are separate judgements and they disagree - Suno is 3.7 to work at and
+ *      22% positive to interview with. Leave `interview` null when no rating
+ *      exists; absent is a different answer from bad.
  */
 
 import { readFile } from 'fs/promises';
