@@ -1,7 +1,7 @@
 {
   "batch": "2026-07-29 - first batch (PM + PMM)",
   "created": "2026-07-31",
-  "note": "Rebuilt after the scoring rubric was replaced. The model now reports facts and scoreFromFacts applies the policy in code, so tier 5 means AI-native, right level, workable geography - not just 'a PM job with one concern'.",
+  "note": "Rebuilt after the scoring rubric was replaced. The model now reports facts and scoreFromFacts applies the policy in code, so tier 5 means AI-native, right level, workable geography - not just 'a PM job with one concern'. | 2026-08-04: dropped stale/dead cards, refreshed ageDays, rescored from live lead-scores.json.",
   "items": [
     {
       "slug": "datadog-senior-product-manager-bits-agent-builder",
@@ -10,8 +10,8 @@
       "sourceUrl": "https://careers.datadoghq.com/detail/8092004/?gh_jid=8092004",
       "applyUrl": "https://job-boards.greenhouse.io/datadog/jobs/8092004",
       "ats": "greenhouse",
-      "score": 5,
-      "ageDays": 0,
+      "score": 3,
+      "ageDays": 4,
       "geo": "NYC office, hybrid \u2014 mode 3",
       "coverLetter": "absent",
       "cvVariant": "ai-infra",
@@ -35,6 +35,11 @@
         "url": "https://www.glassdoor.com/Reviews/Datadog-Reviews-E762009.htm",
         "note": "Strong company, hard door. 78% positive business outlook. But PM candidates rate the interview only 39% positive and take an average of 43 days to get hired, against 26 days company-wide \u2014 the PM loop is materially longer and less liked than the rest of Datadog.",
         "scope": "company"
+      },
+      "scoreSource": "datadog-8092004.md",
+      "scoreConflict": {
+        "altKey": "indeed-datadog-senior-product-manager-bits-agent-builder.md",
+        "altScore": 5
       }
     },
     {
@@ -129,8 +134,8 @@
       "sourceUrl": "https://job-boards.greenhouse.io/mercury/jobs/6123795004",
       "applyUrl": "https://job-boards.greenhouse.io/mercury/jobs/6123795004",
       "ats": "greenhouse",
-      "score": 4,
-      "ageDays": 5,
+      "score": 1,
+      "ageDays": 9,
       "geo": "NYC listed, plus remote US - clean",
       "coverLetter": "optional",
       "cvVariant": "pmm",
@@ -149,7 +154,8 @@
         "url": "https://www.glassdoor.com/Reviews/Mercury-Reviews-E3583070.htm",
         "note": "The best-rated company anywhere in your queue. Comp and benefits rated 4.6/5, the highest figure in the whole set. Reviews cite transparent leadership, autonomy and genuine work-life balance.",
         "scope": "company"
-      }
+      },
+      "scoreSource": "mercury-6123795004.md"
     },
     {
       "slug": "suno-senior-product-marketing-manager",
@@ -193,7 +199,7 @@
       "applyUrl": "https://job-boards.greenhouse.io/successacademycharterschool/jobs/5032421008",
       "ats": "greenhouse",
       "score": 0,
-      "ageDays": 0,
+      "ageDays": 4,
       "geo": "Manhattan, NYC - mode 1 (onsite daily)",
       "coverLetter": "absent",
       "cvVariant": "teaching",
@@ -212,7 +218,8 @@
         "url": "https://www.glassdoor.com/Reviews/Success-Academy-Charter-Schools-Teacher-Reviews-EI_IE381408.0,31_KO32,39.htm",
         "note": "\u26a0 THE WORST RATING IN THE QUEUE BY A WIDE MARGIN, and this is teachers rating it, not the org overall. 2.0/5 across 351 teacher reviews. Only 9% would recommend it to a friend. Work-life balance 1.3/5 and culture 1.6/5 are the lowest numbers I have seen on any employer in this search. Review titles are not subtle. This is worse than the ~2.5 I reported earlier \u2014 I had the wrong figure. Set against ~$55K pay and no certification pathway, the case for this role is speed and nothing else.",
         "scope": "TEACHERS specifically"
-      }
+      },
+      "scoreStale": true
     },
     {
       "slug": "democracy-prep-bronx-elementary-teacher",
@@ -222,7 +229,7 @@
       "applyUrl": "https://job-boards.greenhouse.io/democracypreppublicschools/jobs/7669726",
       "ats": "greenhouse",
       "score": 0,
-      "ageDays": 0,
+      "ageDays": 4,
       "geo": "Bronx, NYC",
       "coverLetter": "optional",
       "cvVariant": "teaching",
@@ -241,7 +248,8 @@
         "url": "https://www.glassdoor.com/Reviews/Democracy-Prep-Public-Schools-Teacher-Reviews-EI_IE284340.0,29_KO30,37.htm",
         "note": "\u26a0 Poor, though clearly better than Success Academy. 2.7/5 across 172 teacher reviews, 39% would recommend, work-life balance 1.7/5, comp 2.9/5. A second Glassdoor page reports 2.5 across 145. Recurring themes are micromanagement and turnover.",
         "scope": "TEACHERS specifically"
-      }
+      },
+      "scoreStale": true
     },
     {
       "slug": "code-for-america-lead-product-manager",
@@ -251,7 +259,7 @@
       "applyUrl": "https://job-boards.greenhouse.io/codeforamerica/jobs/7407338",
       "ats": "greenhouse",
       "score": 0,
-      "ageDays": 0,
+      "ageDays": 4,
       "geo": "Remote (in the U.S.)",
       "coverLetter": "optional",
       "cvVariant": "ai-product",
@@ -270,7 +278,8 @@
         "url": "https://www.glassdoor.com/Reviews/Code-for-America-Reviews-E554293.htm",
         "note": "\u26a0 Weaker than its reputation suggests. Only 41% would recommend it, and career opportunities rate 2.9/5. Several recent reviews are pointedly critical of leadership. Mission is real; the workplace reviews are middling.",
         "scope": "company"
-      }
+      },
+      "scoreStale": true
     },
     {
       "slug": "propel-product-lead-grocery",
@@ -280,7 +289,7 @@
       "applyUrl": "https://jobs.ashbyhq.com/propel/fa7ca24a-e80e-4706-982f-82a3f058776a",
       "ats": "ashby",
       "score": 0,
-      "ageDays": 0,
+      "ageDays": 4,
       "geo": "USA",
       "coverLetter": "optional",
       "cvVariant": "ai-product",
@@ -299,7 +308,8 @@
         "url": "https://www.glassdoor.com/Reviews/Propel-Reviews-E1847074.htm",
         "note": "4.1/5 with 82% recommending, though only 19 reviews so treat it as directional. Employees consistently cite the mission \u2014 helping low-income Americans navigate benefits \u2014 and describe the team as humble and user-focused. 68% positive business outlook. This remains the highest-paid role in the queue.",
         "scope": "company"
-      }
+      },
+      "scoreStale": true
     },
     {
       "slug": "mozilla-director-product-gaming",
@@ -360,7 +370,7 @@
       "applyUrl": "https://jobs.ashbyhq.com/forum-ventures/c95a1287-4654-43f5-b0a0-cf12d9a57df8",
       "ats": "ashby",
       "score": 0,
-      "ageDays": 0,
+      "ageDays": 4,
       "geo": "Remote US - mode 2",
       "coverLetter": "absent",
       "cvVariant": "ai-infra",
@@ -379,7 +389,8 @@
         "url": "",
         "note": "No Glassdoor presence for the studio programme. Venture studio seats are not conventional employment, so employer reviews would not tell you much even if they existed \u2014 diligence the partners and the terms instead.",
         "scope": "none available"
-      }
+      },
+      "scoreStale": true
     },
     {
       "slug": "company-ventures-eir",
@@ -389,7 +400,7 @@
       "applyUrl": "https://jobs.ashbyhq.com/companyventures/3598ba95-2a25-44ca-b9ef-50d316d0bbd5",
       "ats": "ashby",
       "score": 0,
-      "ageDays": 0,
+      "ageDays": 4,
       "geo": "New York City - mode 1/3",
       "coverLetter": "absent",
       "cvVariant": "ai-product",
@@ -408,36 +419,8 @@
         "url": "",
         "note": "No Glassdoor presence for the EIR programme, same reasoning as Forum. Diligence the terms, not the employer.",
         "scope": "none available"
-      }
-    },
-    {
-      "slug": "posse-career-program-specialist-nyc",
-      "company": "The Posse Foundation",
-      "role": "Career Program Specialist, New York",
-      "sourceUrl": "https://www.possefoundation.org/jobs/career-program-specialist-new-york",
-      "applyUrl": "https://www.possefoundation.org/jobs/career-program-specialist-new-york",
-      "ats": "custom",
-      "score": 0,
-      "ageDays": 0,
-      "geo": "New York, NY - mode 1/3",
-      "coverLetter": "unknown",
-      "cvVariant": "ai-product",
-      "notes": "NONPROFIT TRACK - the standout of the Posse batch. The Career Program helps Posse Scholars transition from leaders on campus to leaders in the workforce, which is mentoring and teaching by another name. || WHY IT FITS: their qualifications list says 'experience working in corporate settings is a plus'. That line is written for someone like you - 15 years of corporate product roles is the asset here, not a thing to explain away. Bachelor's required (you exceed it), workshop facilitation preferred (that is the Conexant and Amazon partner-training work), and four languages help with NYC scholars and families. || GAPS, HONESTLY: 'experience working with youth strongly preferred' - you have none. Salesforce and event planning are listed and you have neither. Comp not stated on the page; Glassdoor puts Posse senior trainers around $72K, which clears your ~$60K pivot floor. || RESOLVED 2026-07-31: posting read in full. \u26a0 The possefoundation.org page carries NO application form \u2014 only site search boxes. Applications go through a Paycom portal on a different domain, linked from the posting body; that link is now the applyUrl. Salary is not stated anywhere. Posting says 'No phone calls please' and 'Open until filled', so there is no deadline and no phone follow-up. Paycom builds its field set per employer and needs an account, so the question list cannot be enumerated without registering \u2014 flagged rather than claimed. Residual inspect-form pass before I claim it is prepared. || INTERVIEW PROCESS \u2014 CHECKED 2026-07-31, NO PUBLIC INFORMATION EXISTS: nonprofit programme role; Paycom portals leave no public trail. Searched and found nothing rather than not looking. Ask the recruiter directly about format and any take-home before committing time.",
-      "decision": null,
-      "decidedAt": null,
-      "track": "nonprofit",
-      "glassdoor": {
-        "rating": 3.6,
-        "reviews": 139,
-        "recommend": null,
-        "workLife": null,
-        "culture": null,
-        "career": null,
-        "interview": null,
-        "url": "https://www.glassdoor.com/Reviews/Posse-Foundation-Reviews-E328019.htm",
-        "note": "3.6/5 across 139 reviews, compensation 3.4/5. \u26a0 Read the review titles before committing: the most-surfaced one is 'The people are great, but the program is built for burnout'. A recurring pattern of loving the mission and leaving anyway.",
-        "scope": "company"
-      }
+      },
+      "scoreStale": true
     },
     {
       "slug": "posse-director-nyc",
@@ -464,7 +447,7 @@
       "applyUrl": "https://www.nysais.org/career-detail/?id=6a6a4a18a4d6fab58888cf29",
       "ats": "custom",
       "score": 0,
-      "ageDays": 0,
+      "ageDays": 4,
       "geo": "NYC independent school - confirm campus",
       "coverLetter": "unknown",
       "cvVariant": "teaching",
@@ -483,7 +466,8 @@
         "url": "",
         "note": "Not a single employer \u2014 NYSAIS is an association of independent schools, so a rating only exists once a specific school is identified. Re-check when the school is named.",
         "scope": "none available"
-      }
+      },
+      "scoreStale": true
     },
     {
       "slug": "nycps-cte-business-teacher-industry-pathway",
@@ -493,7 +477,7 @@
       "applyUrl": "https://teachnyc.net/pathways-to-teaching/for-industry-professionals",
       "ats": "custom",
       "score": 0,
-      "ageDays": 0,
+      "ageDays": 4,
       "geo": "NYC public schools - mode 1",
       "coverLetter": "unknown",
       "cvVariant": "teaching",
@@ -512,7 +496,8 @@
         "url": "https://www.glassdoor.com/Reviews/New-York-City-Department-of-Education-Reviews-E105247.htm",
         "note": "Teachers rate NYC DOE 3.4/5 across 948 reviews; the org overall sits at 3.7/5 across 4,460. Not glowing \u2014 complaints centre on administration and support \u2014 but it is a full point and a half above Success Academy, pays about $25K more, carries a pension and a union, and actually leads to certification. On this evidence the public route beats both charters on every axis except speed.",
         "scope": "TEACHERS specifically"
-      }
+      },
+      "scoreStale": true
     },
     {
       "slug": "suno-staff-product-manager",
@@ -522,7 +507,7 @@
       "applyUrl": "https://jobs.ashbyhq.com/suno/ea10a217-1e03-4620-b5bd-e43b67dadbb2",
       "ats": "ashby",
       "score": 5,
-      "ageDays": 21,
+      "ageDays": 25,
       "geo": "NYC, on-site. Mode 1/3 - works.",
       "cvVariant": "ai-consumer",
       "track": "pm",
@@ -545,7 +530,8 @@
         },
         "url": "https://www.glassdoor.com/Reviews/Suno-Reviews-E10318172.htm",
         "note": "The gap is the signal: 3.7 as a place to work, but only 22% rate the interview positively. People seem to like it once inside and dislike getting in. 67% positive business outlook, the lowest of the four. Employee reviews split between the product and team on one side and management style on the other."
-      }
+      },
+      "scoreSource": "suno-ea10a217-1e03-46.md"
     },
     {
       "slug": "harvey-senior-staff-product-manager-vault",
@@ -554,8 +540,8 @@
       "sourceUrl": "https://jobs.ashbyhq.com/harvey/d1669780-6956-4e5b-bc84-590267c565ea",
       "applyUrl": "https://jobs.ashbyhq.com/harvey/d1669780-6956-4e5b-bc84-590267c565ea",
       "ats": "ashby",
-      "score": 5,
-      "ageDays": 23,
+      "score": 3,
+      "ageDays": 27,
       "geo": "New York. Mode 1/3 - works.",
       "cvVariant": "ai-enterprise",
       "track": "pm",
@@ -573,7 +559,8 @@
         "interview": null,
         "url": "https://www.glassdoor.com/Reviews/HARVEY-Reviews-E8126873.htm",
         "note": "Best company rating of the four and the worst work-life balance of the four (3.3) - that combination is the whole story. Comp rated 4.3, career opportunities 4.4, 81% positive business outlook. Reviews are polarized: meaningful work and growth against intensity and pace. No interview rating exists for PM."
-      }
+      },
+      "scoreSource": "harvey-d1669780-6956-4e.md"
     },
     {
       "slug": "middesk-product-manager",
@@ -583,7 +570,7 @@
       "applyUrl": "https://jobs.ashbyhq.com/middesk/a352d80e-5640-4853-9bea-28d56fb7dee2",
       "ats": "ashby",
       "score": 5,
-      "ageDays": 17,
+      "ageDays": 21,
       "geo": "Hybrid NYC. Mode 3/3 - works.",
       "cvVariant": "ai-enterprise",
       "track": "pm",
@@ -601,7 +588,8 @@
         "interview": null,
         "url": "https://www.glassdoor.com/Reviews/Middesk-Reviews-E3244626.htm",
         "note": "The most evenly good of the four - nothing outstanding, nothing alarming, and the best work-life balance in the set at 3.8. Comp rated 4.0. No interview rating exists for PM, which given the reported 5-6 rounds is worth asking about."
-      }
+      },
+      "scoreSource": "middesk-a352d80e-5640-48.md"
     },
     {
       "slug": "webflow-staff-product-manager-ai",
@@ -610,8 +598,8 @@
       "sourceUrl": "https://job-boards.greenhouse.io/webflow/jobs/8054709",
       "applyUrl": "https://job-boards.greenhouse.io/webflow/jobs/8054709",
       "ats": "greenhouse",
-      "score": 5,
-      "ageDays": 1,
+      "score": 3,
+      "ageDays": 5,
       "geo": "U.S. Remote. Mode 2/3 - works.",
       "cvVariant": "ai-infra",
       "track": "pm",
@@ -634,7 +622,8 @@
         },
         "url": "https://www.glassdoor.com/Reviews/Webflow-Reviews-E890506.htm",
         "note": "A second Glassdoor page reports 3.6 across 152 reviews - the count moves, the picture does not. PM candidates rate the interview 100% positive at 3/5 difficulty, so the take-home is not making people unhappy."
-      }
+      },
+      "scoreSource": "indeed-webflow-staff-product-manager-ai.md"
     },
     {
       "slug": "latent-defense-director-of-product",
@@ -644,7 +633,7 @@
       "applyUrl": "https://jobs.ashbyhq.com/Latent%20Defense/f325f8eb-6a7c-436c-8d18-6ade4988d1ce",
       "ats": "ashby",
       "score": 5,
-      "ageDays": 1,
+      "ageDays": 5,
       "geo": "New York City. Mode 1/3 - works.",
       "cvVariant": "ai-infra",
       "track": "pm",
@@ -663,7 +652,8 @@
         "url": "",
         "note": "No Glassdoor presence \u2014 stealth-mode startup, no reviews, no salary data, no investor record in the JD. Nothing here is negative; there is simply nothing to check. Diligence this one by talking to people, before interviewing rather than before applying.",
         "scope": "none available"
-      }
+      },
+      "scoreStale": true
     },
     {
       "slug": "render-staff-product-manager-agent-systems-observability",
@@ -672,8 +662,8 @@
       "sourceUrl": "https://jobs.ashbyhq.com/render/3ec7433c-efbc-42f2-8f28-b8eca42f384c",
       "applyUrl": "https://jobs.ashbyhq.com/render/3ec7433c-efbc-42f2-8f28-b8eca42f384c",
       "ats": "ashby",
-      "score": 5,
-      "ageDays": 9,
+      "score": 3,
+      "ageDays": 13,
       "geo": "Remote, United States. Mode 2/3 - works.",
       "cvVariant": "ai-infra",
       "track": "pm",
@@ -692,6 +682,11 @@
         "url": "https://www.glassdoor.com/Reviews/Render-Reviews-E2213176.htm",
         "note": "4.2/5 but only 12 reviews, so this is the weakest sample in the queue. The reviews split hard: one camp describes a mature, low-ego, sustainable culture with generous comp; the other describes burnout at an all-time high and more people leaving than hiring can replace. Both are recent. Worth asking about attrition directly.",
         "scope": "company"
+      },
+      "scoreSource": "render-3ec7433c-efbc-42.md",
+      "scoreConflict": {
+        "altKey": "indeed-render-staff-product-manager-agent-systems-observability.md",
+        "altScore": 5
       }
     },
     {
@@ -764,8 +759,8 @@
       "sourceUrl": "https://primematterlabs.applytojob.com/apply/KPIR4g6JDf/Product-Lead-Element-AI",
       "applyUrl": "https://primematterlabs.applytojob.com/apply/KPIR4g6JDf/Product-Lead-Element-AI",
       "ats": "jazzhr",
-      "score": 5,
-      "ageDays": 1,
+      "score": 3,
+      "ageDays": 5,
       "geo": "NYC, hybrid. Mode 3/3 - works.",
       "cvVariant": "ai-infra",
       "track": "pm",
@@ -784,7 +779,8 @@
         "url": "",
         "note": "No meaningful Glassdoor presence. Described as a profitable manufacturer rather than a funded startup, so the usual startup review sites will not cover it either.",
         "scope": "none available"
-      }
+      },
+      "scoreSource": "indeed-prime-matter-labs-product-lead-element-ai.md"
     },
     {
       "slug": "niural-director-of-product",
@@ -794,7 +790,7 @@
       "applyUrl": "https://jobs.ashbyhq.com/niural/9cc4deed-2a1c-458a-b10c-9120484135a1",
       "ats": "ashby",
       "score": 5,
-      "ageDays": 4,
+      "ageDays": 8,
       "geo": "New York City. Mode 1/3 - works.",
       "cvVariant": "ai-enterprise",
       "track": "pm",
@@ -813,7 +809,8 @@
         "url": "",
         "note": "No meaningful Glassdoor presence \u2014 too small and too new. No culture or turnover signal available.",
         "scope": "none available"
-      }
+      },
+      "scoreStale": true
     },
     {
       "slug": "audible-senior-pm-tech-creator-products",
@@ -821,7 +818,7 @@
       "role": "Senior Product Manager - Tech, Creator Products",
       "sourceUrl": "https://www.amazon.jobs/en/jobs/10474433/senior-product-manager-tech-creator-products",
       "applyUrl": "https://www.amazon.jobs/en/jobs/10474433/senior-product-manager-tech-creator-products",
-      "ageDays": 17,
+      "ageDays": 21,
       "geo": "Newark, NJ. Commutable from Manhattan - PATH from 14th St is ~25 min. Mode 1/3 or 3/3.",
       "cvVariant": "ai-consumer",
       "glassdoor": {
@@ -842,36 +839,8 @@
       "track": "pm",
       "coverLetter": "absent",
       "decision": null,
-      "decidedAt": null
-    },
-    {
-      "slug": "audible-senior-pm-technical-fraud-defense",
-      "company": "Audible",
-      "role": "Senior Product Manager - Technical, Audible Fraud Defense",
-      "sourceUrl": "https://www.amazon.jobs/en/jobs/10463013/senior-product-manager-technical-audible-fraud-defense",
-      "applyUrl": "https://www.amazon.jobs/en/jobs/10463013/senior-product-manager-technical-audible-fraud-defense",
-      "ageDays": 31,
-      "geo": "Newark, NJ. Commutable from Manhattan. Mode 1/3 or 3/3.",
-      "cvVariant": "ai-enterprise",
-      "glassdoor": {
-        "rating": 3.5,
-        "reviews": 342,
-        "recommend": null,
-        "workLife": 3.7,
-        "culture": 3.4,
-        "career": 3.3,
-        "interview": null,
-        "scope": "NEWARK office specifically",
-        "url": "https://www.glassdoor.com/Reviews/Audible-Newark-Reviews-EI_IE9266.0,7_IL.8,14_IC1126906.htm",
-        "note": "Newark rates 3.5/5 across 342 reviews against 3.4 for Audible worldwide, so the office you would actually work in is the better-rated half. Compensation 4.1/5 is the standout. Culture 3.4 and career opportunities 3.3 are the soft spots. || Context that matters: this is a full point and a half above nothing, but more importantly it is 0.4 above how Amazon's own Principal PMs rate Amazon (3.1) - which is the whole reason you named the subsidiaries."
-      },
-      "notes": "Second Audible pick. Fraud defense is detection-and-response product work - rules, signals, false-positive tradeoffs - which is adjacent to what Socure and Reco.AI do and closer to your Reco.AI security background than the Creator Products role. || Requirements: 7+ years full product life cycle and 5+ years technical product management. You clear both. Posted 31 days ago, the oldest of the Audible set. || \u26a0 APPLY TO ONE AUDIBLE ROLE, NOT BOTH. Same recruiting org, same building. Two applications in the same week reads as unfocused - the same reason I picked one Harvey req out of three. Creator Products is the stronger of the two on fit and freshness. || ON ME: form not enumerable without an Amazon account - see the Creator Products note. || \u2705 INTERVIEW PROCESS \u2014 same Audible loop as Creator Products: recruiter screen, hiring manager behavioural on people principles, then a 4-5 round onsite of behavioural and situational questions. No take-home, no coding screen.",
-      "ats": "amazon-jobs",
-      "score": 0,
-      "track": "pm",
-      "coverLetter": "absent",
-      "decision": null,
-      "decidedAt": null
+      "decidedAt": null,
+      "scoreStale": true
     },
     {
       "slug": "brex-staff-product-manager-ai-nyc",
@@ -879,11 +848,11 @@
       "role": "Staff Product Manager, AI",
       "sourceUrl": "https://job-boards.greenhouse.io/brex/jobs/8616324002",
       "applyUrl": "https://job-boards.greenhouse.io/brex/jobs/8616324002",
-      "ageDays": 1,
+      "ageDays": 5,
       "cvVariant": "ai-infra",
       "notes": "\u2605 MY PICK OF THE BREX SET. AI-native, Staff level, New York, **$240,000\u2013$300,000** \u2014 read from Greenhouse directly, not inferred. Your stated target band tops out at $200K, so this opens $40K above your ceiling. || FORM INSPECTED 2026-07-31 via the Greenhouse questions API \u2014 11 required fields, all answerable, and NO essays. Cover letter and even the resume are marked OPTIONAL (attach the resume regardless). || \u26a0 ONE QUESTION WORTH SEEING BEFORE YOU APPLY: they ask twice whether you have ever worked at Capital One or a company Capital One acquired. You have not, so the answer is no \u2014 but it tells you Brex has a legal reason to screen for it, worth remembering if a Capital One role ever comes up. || \u2705 INTERVIEW PROCESS \u2014 NO TAKE-HOME. Five stages: 30-minute recruiter screen, behavioural call with the hiring manager, then an onsite of roughly six interviews across functions, ending on a values round. ~25 days average for Senior PM. || The product round is a 'product strategy session' \u2014 a LIVE case from an ambiguous prompt tied to Brex's own business, where they watch how you frame the problem and reach a recommendation. That is a conversation, not homework, so it does not hit your unpaid-work line. It is the format you should actually be strongest in: you have run real prioritisation calls with real constraints. || Difficulty 3.5/5 for Senior PM, 57% positive. No coding screen documented. || \u26a0 APPLY TO ONE BREX REQ. Brex posts the same role separately in SF, Seattle and NYC and has 293 openings \u2014 a large, funded, actively hiring org. Multiple applications in one week to the same recruiting team reads as unfocused. || HOW THIS ROLE WAS FOUND: it was not, until you asked me to verify the Brex postings. The scanner had cached SF and Seattle variants that the model was mislabelling NYC because each JD body lists all three offices. Checking the real board surfaced the genuine New York reqs.",
       "ats": "greenhouse",
-      "score": 5,
+      "score": 4,
       "track": "pm",
       "coverLetter": "optional",
       "decision": null,
@@ -905,7 +874,8 @@
         "url": "https://www.glassdoor.com/Reviews/Brex-Reviews-E2040671.htm",
         "note": "3.9/5 across 651 reviews with 70% recommending, comp 4.0 and culture 4.1 \u2014 solid, not outstanding. \u26a0 Two things to weigh: the rating has fallen 6% over the last twelve months, and business outlook sits at 60%, the softest number in the set. Senior PM candidates rate the interview 57% positive at 3.5/5 difficulty and average 25 days to hire, which is fast."
       },
-      "geo": "New York, NY. Hybrid, 3 days/week in office (Mon/Wed/Thu). Mode 3/3 \u2014 works."
+      "geo": "New York, NY. Hybrid, 3 days/week in office (Mon/Wed/Thu). Mode 3/3 \u2014 works.",
+      "scoreSource": "brex-8616324002.md"
     },
     {
       "slug": "brex-staff-product-manager-embedded-nyc",
@@ -913,11 +883,11 @@
       "role": "Staff Product Manager, Embedded",
       "sourceUrl": "https://job-boards.greenhouse.io/brex/jobs/8659211002",
       "applyUrl": "https://job-boards.greenhouse.io/brex/jobs/8659211002",
-      "ageDays": 1,
+      "ageDays": 5,
       "cvVariant": "ai-enterprise",
       "notes": "**THE HIGHEST BAND ANYWHERE IN THIS SEARCH: $280,000\u2013$350,000**, New York, Staff level. Its FLOOR is $80K above your stated ceiling. Embedded is Brex's API and partner-platform surface \u2014 B2B infrastructure product work, closer to Reco.AI and Middesk than to consumer. || FORM INSPECTED 2026-07-31 via the Greenhouse questions API \u2014 11 required fields, all answerable, and NO essays. Cover letter and even the resume are marked OPTIONAL (attach the resume regardless). || \u26a0 ONE QUESTION WORTH SEEING BEFORE YOU APPLY: they ask twice whether you have ever worked at Capital One or a company Capital One acquired. You have not, so the answer is no \u2014 but it tells you Brex has a legal reason to screen for it, worth remembering if a Capital One role ever comes up. || \u2705 INTERVIEW PROCESS \u2014 NO TAKE-HOME. Five stages: 30-minute recruiter screen, behavioural call with the hiring manager, then an onsite of roughly six interviews across functions, ending on a values round. ~25 days average for Senior PM. || The product round is a 'product strategy session' \u2014 a LIVE case from an ambiguous prompt tied to Brex's own business, where they watch how you frame the problem and reach a recommendation. That is a conversation, not homework, so it does not hit your unpaid-work line. It is the format you should actually be strongest in: you have run real prioritisation calls with real constraints. || Difficulty 3.5/5 for Senior PM, 57% positive. No coding screen documented. || \u26a0 PICK ONE BREX REQ, NOT BOTH. Choose on substance rather than band: AI is the thesis you have been hunting and the CV is built for it; Embedded pays more and is the safer fit for your enterprise/platform history. Both are Staff, both NYC, both hybrid 3 days.",
       "ats": "greenhouse",
-      "score": 5,
+      "score": 3,
       "track": "pm",
       "coverLetter": "optional",
       "decision": null,
@@ -939,7 +909,8 @@
         "url": "https://www.glassdoor.com/Reviews/Brex-Reviews-E2040671.htm",
         "note": "3.9/5 across 651 reviews with 70% recommending, comp 4.0 and culture 4.1 \u2014 solid, not outstanding. \u26a0 Two things to weigh: the rating has fallen 6% over the last twelve months, and business outlook sits at 60%, the softest number in the set. Senior PM candidates rate the interview 57% positive at 3.5/5 difficulty and average 25 days to hire, which is fast."
       },
-      "geo": "New York, NY. Hybrid, 3 days/week in office (Mon/Wed/Thu). Mode 3/3 \u2014 works."
+      "geo": "New York, NY. Hybrid, 3 days/week in office (Mon/Wed/Thu). Mode 3/3 \u2014 works.",
+      "scoreSource": "brex-8659211002.md"
     }
   ],
   "tracks": {
@@ -948,5 +919,6 @@
     "teaching": "Teaching \u2014 college, community college, or NYC public school",
     "govtech": "Government / civic tech \u2014 public interest technology",
     "venture": "Venture / accelerator \u2014 platform, program, operator-in-residence"
-  }
+  },
+  "rescoredAt": "2026-08-04"
 }
