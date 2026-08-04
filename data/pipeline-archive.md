@@ -623,3 +623,36 @@ Rows removed from the board by prune-stale.mjs. Kept so a bad prune is recoverab
 - 2026-07-31 | not a posting (search url) | https://www.ixl.com/company/jobs?gh_jid=8444868002 | IXL Learning | Product Manager, Education.com
 - 2026-07-31 | not a posting (search url) | https://www.ixl.com/company/jobs?gh_jid=8444887002 | IXL Learning | Product Manager, Wyzant
 - 2026-07-31 | not a posting (search url) | https://stripe.com/jobs/search?gh_jid=8097731 | Stripe | Product Marketing Manager, Startup Segment
+- 2026-08-01 | ats: req gone | https://job-boards.greenhouse.io/brillapubliccharterschools/jobs/5165717007 | Brilla Public Charter Schools | 2026-27 Middle School Orchestra Teacher
+- 2026-08-01 | ats: req gone | https://job-boards.greenhouse.io/coursera/jobs/5751613004 | Coursera | Principal Product Manager, Mobile
+- 2026-08-01 | ats: req gone | https://job-boards.greenhouse.io/coursera/jobs/6122497004 | Coursera | Staff Product Manager, Partnerships
+- 2026-08-01 | ats: req gone | https://jobs.ashbyhq.com/human/f9b57154-1df5-4581-84ff-e79fd20d52d2 | HUMAN Security | Senior Product Manager
+- 2026-08-01 | ats: req gone | https://jobs.ashbyhq.com/nubank/baabf037-c028-4260-bb74-9876854c1c61 | Nubank | Product Marketing Lead
+- 2026-08-01 | not a posting (search url) | https://stripe.com/jobs/search?gh_jid=8090203 | Stripe | Product Marketing Lead, Billing
+- 2026-08-01 | page: insufficient content — likely nav/footer only | https://careers.onepeloton.com/en/all-jobs/?gh_jid=8092989 | Peloton | Sr. Hardware Product Manager
+- 2026-08-02 | age 46d | https://jobs.ashbyhq.com/cohere/87e9fd4e-49ac-4242-97be-7da6f718020d | Cohere | Product Manager, Integrations
+- 2026-08-02 | age 46d | https://jobs.ashbyhq.com/ramp/cf3516f6-4d6b-4872-831f-c8ef4a3078ee | Ramp | Product Manager
+- 2026-08-02 | age 46d | https://job-boards.greenhouse.io/hightouch/jobs/5834919004 | Hightouch | Lead Product Manager, Agentic Personalization
+- 2026-08-02 | age 68d | https://www.indeed.com/viewjob?jk=727b71a10e829c00 | Amazon.com | Principal Product Manager, Tech - Ad Products, Prime Video
+- 2026-08-03 | age 46d | https://jobs.ashbyhq.com/sierra/758beaca-db59-4e46-9867-7a93989735a7 | Sierra | Product Manager, Agent Development - Flagship Deployment
+- 2026-08-03 | age 46d | https://jobs.ashbyhq.com/perplexity/dd9c7675-1369-4320-afdb-c8caef22ce3a | Perplexity | Product Marketing Manager, API
+- 2026-08-03 | age 46d | https://job-boards.greenhouse.io/stackblitz/jobs/4131722009 | StackBlitz | Senior Product Marketing Manager
+- 2026-08-03 | age 46d | https://job-boards.greenhouse.io/chainguard/jobs/4689646006 | Chainguard | Staff Product Marketing Manager
+- 2026-08-04 | age 46d | https://jobs.ashbyhq.com/replit/06cbc016-f931-431a-92cf-29fa74eedbf1 | Replit | Enterprise Product Manager
+- 2026-08-04 | age 46d | https://boards.greenhouse.io/figma/jobs/6092802004?gh_jid=6092802004 | Figma | Product Manager, CMS
+- 2026-08-04 | age 46d | https://jobs.ashbyhq.com/sierra/4f0e65ba-b262-4d79-b926-3988f8eb0c00 | Sierra | Product Manager, Agent Development (Brazilian Portuguese speaking)
+- 2026-08-04 | no JD after 8d | https://jobot.com/apply/head-of-product/7dc0ac5e06?eid=bc58556c2f89&uid=f2658430e2&jid=7dc0ac5e06 | Jobot | Head of Product opportunities are available
+- 2026-08-04 | no JD after 8d | https://jobot.com/apply/product-manager-refractory-industry/e78e9a5a06?eid=bc58556c2f89&uid=f2658430e2&jid=e78e9a5a06 | Jobot | Head of Product opportunities are available
+- 2026-08-04 | no JD after 8d | https://jobot.com/apply/software-product-manager-accounting-finance-erp-experience-required/9d47224a06?eid=bc58556c2f89&uid=f2658430e2&jid=9d47224a06 | Jobot | Head of Product opportunities are available
+- 2026-08-04 | no JD after 8d | https://jobot.com/apply/fractional-vp-of-sales/e48fec4f06?eid=bc58556c2f89&uid=f2658430e2&jid=e48fec4f06 | Jobot | Head of Product opportunities are available
+- 2026-08-04 | no JD after 8d | https://jobot.com/apply/product-manager/2257d54e06?eid=bc58556c2f89&uid=f2658430e2&jid=2257d54e06 | Jobot | Head of Product opportunities are available
+- 2026-08-04 | no JD after 8d | https://jobot.com/apply/manager-digital-experience-web-strategy/9a86e74d06?eid=bc58556c2f89&uid=f2658430e2&jid=9a86e74d06 | Jobot | Head of Product opportunities are available
+- 2026-08-04 | no JD after 8d | https://jobot.com/apply/integrated-campaign-manager/d96df05506?eid=bc58556c2f89&uid=f2658430e2&jid=d96df05506 | Jobot | Head of Product opportunities are available
+- 2026-08-04 | no JD after 8d | https://jobot.com/apply/senior-content-strategist/8624034c06?eid=bc58556c2f89&uid=f2658430e2&jid=8624034c06 | Jobot | Head of Product opportunities are available
+- 2026-08-04 | no JD after 8d | https://jobot.com/apply/sales-marketing-manager-manufacturing-sensor-products/bbe8775b06?eid=bc58556c2f89&uid=f2658430e2&jid=bbe8775b06 | Jobot | Head of Product opportunities are available
+- 2026-08-04 | no JD after 8d | https://jobot.com/apply/talent-acquisition-manager/8b057c4a06?eid=bc58556c2f89&uid=f2658430e2&jid=8b057c4a06 | Jobot | Head of Product opportunities are available
+- 2026-08-04 | no JD after 8d | https://jobot.com/apply/head-of-field-architecture-utility-industry/f0d0515106?eid=bc58556c2f89&uid=f2658430e2&jid=f0d0515106 | Jobot | Head of Product opportunities are available
+- 2026-08-04 | no JD after 8d | https://jobot.com/apply/printed-products-business-development-strategic-sales-representative/07323d5c06?eid=bc58556c2f89&uid=f2658430e2&jid=07323d5c06 | Jobot | Head of Product opportunities are available
+- 2026-08-04 | age 46d | https://job-boards.greenhouse.io/democracypreppublicschools/jobs/8016221 | Democracy Prep Public Schools | High School ELA Teacher (2026-2027 School Year)
+- 2026-08-04 | ats: req gone | https://job-boards.greenhouse.io/codeforamerica/jobs/8064228 | Code for America | Senior Program Manager
+- 2026-08-04 | age 46d | https://jobs.ashbyhq.com/instructure/ddffa558-ca81-4803-be30-fa61e5770038 | Instructure | Product Manager, Canvas - US Remote
