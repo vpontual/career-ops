@@ -240,31 +240,78 @@ async function readRendered(url) {
     return await page.evaluate(() => {
       const out = [];
       const seen = new Set();
-      for (const el of document.querySelectorAll('input, textarea, select')) {
-        const type = (el.getAttribute('type') || el.tagName).toLowerCase();
-        if (['hidden', 'submit', 'button'].includes(type)) continue;
-        let label = '';
+      const radioGroups = new Map();
+
+      const labelFor = (el) => {
         const id = el.getAttribute('id');
         if (id) {
           const l = document.querySelector(`label[for="${CSS.escape(id)}"]`);
-          if (l) label = l.innerText;
+          if (l && l.innerText.trim()) return l.innerText;
         }
-        if (!label) {
-          const al = el.getAttribute('aria-labelledby');
-          if (al) label = (document.getElementById(al) || {}).innerText || '';
+        const al = el.getAttribute('aria-labelledby');
+        if (al) {
+          const n = document.getElementById(al);
+          if (n && n.innerText.trim()) return n.innerText;
         }
-        if (!label) label = el.getAttribute('aria-label') || el.getAttribute('placeholder') || el.getAttribute('name') || '';
-        label = (label || '').replace(/\s+/g, ' ').trim();
+        return el.getAttribute('aria-label') || el.getAttribute('placeholder') || el.getAttribute('name') || '';
+      };
+
+      // Ashby puts the QUESTION in a sibling of the option list rather than in a
+      // <legend>, so a radio's own label is the OPTION text. Reading those as
+      // fields turned one three-way question into three separate "fields" - and
+      // the relocation question came out as three contradictory answers. Walk up
+      // to the group container and take its heading instead.
+      const groupQuestion = (el) => {
+        let n = el;
+        for (let i = 0; i < 6 && n; i++) {
+          n = n.parentElement;
+          if (!n) break;
+          const fs = n.querySelector(':scope > legend, :scope > label, :scope > h1, :scope > h2, :scope > h3, :scope > h4, :scope > p, :scope > div[class*="label" i], :scope > div[class*="title" i]');
+          if (fs && fs.innerText.trim() && fs.innerText.trim().length > 3) return fs.innerText;
+          if (n.getAttribute && n.getAttribute('role') === 'radiogroup') {
+            const al = n.getAttribute('aria-labelledby');
+            if (al) { const x = document.getElementById(al); if (x) return x.innerText; }
+          }
+        }
+        return '';
+      };
+
+      for (const el of document.querySelectorAll('input, textarea, select')) {
+        const type = (el.getAttribute('type') || el.tagName).toLowerCase();
+        if (['hidden', 'submit', 'button'].includes(type)) continue;
+
+        if (type === 'radio' || type === 'checkbox') {
+          const key = el.getAttribute('name') || groupQuestion(el) || 'ungrouped';
+          if (!radioGroups.has(key)) {
+            radioGroups.set(key, {
+              label: (groupQuestion(el) || key).replace(/\s+/g, ' ').trim(),
+              required: el.hasAttribute('required') || el.getAttribute('aria-required') === 'true',
+              type: 'choice',
+              options: [],
+            });
+          }
+          const opt = (labelFor(el) || '').replace(/\s+/g, ' ').trim();
+          if (opt) radioGroups.get(key).options.push(opt);
+          continue;
+        }
+
+        const label = (labelFor(el) || '').replace(/\s+/g, ' ').trim().replace(/\*$/, '').trim();
         if (!label || seen.has(label)) continue;
         seen.add(label);
         out.push({
-          label: label.replace(/\*$/, '').trim(),
-          required: el.hasAttribute('required') || el.getAttribute('aria-required') === 'true' || /\*\s*$/.test(label),
+          label,
+          required: el.hasAttribute('required') || el.getAttribute('aria-required') === 'true',
           type,
           options: el.tagName === 'SELECT'
             ? [...el.querySelectorAll('option')].map(o => o.innerText.trim()).filter(Boolean).slice(0, 12)
             : [],
         });
+      }
+
+      for (const g of radioGroups.values()) {
+        if (!g.label || seen.has(g.label)) continue;
+        seen.add(g.label);
+        out.push(g);
       }
       return out;
     });
@@ -286,7 +333,8 @@ function renderAnswers(card, fields, defaults, how) {
     const c = canonMatch(f.label, defaults);
     if (c) {
       mapped++;
-      rows.push(`| ${f.label} | ${f.required ? '**yes**' : 'no'} | ${c.answer} <br/>_via application-defaults.md → ${c.from}_ |`);
+      const opts = f.options && f.options.length ? ` <br/>_options: ${f.options.join(' · ').slice(0, 160)}_` : '';
+      rows.push(`| ${f.label} | ${f.required ? '**yes**' : 'no'} | ${c.answer}${opts} <br/>_via application-defaults.md → ${c.from}_ |`);
       continue;
     }
     const m = bestMatch(f.label, defaults);

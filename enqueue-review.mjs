@@ -31,6 +31,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { canonKey } from './lib/canonical.mjs';
 import { detectTrack } from './lib/track.mjs';
+import { classifyArchetype } from './tailor-cv.mjs';
 import { parseBlacklist, blacklistEntry } from './blacklist.mjs';
 import { canonicalizeUrl } from './lib/url-canonical.mjs';
 import { parseJd } from './lib/jd-parse.mjs';
@@ -73,31 +74,24 @@ function isApplyable(url) {
   return !!h && !NOT_A_FORM.test(h);
 }
 
-// Which CV goes out. Mirrors tailor-cv.mjs's archetype vocabulary; PMM is
-// title-decisive there for a reason, so it is checked first here too.
-function cvVariantFor(archetype, title, track) {
-  const a = String(archetype || '').toLowerCase();
-  const t = String(title || '').toLowerCase();
-  // cv-variants/cv-teaching.md exists; without this branch an auto-enqueued
-  // teaching card was stamped `ai-enterprise` - a product CV staged for a school.
+// Which CV goes out. Use tailor-cv.mjs's own classifier - it is the thing that
+// actually renders the PDF, and it is exported for exactly this reason.
+//
+// The hand-rolled version this replaces invented a variant called 'leadership'
+// for any Director/Head title, and a later change forced EVERY Track D card to
+// it. cv-variants/cv-leadership.md does not exist and never did, so 22 of 69
+// cards pointed at a missing file - and tailor-cv.mjs does not fall back, it
+// returns "variant cv-leadership.md not found" and renders nothing. Same lesson
+// as the slug and the track: one source of truth, imported, not re-implemented.
+function cvVariantFor(jdContent, track) {
   if (track === 'teaching') return 'teaching';
-  if (track === 'now') return 'leadership';
-  if (a.includes('marketing') || t.includes('product marketing')) return 'pmm';
-  if (a.includes('director') || a.includes('head')) return 'leadership';
-  if (a.includes('ai') || t.includes(' ai') || t.includes('machine learning')) return 'ai-infra';
-  return 'ai-enterprise';
+  try {
+    return classifyArchetype(jdContent) || 'ai-product';
+  } catch {
+    return 'ai-product';
+  }
 }
 
-// Track must come from the same function the scorer used, or the queue's tag and
-// the score's rubric disagree. The local copy this replaced could never return
-// 'nonprofit' at all and missed adjunct and professor titles.
-
-// MUST match stage-applications.mjs exactly, including the 60-character cut.
-// Without the slice, a card whose company-role is longer than 60 characters
-// points at a directory stage-applications will never create, so the pack can
-// never appear and the card is permanently unreviewable. Six cards were in that
-// state - two Amazon reqs, Amplify, Evergreen Charter, Patchogue-Medford and
-// Wyandanch - and no nightly run would ever have fixed them.
 function slugify(s) {
   return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
 }
@@ -178,6 +172,7 @@ const main = async () => {
       role: jd.title || '',
       url: jd.url || '',
       applyable: isApplyable(jd.url),
+      jdContent: `${jd.title}\n${jd.body}`.slice(0, 20000),
       track: rec.track || detectTrack(jd),
       geo: rec.geo,
       archetype: rec.archetype || '',
@@ -320,7 +315,7 @@ const main = async () => {
       ageDays: c.days,
       geo: c.geo,
       coverLetter: 'unknown',
-      cvVariant: cvVariantFor(c.archetype, c.role, c.track),
+      cvVariant: cvVariantFor(c.jdContent || `${c.role}\n${c.company}`, c.track),
       notes,
       decision: null,
       decidedAt: null,
