@@ -121,6 +121,11 @@ function detectAts(url) {
     if (!m) return null;
     return { type: 'ashby', slug: m[1], id: m[2] };
   }
+  if (/jobs\.smartrecruiters\.com/.test(url)) {
+    const m = url.match(/jobs\.smartrecruiters\.com\/([^/]+)\/(\d+)/);
+    if (!m) return null;
+    return { type: 'smartrecruiters', slug: m[1], id: m[2] };
+  }
   if (/jobs\.lever\.co/.test(url)) {
     const m = url.match(/jobs\.lever\.co\/([^/]+)\/([a-f0-9-]+)/);
     if (!m) return null;
@@ -269,6 +274,31 @@ async function fetchJd(url) {
       posted_at: job.publishedAt || job.updatedAt || null,
       updated_at: job.updatedAt || null,
       ats_url: job.jobUrl || url
+    };
+  }
+
+  if (ats.type === 'smartrecruiters') {
+    // The single-posting endpoint carries the full ad; the list endpoint does
+    // not. jobAd.sections holds the prose in named blocks.
+    const data = await fetchJson(
+      `https://api.smartrecruiters.com/v1/companies/${ats.slug}/postings/${ats.id}`
+    );
+    const sec = data.jobAd?.sections || {};
+    const body = ['companyDescription', 'jobDescription', 'qualifications', 'additionalInformation']
+      .map((k) => (sec[k]?.title ? `## ${sec[k].title}\n${stripHtml(sec[k].text || '')}` : ''))
+      .filter(Boolean)
+      .join('\n\n');
+    const comp = data.compensation;
+    return {
+      title: data.name || '',
+      company: data.company?.name || '',
+      location: [data.location?.city, data.location?.region].filter(Boolean).join(', '),
+      department: data.department?.label || '',
+      pay: comp?.min && comp?.max ? `${comp.min}–${comp.max} ${comp.currency || ''}`.trim() : '',
+      content: body,
+      posted_at: data.releasedDate || null,
+      updated_at: null,
+      ats_url: `https://jobs.smartrecruiters.com/${ats.slug}/${ats.id}`,
     };
   }
 

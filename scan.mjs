@@ -65,6 +65,20 @@ function detectApi(company) {
     };
   }
 
+  // SmartRecruiters. Uncommon Schools - which the mission calls the best
+  // structural fit for VP's constraint, because it hires on a bachelor's and
+  // has you certify after hire - publishes here and nowhere else, so without
+  // this the employer simply could not be scanned.
+  //
+  // The limit is deliberate: the API pages at 100 and defaults to 10.
+  const srMatch = url.match(/(?:careers|jobs)\.smartrecruiters\.com\/([^/?#]+)/);
+  if (srMatch) {
+    return {
+      type: 'smartrecruiters',
+      url: `https://api.smartrecruiters.com/v1/companies/${srMatch[1]}/postings?limit=100`,
+    };
+  }
+
   // Greenhouse EU boards
   const ghEuMatch = url.match(/job-boards(?:\.eu)?\.greenhouse\.io\/([^/?#]+)/);
   if (ghEuMatch && !company.api) {
@@ -109,7 +123,34 @@ function parseLever(json, companyName) {
   }));
 }
 
-const PARSERS = { greenhouse: parseGreenhouse, ashby: parseAshby, lever: parseLever };
+// ⚠ SmartRecruiters answers 200 with `totalFound: 0` for a company slug that does
+// not exist, so a status code proves nothing here. KIPPNYC, KIPPFoundation and
+// KIPPNYCPublicSchools all returned 200 and all had zero postings; only `KIPP`
+// and `UncommonSchools` are real. Read the postings before trusting a slug -
+// the same rule the venture config learned after eight wrong-company collisions.
+function parseSmartRecruiters(json, companyName) {
+  const jobs = json.content || [];
+  return jobs.map((j) => {
+    // The slug comes off the record itself, so nothing has to be threaded down
+    // here. Verified: jobs.smartrecruiters.com/<slug>/<id> serves the posting
+    // with a 200 and no redirect, while the careers.* host bounces to the board
+    // root and would give every role the same URL.
+    const slug = j.company?.identifier || '';
+    return {
+      title: j.name || '',
+      url: slug && j.id ? `https://jobs.smartrecruiters.com/${slug}/${j.id}` : '',
+      company: companyName,
+      location: [j.location?.city, j.location?.region].filter(Boolean).join(', '),
+    };
+  }).filter((r) => r.url);
+}
+
+const PARSERS = {
+  greenhouse: parseGreenhouse,
+  ashby: parseAshby,
+  lever: parseLever,
+  smartrecruiters: parseSmartRecruiters,
+};
 
 // ── Fetch with timeout ──────────────────────────────────────────────
 
@@ -126,6 +167,25 @@ async function fetchJson(url) {
 }
 
 // ── Title filter ────────────────────────────────────────────────────
+
+// Optional, and off unless a portals file defines it. National networks publish
+// nationally: KIPP alone has 581 open postings, almost all outside VP's three
+// workable geographies. Without this every one of them becomes a JD and a ~34s
+// scoring call before being discarded on location. Filtering here is free.
+// Absent config means no filtering, so existing portals files are unaffected.
+function buildLocationFilter(locationFilter) {
+  const positive = (locationFilter?.positive || []).map((k) => k.toLowerCase());
+  if (!positive.length) return () => true;
+  const negative = (locationFilter?.negative || []).map((k) => k.toLowerCase());
+  return (loc) => {
+    const l = String(loc || '').toLowerCase();
+    // An unstated location is kept: remote roles often leave it blank, and the
+    // scorer reads the ATS location field properly later.
+    if (!l.trim()) return true;
+    if (negative.some((k) => l.includes(k))) return false;
+    return positive.some((k) => l.includes(k));
+  };
+}
 
 function buildTitleFilter(titleFilter) {
   const positive = (titleFilter?.positive || []).map(k => k.toLowerCase());
@@ -269,6 +329,8 @@ async function main() {
   const config = parseYaml(readFileSync(PORTALS_PATH, 'utf-8'));
   const companies = config.tracked_companies || [];
   const titleFilter = buildTitleFilter(config.title_filter);
+  const locationFilter = buildLocationFilter(config.location_filter);
+  let totalGeoFiltered = 0;
 
   // 2. Filter to enabled companies with detectable APIs
   const targets = companies
@@ -305,6 +367,10 @@ async function main() {
         // Canonicalize at ingest so dedup + the written URL match every other
         // appender (shared lib/url-canonical.mjs).
         job.url = canonicalizeUrl(job.url);
+        if (!locationFilter(job.location)) {
+          totalGeoFiltered++;
+          continue;
+        }
         if (!titleFilter(job.title)) {
           totalFiltered++;
           continue;
@@ -343,6 +409,7 @@ async function main() {
   console.log(`Companies scanned:     ${targets.length}`);
   console.log(`Total jobs found:      ${totalFound}`);
   console.log(`Filtered by title:     ${totalFiltered} removed`);
+  if (totalGeoFiltered) console.log(`Filtered by location:  ${totalGeoFiltered} removed`);
   console.log(`Duplicates:            ${totalDupes} skipped`);
   console.log(`New offers added:      ${newOffers.length}`);
 

@@ -77,6 +77,44 @@ tracked_companies:
   careers_url: https://job-boards.greenhouse.io/zetacharterschools
   api: https://boards-api.greenhouse.io/v1/boards/zetacharterschools/jobs
   enabled: true
+- name: Uncommon Schools
+  careers_url: https://careers.smartrecruiters.com/UncommonSchools
+  enabled: true
+- name: KIPP
+  careers_url: https://careers.smartrecruiters.com/KIPP
+  enabled: true
+# National networks (KIPP, Rocketship) post nationally; VP works in exactly three
+# geographies. Filtering here saves a JD fetch and a ~34s scoring call per role.
+# A blank location is kept - remote roles often omit it and the scorer reads the
+# ATS location field properly later.
+location_filter:
+  positive:
+  - New York
+  - NY
+  - Brooklyn
+  - Bronx
+  - Queens
+  - Manhattan
+  - Staten Island
+  - Newark
+  - Jersey City
+  - Westchester
+  - Yonkers
+  - Harrison
+  - New Rochelle
+  - Long Island
+  - Nassau
+  - Suffolk
+  - Hempstead
+  - Remote
+  negative:
+  - Camden
+  - Trenton
+  - Rochester
+  - Buffalo
+  - Syracuse
+  - Albany
+
 scan_settings:
   max_results_per_company: 20
   max_age_days: 60
