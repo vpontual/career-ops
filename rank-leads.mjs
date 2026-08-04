@@ -24,6 +24,7 @@ import dotenv from 'dotenv';
 import { loadBlacklist, blacklistEntry } from './blacklist.mjs';
 import { canonKey } from './lib/canonical.mjs';
 import { parseJd } from './lib/jd-parse.mjs';
+import { detectTrack, titlePassesForTrack, trackFacts, scoreTeaching, scoreNonprofit } from './lib/track.mjs';
 
 dotenv.config();
 
@@ -39,6 +40,9 @@ const LOG_PATH = path.join(ROOT, 'logs', 'rank-leads.log');
 const SCORING_RULES_LIMIT = parseInt(process.env.SCORING_RULES_LIMIT ?? '12000', 10);
 const MAX_AGE_DAYS = parseInt(process.env.MAX_AGE_DAYS ?? '30', 10);
 const STALE_AGE_DAYS = parseInt(process.env.STALE_AGE_DAYS ?? '5', 10);
+// Track C only. See the drop site for why the 30-day rule cannot apply to a
+// school-year requisition.
+const TEACHING_MAX_AGE_DAYS = parseInt(process.env.TEACHING_MAX_AGE_DAYS ?? '150', 10);
 const OLLAMA_URL = process.env.OLLAMA_URL;
 const OLLAMA_MODEL = process.env.RANK_MODEL ?? 'Qwen/Qwen3.6-35B-A3B-FP8';
 // Bound every scorer call: a wedged gateway (green /health, 504s or a silent
@@ -232,7 +236,13 @@ Report what the JD says. If it does not say, use null or "unclear" rather than g
 // applies: let the model report what it sees, and make the CATEGORY a
 // deterministic function of that text. This is testable, it cannot drift, and
 // it handles the enum values too for the replies that did comply.
-const NYC_METRO = /\b(nyc|new york|manhattan|brooklyn|queens|bronx|newark|jersey city|hoboken|stamford|greenwich, ct|white plains|princeton|east windsor|port chester|yonkers)\b/i;
+// Princeton and East Windsor NJ were in this list and are not daily-commutable;
+// VP never named them. Removed. Added the Metro-North and LIRR towns the mission
+// explicitly calls the tractable part of Track C - "Harrison and New Rochelle on
+// Metro-North" - plus Westchester, Nassau and Suffolk generally, because all 5
+// OLAS Business-teacher vacancies normalised to `unclear`, lost a point, and were
+// then dropped outright by the enqueue geo gate.
+const NYC_METRO = /\b(nyc|new york|manhattan|brooklyn|queens|bronx|staten island|newark|jersey city|hoboken|stamford|greenwich, ct|white plains|port chester|yonkers|harrison|new rochelle|scarsdale|rye|mamaroneck|mount vernon|tarrytown|westchester|hempstead|garden city|mineola|nassau county|suffolk county|long island|patchogue|wyandanch|babylon|huntington|mastic|hicksville|valley stream)\b/i;
 const REMOTE = /\bremote|work from home|wfh|distributed\b/i;
 const HYBRID = /\bhybrid|days? (?:a|per) week|in[- ]office\b/i;
 // Anywhere he cannot reach daily from Manhattan. Non-US entries land here too.
@@ -311,8 +321,24 @@ function scoreFromFacts(f) {
   if (f.compLow != null && f.compLow >= 150000) score += 1;
   if (f.compLow != null && f.compLow < 120000) score -= 1;
 
-  // A coding screen makes the role unwinnable for him regardless of fit.
-  if (f.technicalScreen) score -= 2;
+  // $150K+ base is a FLOOR, not a bonus (mission: "below only with specific
+  // equity terms - a percentage, share count, or strike price"). As a mere +1 it
+  // let eight tier-4 roles through with stated bases from $124K to $142K -
+  // GitHub, Indeed, Bloomberg twice, Addepar - each of which VP had already
+  // ruled out. Silence still costs nothing; only a stated sub-floor band caps.
+  // No equity fact is extracted yet, so a genuinely equity-heavy offer will be
+  // held at 3 and has to be spotted by hand.
+  if (f.compLow != null && f.compLow < 150000) score = Math.min(score, 3);
+
+  // A coding screen makes the role unwinnable for him regardless of fit. The
+  // mission is unambiguous and states it twice: "Do not shortlist roles that
+  // will run a live-coding technical screen", and "a role with a screen he
+  // cannot pass is not a candidate no matter how good the fit". As a -2 it was a
+  // price rather than a gate, and two tier-4 roles carried the flag and were
+  // eligible for the queue. The stated exception - a role that explicitly allows
+  // building through AI - is not extracted as a fact yet, so it cannot be
+  // honoured here; that is a known gap, not an oversight.
+  if (f.technicalScreen) return 1;
 
   // Geography he can work is assumed, not rewarded; only ambiguity costs.
   if (f.geo === 'unclear') score -= 1;
@@ -409,15 +435,30 @@ async function scoreOne(jd, resume, targets) {
         level: String(parsed.level || 'at').slice(0, 12),
         leadGen: parsed.leadGen === true,
         technicalScreen: parsed.technicalScreen === true,
-        compLow: Number.isFinite(Number(parsed.compLow)) && Number(parsed.compLow) > 0
+        // The model returns things like 1 and 124 for compLow. Treated as a real
+        // salary, 1 is below every floor and silently caps a good role; 32 such
+        // values were live. Anything under $10k is not a US base salary, so it is
+        // read as "not stated" rather than as a number.
+        compLow: Number.isFinite(Number(parsed.compLow)) && Number(parsed.compLow) >= 10000
           ? Number(parsed.compLow)
           : null,
       };
+      // Which of the three searches this belongs to, and the extra facts that
+      // rubric needs - both read off the posting in code, so neither costs
+      // prompt surface. The scoring prompt is already 5,554 of its 6,000
+      // characters and has silently truncated before.
+      const track = jd.track || detectTrack(jd);
+      const extra = trackFacts(track, jd);
+      const allFacts = { ...facts, ...extra, track };
+      const score = track === 'teaching' ? scoreTeaching(allFacts)
+                  : track === 'nonprofit' ? scoreNonprofit(allFacts)
+                  : scoreFromFacts(allFacts);
+
       return {
         // Score is derived, never taken from the model. Facts are kept so a
         // score can always be explained and the policy re-run without re-asking.
-        score: scoreFromFacts(facts),
-        ...facts,
+        score,
+        ...allFacts,
         verdict: String(parsed.verdict || '').slice(0, 240),
         redFlags: String(parsed.redFlags || '').slice(0, 200),
       };
@@ -546,13 +587,24 @@ async function main() {
     const p = path.join(JDS_DIR, f);
     const raw = await readFile(p, 'utf-8');
     const jd = parseJd(raw, f);
+    // Track A keeps portals.yml's PM/PMM filter untouched. Tracks B and C are
+    // additive: a Business Teacher vacancy has no PM title and was dropped here
+    // before it could ever be scored, which is why Track C had zero scored roles
+    // while its JDs sat on disk.
+    const track = detectTrack(jd);
     const tf = titleFilter(jd.title);
-    if (!tf.passes) { titleDropped++; continue; }
+    if (!tf.passes && !titlePassesForTrack(track, jd.title)) { titleDropped++; continue; }
     if (blacklist.size && blacklistEntry(jd.company, blacklist)) { blacklistDropped++; continue; }
     const days = freshnessOf(jd);
-    if (days != null && days > MAX_AGE_DAYS) { staleDropped++; continue; }
+    // Schools hire on a school year, not a sprint. A charter runs one evergreen
+    // requisition for a whole season: 68 of 82 teaching JDs are over 90 days old
+    // and 27 of 28 Success Academy reqs - open SY2026-27 postings - were dropped
+    // as stale, which is why Track C's dominant employer was invisible. The 30-day
+    // "assume filled" rule is a tech-req rule and does not transfer.
+    const maxAge = track === 'teaching' ? TEACHING_MAX_AGE_DAYS : MAX_AGE_DAYS;
+    if (days != null && days > maxAge) { staleDropped++; continue; }
     if (days == null) unparsedDate++;
-    candidates.push({ ...jd, posted_days: days });
+    candidates.push({ ...jd, posted_days: days, track });
   }
 
   console.log(`After title:  ${candidates.length + titleDropped} → ${candidates.length} (-${titleDropped})`);

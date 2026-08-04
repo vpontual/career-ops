@@ -30,6 +30,7 @@ import { existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { canonKey } from './lib/canonical.mjs';
+import { detectTrack } from './lib/track.mjs';
 import { parseJd } from './lib/jd-parse.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -46,6 +47,9 @@ const argN = (flag, dflt) => {
 };
 const MIN_SCORE = argN('--min-score', Number(process.env.MIN_SCORE || 4));
 const MAX_AGE_DAYS = argN('--max-age', Number(process.env.MAX_AGE_DAYS || 30));
+// Must agree with rank-leads' TEACHING_MAX_AGE_DAYS or the scorer admits a
+// school-year requisition and this immediately drops it again as stale.
+const TEACHING_MAX_AGE_DAYS = Number(process.env.TEACHING_MAX_AGE_DAYS || 150);
 
 // The three modes VP can actually work in. `unclear` is deliberately excluded:
 // the mission's standing rule is to flag an undetermined location rather than
@@ -69,21 +73,21 @@ function isApplyable(url) {
 
 // Which CV goes out. Mirrors tailor-cv.mjs's archetype vocabulary; PMM is
 // title-decisive there for a reason, so it is checked first here too.
-function cvVariantFor(archetype, title) {
+function cvVariantFor(archetype, title, track) {
   const a = String(archetype || '').toLowerCase();
   const t = String(title || '').toLowerCase();
+  // cv-variants/cv-teaching.md exists; without this branch an auto-enqueued
+  // teaching card was stamped `ai-enterprise` - a product CV staged for a school.
+  if (track === 'teaching') return 'teaching';
   if (a.includes('marketing') || t.includes('product marketing')) return 'pmm';
   if (a.includes('director') || a.includes('head')) return 'leadership';
   if (a.includes('ai') || t.includes(' ai') || t.includes('machine learning')) return 'ai-infra';
   return 'ai-enterprise';
 }
 
-function trackFor(archetype, title) {
-  const t = String(title || '').toLowerCase();
-  if (/\b(teacher|teaching|instructor|educator|faculty|lecturer)\b/.test(t)) return 'teaching';
-  if (String(archetype || '').toLowerCase().includes('marketing')) return 'pm';
-  return 'pm';
-}
+// Track must come from the same function the scorer used, or the queue's tag and
+// the score's rubric disagree. The local copy this replaced could never return
+// 'nonprofit' at all and missed adjunct and professor titles.
 
 function slugify(s) {
   return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -151,6 +155,7 @@ const main = async () => {
       role: jd.title || '',
       url: jd.url || '',
       applyable: isApplyable(jd.url),
+      track: rec.track || detectTrack(jd),
       geo: rec.geo,
       archetype: rec.archetype || '',
       verdict: rec.verdict || '',
@@ -178,8 +183,9 @@ const main = async () => {
     if (!applyable.length) {
       // Known only from an aggregator. Recorded, never enqueued - a card with no
       // form behind it cannot be filled, and 99 of those is a queue nobody reads.
+      const unresolvedMaxAge = rep.track === 'teaching' ? TEACHING_MAX_AGE_DAYS : MAX_AGE_DAYS;
       if (rep.score >= MIN_SCORE && GEO_OK.has(String(rep.geo || 'unclear')) &&
-          rep.days != null && rep.days <= MAX_AGE_DAYS) {
+          rep.days != null && rep.days <= unresolvedMaxAge) {
         unresolved.push(rep);
         stats.noApplyPath++;
       }
@@ -188,7 +194,8 @@ const main = async () => {
 
     if (!(rep.score >= MIN_SCORE)) { stats.lowScore++; continue; }
     if (!GEO_OK.has(String(rep.geo || 'unclear'))) { stats.geo++; continue; }
-    if (rep.days == null || rep.days > MAX_AGE_DAYS) { stats.stale++; continue; }
+    const maxAge = rep.track === 'teaching' ? TEACHING_MAX_AGE_DAYS : MAX_AGE_DAYS;
+    if (rep.days == null || rep.days > maxAge) { stats.stale++; continue; }
     if (blacklist.has(rep.company.toLowerCase())) { stats.blacklisted++; continue; }
 
     const conflict = variants.find(v => v !== rep && v.score !== rep.score);
@@ -275,11 +282,11 @@ const main = async () => {
       ageDays: c.days,
       geo: c.geo,
       coverLetter: 'unknown',
-      cvVariant: cvVariantFor(c.archetype, c.role),
+      cvVariant: cvVariantFor(c.archetype, c.role, c.track),
       notes,
       decision: null,
       decidedAt: null,
-      track: trackFor(c.archetype, c.role),
+      track: c.track,
       glassdoor: null,
       autoEnqueued: true,
       enqueuedAt: new Date().toISOString().slice(0, 10),

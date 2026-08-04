@@ -26,6 +26,11 @@ cd /home/vp/career-ops || exit 1
 step() { echo "=== $(date -Iseconds) $1 ==="; }
 
 step scan        ; /usr/bin/docker compose run --rm scanner node scan.mjs
+# Tracks B and C have had their own portals files since 2026-07-29 and were
+# never swept: only portals.yml was ever scanned, so the nonprofit and school
+# boards VP asked for produced nothing at all.
+step scan-teach  ; /usr/bin/docker compose run --rm -e PORTALS_FILE=portals-teaching.yml scanner node scan.mjs
+step scan-np     ; /usr/bin/docker compose run --rm -e PORTALS_FILE=portals-nonprofit.yml scanner node scan.mjs
 step gmail       ; /usr/bin/node fetch-gmail-leads.mjs
 step resolve     ; /usr/bin/docker compose run --rm applier node resolve-lensa.mjs
 step fetch-jds   ; /usr/bin/docker compose run --rm scanner node fetch-jds.mjs
