@@ -348,6 +348,12 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
                   <span className="rounded bg-blue-400/20 px-1.5 py-0.5 text-[10px] tabular-nums text-blue-100">{pendingReview}</span>
                 )}
               </Link>
+              <Link
+                href="/now"
+                className="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium text-emerald-300/80 transition-colors hover:bg-emerald-500/10 hover:text-emerald-200"
+              >
+                Get Hired Now
+              </Link>
             </nav>
 
             <div className="flex items-center gap-2">
