@@ -87,6 +87,15 @@ tracked_companies:
 # geographies. Filtering here saves a JD fetch and a ~34s scoring call per role.
 # A blank location is kept - remote roles often omit it and the scorer reads the
 # ATS location field properly later.
+- name: East Harlem Tutorial Program
+  careers_url: https://job-boards.greenhouse.io/eastharlemtutorialprogram
+  api: https://boards-api.greenhouse.io/v1/boards/eastharlemtutorialprogram/jobs
+  enabled: true
+- name: Saga Education
+  careers_url: https://job-boards.greenhouse.io/sagaeducation
+  api: https://boards-api.greenhouse.io/v1/boards/sagaeducation/jobs
+  enabled: true
+
 location_filter:
   positive:
   - New York
