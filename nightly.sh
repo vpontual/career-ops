@@ -42,5 +42,8 @@ step olas        ; /usr/bin/docker compose run --rm applier node fetch-olas.mjs
 step rank-leads  ; /usr/bin/node rank-leads.mjs
 step stage       ; /usr/bin/docker compose run --rm -e MAX_AGE_DAYS=30 applier node stage-applications.mjs
 step enqueue     ; /usr/bin/node enqueue-review.mjs
+# Turns a scored card into a filled-in application. Runs after enqueue so a card
+# gets its answers the same night it appears.
+step answers     ; /usr/bin/docker compose run --rm applier node generate-answers.mjs
 
 step done

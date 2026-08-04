@@ -38,6 +38,10 @@ try {
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const MIN_SCORE = parseFloat(process.env.MIN_SCORE || '4.0');
 const MAX_AGE_DAYS = parseInt(process.env.MAX_AGE_DAYS || '14', 10);
+// Schools hire on a school year, so enqueue-review admits a teaching role for
+// 150 days. Staging used one flat window, which meant a teaching card 31-150
+// days old got a review card that could never get an application pack.
+const TEACHING_MAX_AGE_DAYS = parseInt(process.env.TEACHING_MAX_AGE_DAYS || '150', 10);
 const MAX_CONCURRENT = parseInt(process.env.MAX_CONCURRENT || '1', 10);  // free tier = 5 RPM
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -146,6 +150,10 @@ async function loadCandidates() {
       score,
       days,
       verdict: rec?.verdict || '',
+      // Needed by the age filter below: teaching roles get a 150-day window
+      // because schools hire on a school year. Without carrying it here the
+      // filter silently fell back to the 30-day cap for every track.
+      track: rec?.track || 'pm',
       slug: slugify(`${meta.company}-${meta.title}`),
     });
   }
@@ -163,7 +171,10 @@ async function loadCandidates() {
       best.set(key, r);
     }
   }
-  return [...best.values()].filter(r => r.days != null && r.days <= MAX_AGE_DAYS);
+  return [...best.values()].filter(r => {
+    const cap = r.track === 'teaching' ? TEACHING_MAX_AGE_DAYS : MAX_AGE_DAYS;
+    return r.days != null && r.days <= cap;
+  });
 }
 
 async function callGeminiWithRetry(prompt, maxAttempts = 6) {

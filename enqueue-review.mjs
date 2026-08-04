@@ -92,8 +92,14 @@ function cvVariantFor(archetype, title, track) {
 // the score's rubric disagree. The local copy this replaced could never return
 // 'nonprofit' at all and missed adjunct and professor titles.
 
+// MUST match stage-applications.mjs exactly, including the 60-character cut.
+// Without the slice, a card whose company-role is longer than 60 characters
+// points at a directory stage-applications will never create, so the pack can
+// never appear and the card is permanently unreviewable. Six cards were in that
+// state - two Amazon reqs, Amplify, Evergreen Charter, Patchogue-Medford and
+// Wyandanch - and no nightly run would ever have fixed them.
 function slugify(s) {
-  return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
 }
 
 function atsOf(url) {

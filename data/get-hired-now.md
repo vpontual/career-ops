@@ -7,13 +7,15 @@ full-time, all fine. The only hard exclusions are work that trades hours for
 minimum wage — delivery, retail, rideshare, warehouse — and anything with a
 live-coding screen.
 
-Two different kinds of thing live here, and the difference matters:
+**This is not the PM search with a different passport.** Three different kinds of
+thing live here, and most of them are not a product job:
 
-- **Platforms you join once.** Not job postings. You apply to the *network*, and
-  after that work is routed to you. Time-to-first-dollar is days to weeks, and
-  there is no interview loop in the ordinary sense.
-- **Live contract roles.** Ordinary postings with fractional/interim/contract
-  titles, scanned nightly by career-ops and scored on the `now` track.
+- **Platforms you join once.** Not job postings at all. You register with the
+  *network*, and work is routed to you afterwards — no interview loop. Fastest
+  money on this page.
+- **Things you can start alone.** Teaching, mentoring, advising. No employer, no
+  hiring process, no permission needed.
+- **Live roles.** Ordinary postings — and deliberately not only product ones.
 
 Every URL below was checked on 2026-08-04 and resolves. `403` next to one means
 the site blocks automated checks (Cloudflare), not that it is dead.
@@ -97,6 +99,54 @@ going into Brazil, and Brazilian companies coming into the US, both need someone
 who can hold the product conversation in both languages and has shipped in both
 markets. Sell it through Catalant and Business Talent Group below, and mention it
 explicitly on expert-network profiles.
+
+---
+
+## Tier 1c — earning that is not a product job at all
+
+The point of this tab is income, not a product title. These use the same fifteen
+years without ever being "a PM role", and several are open to you tonight.
+
+### Teach it
+**Maven** — cohort-based courses, `https://maven.com/teach`. **No application and
+no gate**: you build the course and run it. Instructors keep **90% of revenue**
+minus Stripe fees, and Maven's own figure is that many earn **~$20,000 per
+cohort**, several cohorts a year. Courses you could credibly run today:
+- *Shipping AI products without an AI team* — the homelab is the curriculum.
+- *Self-hosting your own inference stack* — almost nobody teaching this has run a
+  real multi-node GPU fleet.
+- *Product management for engineers*, in **Portuguese or Spanish** — a materially
+  emptier market than the English one.
+
+### Mentor it
+Paid 1:1, low commitment, near-zero setup.
+- **ADPList** — `https://adplist.org/become-a-mentor`
+- **GrowthMentor** — `https://www.growthmentor.com/become-a-mentor/`
+
+### Advise it
+Paid advisory-board seats, typically cash plus a small equity grant.
+- **Boardio** — `https://www.boardio.com/advisors`. Free to join *and* free to
+  apply to open searches. Fintech, SaaS and **cross-border e-commerce** are the
+  sectors that formalise paid advisor packages, and cross-border is exactly your
+  US↔Brazil edge.
+- **Connectd** — `https://www.connectd.com/us/advisors`, fractional execs and
+  advisors across 80+ countries.
+
+### Sell the thing only you can say
+Market-entry and localisation advisory: a US company going into Brazil, or a
+Brazilian company coming into the US. Product, GTM and regulatory judgement in
+both languages. Sell it through Catalant and Business Talent Group below, and put
+it on every expert-network profile — it is a niche with almost no competition,
+not a generic consulting pitch.
+
+---
+
+## Tier 3 — live roles, and they are NOT all product
+
+See the roles list at the top of this page. The board scan deliberately reaches
+past product titles — consulting, strategy, operations, programme management,
+partnerships, solutions, research and instructor roles all qualify, because the
+test on this track is whether it pays, not whether it says Product Manager.
 
 ---
 

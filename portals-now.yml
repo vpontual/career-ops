@@ -11,44 +11,107 @@
 # Every board below was probed on 2026-08-04 and returned live product roles.
 # Slugs that answered but carried nothing were discarded rather than trusted.
 
+# ⚠ This is deliberately WIDE. The test on this track is "could he do it and would
+# it pay soon", not "does the title say Product Manager". An allowlist of product
+# titles was the first version and it was wrong: it blocked every other kind of
+# work VP could do and turned this tab into the NYC search with a different
+# passport. Experience that earns MORE is a bonus applied in scoring, never a
+# filter applied here.
 title_filter:
   positive:
-  # Fast-start engagements
+  # Speed signals - these start in weeks, not quarters
   - Fractional
   - Interim
-  - Contract Product
-  - Product Consultant
+  - Contract
+  - Freelance
+  - Temporary
   - Consultant
+  - Consulting
   - Advisor
-  # Ordinary product titles - at these employers they ARE the opportunity
-  - Product Manager
-  - Senior Product Manager
-  - Staff Product Manager
-  - Group Product Manager
-  - Principal Product Manager
-  - Lead Product Manager
-  - Product Lead
-  - Director of Product
-  - Head of Product
-  - Product Marketing Manager
-  - Product Builder
+  - Advisory
+  # Anything he could credibly do, product or not
+  - Product
+  - Program
+  - Project
+  - Portfolio
+  - Delivery
+  - Operations
+  - Strategy
+  - Strategic
+  - Business
+  - Commercial
+  - Partnerships
+  - Alliances
+  - Customer Success
+  - Solutions
+  - Implementation
+  - Onboarding
+  - Analyst
+  - Research
+  - Insights
+  - Competitive
+  - Instructor
+  - Trainer
+  - Training
+  - Curriculum
+  - Enablement
+  - Documentation
+  - Technical Writer
+  - Localization
+  - Localisation
+  - Internationalization
+  - Market Entry
+  - Expansion
+  - Innovation
+  - Transformation
+  - Chief of Staff
+  - General Manager
+  - Head of
+  - Director
+  - Lead
+  - Manager
+  - Principal
   negative:
-  # The exclusions VP named: hours-for-minimum-wage work.
+  # Hours-for-minimum-wage work, excluded by VP by name.
   - Driver
   - Courier
-  - Delivery
+  - Delivery Driver
   - Warehouse
   - Cashier
   - Retail Associate
   - Call Center
+  - Call Centre
   - Customer Service Representative
-  # Still not a software developer.
+  - Janitor
+  - Security Guard
+  # He is not a software developer, and cannot pass a coding screen.
   - Software Engineer
+  - Engineer,
+  - Engineering Manager
   - Backend
+  - Front End
   - Frontend
   - Full Stack
+  - Fullstack
   - Data Engineer
+  - Data Scientist
+  - Machine Learning Engineer
+  - DevOps
+  - Site Reliability
+  - QA Engineer
+  - Developer
+  # Tool-administration specialisms
+  - Atlassian
+  - Salesforce
+  - ServiceNow
+  - Workday
+  - NetSuite
+  - SAP
+  # Not a real start
   - Intern
+  - Internship
+  - Apprentice
+  - Graduate Programme
 
 tracked_companies:
 - name: Nubank

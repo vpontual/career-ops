@@ -81,7 +81,7 @@ async function hydrate(item: QueueItem): Promise<Loaded> {
 }
 
 // Tabs need short labels; the long description belongs under the tab bar, once.
-const TRACK_ORDER = ["pm", "govtech", "nonprofit", "teaching", "venture"];
+const TRACK_ORDER = ["pm", "now", "govtech", "nonprofit", "teaching", "venture"];
 const TRACK_LABEL: Record<string, string> = {
   pm: "PM / PMM",
   govtech: "Government",
