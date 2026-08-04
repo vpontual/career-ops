@@ -22,15 +22,98 @@
  * Usage: node fetch-olas.mjs [--dry-run]
  */
 
-import { readFile, appendFile } from 'fs/promises';
+import { readFile, appendFile, writeFile, mkdir, readdir } from 'fs/promises';
 import path from 'path';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import { chromium } from 'playwright';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PIPELINE = path.join(ROOT, 'data', 'pipeline.md');
 const HISTORY = path.join(ROOT, 'data', 'scan-history.tsv');
+const JDS_DIR = path.join(ROOT, 'jds');
 const DRY = process.argv.includes('--dry-run');
+
+// The search results need a browser - the listing is an Angular view. The
+// DETAIL pages do not: olasjobs.org server-renders them for SEO, so the whole
+// description is in the raw HTML. That distinction matters, because fetch-jds
+// only knows how to read JSON-LD and OLAS publishes a `WebSite` block rather
+// than a `JobPosting` one. Every OLAS row therefore came back "FAIL parse",
+// which meant all 8 Business-teacher vacancies had no description on disk and
+// could never be scored. Track C was dead here, before anyone looked at it.
+async function fetchDetailHtml(url) {
+  const res = await fetch(url, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; career-ops/1.0)' },
+    signal: AbortSignal.timeout(20000),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.text();
+}
+
+function visibleText(html) {
+  return String(html)
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|li|tr|h\d)>/gi, '\n')
+    .replace(/<li[^>]*>/gi, '- ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n\s*\n\s*\n+/g, '\n\n')
+    .replace(/^[ \t]+|[ \t]+$/gm, '')
+    .trim();
+}
+
+function field(text, label) {
+  const re = new RegExp(`${label}:\\s*([\\s\\S]*?)(?=\\s(?:Job Number|Start Date|End Date|Description|Salary|Contact|Apply):|$)`, 'i');
+  const m = text.match(re);
+  return m ? m[1].trim() : '';
+}
+
+function slugify(s) {
+  return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+async function writeOlasJd(rec, existingFiles) {
+  // fetch-jds.mjs gets null from detectAts() for olasjobs.org, so it would name
+  // the file sha1-of-URL. Match that exactly or it will re-fetch and re-fail.
+  const suffix = crypto.createHash('sha1').update(rec.url).digest('hex').slice(0, 12);
+  const company = rec.district || 'Unknown District';
+  const filename = `${slugify(company)}-${suffix}.md`;
+  if (existingFiles.has(filename)) return { filename, skipped: true };
+
+  const text = visibleText(await fetchDetailHtml(rec.url));
+  const desc = field(text, 'Description');
+  if (!desc || desc.length < 80) throw new Error(`no description found (${desc.length} chars)`);
+
+  const endDate = field(text, 'End Date').split('T')[0];
+  const startDate = field(text, 'Start Date').split('T')[0];
+
+  // OLAS publishes no posted date, only a start date and an application
+  // deadline. Discovery date is the honest stand-in and is what the pipeline row
+  // already records; labelling it as the posted date would overstate freshness.
+  const today = new Date().toISOString().slice(0, 10);
+  const md = [
+    `# ${rec.title}`,
+    ``,
+    `**URL:** ${rec.url}`,
+    `**Company:** ${company}`,
+    `**Location:** ${rec.location || rec.where || ''}`,
+    `**Posted:** ${today} (0 days ago)`,
+    startDate ? `**Start date:** ${startDate}` : '',
+    endDate ? `**Application deadline:** ${endDate}` : '',
+    `**Source:** olas (no posted date published; date above is first-seen)`,
+    ``,
+    `---`,
+    ``,
+    desc,
+  ].filter(Boolean).join('\n');
+
+  await writeFile(path.join(JDS_DIR, filename), md);
+  return { filename, skipped: false };
+}
 
 // One zip per target county. Manhattan is included so NYC postings that DO
 // reach OLAS are not missed.
@@ -135,10 +218,25 @@ const main = async () => {
     return;
   }
 
+  // Every vacancy gets its JD, including ones already in pipeline.md — those are
+  // precisely the backlog that has been failing to parse every night.
+  await mkdir(JDS_DIR, { recursive: true });
+  const existingFiles = new Set(await readdir(JDS_DIR).catch(() => []));
+  let wrote = 0, kept = 0;
+  for (const rec of list) {
+    try {
+      const r = await writeOlasJd(rec, existingFiles);
+      if (r.skipped) kept++; else wrote++;
+    } catch (e) {
+      console.log(`  JD failed: ${rec.title.slice(0, 45)} — ${String(e.message).slice(0, 60)}`);
+    }
+  }
+  console.log(`\nJDs: ${wrote} written, ${kept} already present`);
+
   let existing = '';
   try { existing = await readFile(PIPELINE, 'utf8'); } catch {}
   const fresh = list.filter((f) => !existing.includes(f.url));
-  if (!fresh.length) { console.log('all already known'); return; }
+  if (!fresh.length) { console.log('all already known in pipeline.md'); return; }
 
   const today = new Date().toISOString().slice(0, 10);
   await appendFile(PIPELINE, '\n' + fresh.map((f) =>

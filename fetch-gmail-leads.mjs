@@ -34,6 +34,11 @@ import { existsSync, readFileSync } from 'fs';
 import { canonicalizeUrl } from './lib/url-canonical.mjs';
 import path from 'path';
 
+// Subjects that are a marketing hook rather than a job title. See the drop site
+// in the message loop for why these are poison specifically here.
+const JUNK_SUBJECT = /^(keep going with more jobs like|more jobs like|jobs similar to|similar jobs|you may also like|recommended (jobs|for you)|new jobs? (for|matching)|don'?t miss)/i;
+
+
 dotenv.config();
 
 const ROOT = process.env.CAREER_OPS_ROOT ?? process.cwd();
@@ -216,6 +221,7 @@ async function writeLog(summary) {
 async function main() {
   const sources = loadSources();
   const titleFilter = loadTitleFilter();
+  let junkDropped = 0;
   const seenUrls = loadSeenUrls();
   const since = loadCursor(sources.first_run_lookback_days ?? 14);
 
@@ -273,6 +279,19 @@ async function main() {
         continue;
       }
 
+      // Re-engagement digests, not job alerts. Every URL extracted from a
+      // message inherits that message's SUBJECT as its role (see the push
+      // below), which is fine for a single-role alert and wrong for these: one
+      // Jobot "Keep Going With More Jobs Like Product Manager-Refractory
+      // Industry" email put 24 rows into pipeline.md, each a different posting
+      // and all four labelled with that same marketing hook. The links are an
+      // assortment of unrelated jobs and jobot.com is unscrapeable, so nothing
+      // downstream ever corrects the title. Drop the message.
+      if (JUNK_SUBJECT.test(subject.trim())) {
+        junkDropped++;
+        continue;
+      }
+
       const body = (parsed.text || '') + '\n' + (parsed.html ? stripHtml(parsed.html) : '');
       const allUrls = extractUrls(body);
       const filtered = allUrls.filter(u => !isNoiseUrl(u, sources.url_noise_patterns));
@@ -323,6 +342,7 @@ async function main() {
     extractedUrls,
     jobLikeUrls,
     titleDropped,
+    junkDropped,
     alreadySeen,
     newLeads: newRows.length,
     cursorAdvancedTo: latestSeenDate.toISOString()
@@ -335,6 +355,7 @@ async function main() {
   console.log(`URLs found:      ${extractedUrls}`);
   console.log(`Job-like URLs:   ${jobLikeUrls}`);
   console.log(`Subject-dropped: ${titleDropped}`);
+  console.log(`Digest-dropped: ${junkDropped} (re-engagement emails, not alerts)`);
   console.log(`Already seen:    ${alreadySeen}`);
   console.log(`New leads:       ${newRows.length} → pipeline.md`);
   console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
