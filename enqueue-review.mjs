@@ -177,6 +177,8 @@ const main = async () => {
       verdict: rec.verdict || '',
       redFlags: rec.redFlags || '',
       technicalScreen: rec.technicalScreen === true,
+      certRequired: rec.certRequired === true,
+      cteEligible: rec.cteEligible === true,
       compLow: rec.compLow ?? null,
     });
   }
@@ -290,6 +292,9 @@ const main = async () => {
         : '',
       c.altScore != null
         ? `⚠ SCORE CONFLICT: a duplicate listing of this role (${c.altFile}) scores ${c.altScore}. This card uses the employer's own posting.`
+        : '',
+      c.certRequired && c.cteEligible
+        ? 'CERTIFICATION: the posting asks for NYS certification VP does not hold. Not a blocker for a CTE subject - NYSED Transitional A is nominated BY the hiring district and is the designed route for industry professionals (2 years experience required; he has 15). But the district must agree to nominate, so confirm early.'
         : '',
       'ON ME: Glassdoor and interview-process research not yet done for this role - auto-enqueued from the nightly score.',
     ].filter(Boolean).join(' ');
