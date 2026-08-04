@@ -20,6 +20,8 @@ import { readFile, writeFile } from 'fs/promises';
 import { readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { parseJd } from './lib/jd-parse.mjs';
+import { detectTrack, trackFacts, scoreTeaching, scoreNonprofit } from './lib/track.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const SCORES = path.join(ROOT, 'data', 'lead-scores.json');
@@ -58,13 +60,26 @@ for (const [k, v] of Object.entries(scores)) {
   } catch {}
   const geo = mod.normalizeGeo(raw);
   const archetype = mod.normalizeArchetype(v.archetypeRaw ?? v.archetype);
-  const facts = { ...v, geo, archetype };
-  const score = mod.scoreFromFacts(facts);
+
+  // Track-aware, or this tool silently reverts Tracks B and C. It rewrites every
+  // entry carrying an `aiNative` key, and teaching entries carry one, so a single
+  // run used to overwrite scoreTeaching values with PM-rubric numbers - undoing
+  // the whole rubric it exists to reapply.
+  let jd = null;
+  try { jd = parseJd(readFileSync(path.join(ROOT, 'jds', k), 'utf8'), k); } catch {}
+  const track = jd ? detectTrack(jd) : (v.track || 'pm');
+  const extra = jd ? trackFacts(track, jd) : {};
+  const facts = { ...v, ...extra, geo, archetype, track };
+  const score = track === 'teaching' ? scoreTeaching(facts)
+              : track === 'nonprofit' ? scoreNonprofit(facts)
+              : mod.scoreFromFacts(facts);
   if (geo !== v.geo || score !== v.score) {
     moves.push({ k, from: v.score, to: score, geoFrom: v.geo, geoTo: geo });
     changed++;
     if (score === 1 && v.score > 1) gated++;
   }
+  Object.assign(v, extra);
+  v.track = track;
   v.archetypeRaw = v.archetypeRaw ?? v.archetype;
   v.archetype = archetype;
   v.geoRaw = raw;
@@ -78,6 +93,9 @@ console.log(`changed: ${changed}   newly gated to 1 on geography: ${gated}`);
 const tiers = {};
 for (const v of Object.values(scores)) if ('aiNative' in v) tiers[v.score] = (tiers[v.score] || 0) + 1;
 console.log('new tiers 5/4/3/2/1:', [5, 4, 3, 2, 1].map(t => tiers[t] || 0).join('/'));
+const byTrack = {};
+for (const v of Object.values(scores)) if ('aiNative' in v) byTrack[v.track || 'pm'] = (byTrack[v.track || 'pm'] || 0) + 1;
+console.log('by track:', JSON.stringify(byTrack));
 
 console.log('\nsample of what moved:');
 for (const m of moves.slice(0, 12)) {

@@ -128,8 +128,11 @@ const BASE = 'https://www.amazon.jobs/en/search.json';
 // Titles worth surfacing. amazon.jobs calls almost everything "Technical", so
 // the PM-T variants have to be allowed through rather than filtered as
 // engineering.
-const TITLE_OK = /(product manager|product lead|head of product|director,? product|principal pm|pmt)/i;
-const TITLE_NO = /(intern|university|apprentice|assistant|coordinator|recruiter|sourcer)/i;
+const TITLE_OK = /(product manager|product lead|head of product|director,? product|principal pm|\bpmt\b)/i;
+// Word-anchored. Unanchored, `intern` matched INTERNational and silently dropped
+// every "Senior Product Manager, International Expansion" and "Internal Tools"
+// req before it reached pipeline.md, where it was invisible to every count.
+const TITLE_NO = /\b(intern|interns|internship|university|apprentice|assistant|coordinator|recruiter|sourcer)\b/i;
 
 // HQ. The specific thing he is not going back to.
 const HQ = /\b(seattle|bellevue|redmond)\b/i;

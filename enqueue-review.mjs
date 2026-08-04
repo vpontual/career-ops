@@ -31,6 +31,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { canonKey } from './lib/canonical.mjs';
 import { detectTrack } from './lib/track.mjs';
+import { parseBlacklist, blacklistEntry } from './blacklist.mjs';
 import { parseJd } from './lib/jd-parse.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -108,20 +109,30 @@ const main = async () => {
   const queue = JSON.parse(await readFile(QUEUE, 'utf-8'));
   const files = await readdir(JDS_DIR);
 
-  let blacklist = new Set();
-  if (existsSync(BLACKLIST)) {
-    const raw = await readFile(BLACKLIST, 'utf-8');
-    for (const line of raw.split('\n')) {
-      const m = line.match(/^-\s*(.+?)\s*(?:\||$)/);
-      if (m && m[1] && !m[1].startsWith('#')) blacklist.add(m[1].trim().toLowerCase());
-    }
-  }
+  // data/blacklist.md is a markdown TABLE, and this used to parse it as bullets,
+  // so it silently matched nothing. Use the project's own parser - it is the only
+  // gate that can stop a company already present in lead-scores.json, because
+  // rank-leads filters blacklisted companies before scoring and never removes
+  // entries scored before the company was blacklisted.
+  const blacklist = existsSync(BLACKLIST)
+    ? parseBlacklist(await readFile(BLACKLIST, 'utf-8'))
+    : [];
 
   // Every canonical key already represented in the queue, whatever its decision.
   // A rejected role must not come back.
+  // Two keys, because one is not enough. canonKey(company, role) breaks the
+  // moment a queue card's role text is hand-edited: 4 of the 11 rejected items
+  // no longer match their own JD, including "Indeed | Product Manager II
+  // (Responsible AI)" whose JD canonicalises to "productmanagerii". A rejected
+  // role reappearing is the failure that makes an auto-enqueued queue unreadable,
+  // so the apply URL is indexed as well.
   const known = new Map();
+  const knownUrls = new Set();
   for (const it of queue.items) {
     known.set(canonKey(it.company || '', it.role || ''), it.decision || 'pending');
+    for (const u of [it.applyUrl, it.sourceUrl]) {
+      if (u) knownUrls.add(String(u).split('?')[0].replace(/\/$/, ''));
+    }
   }
 
   const stats = { scanned: 0, noJd: 0, badCompany: 0, lowScore: 0, geo: 0, stale: 0,
@@ -171,6 +182,9 @@ const main = async () => {
 
   for (const [key, variants] of groups) {
     if (known.has(key)) { stats.already++; continue; }
+    if (variants.some(v => knownUrls.has(String(v.url || '').split('?')[0].replace(/\/$/, '')))) {
+      stats.already++; continue;
+    }
 
     // A real ATS posting always beats an aggregator scrape of it: it is the form
     // VP will actually fill, and its score is computed from the employer's own
@@ -196,7 +210,7 @@ const main = async () => {
     if (!GEO_OK.has(String(rep.geo || 'unclear'))) { stats.geo++; continue; }
     const maxAge = rep.track === 'teaching' ? TEACHING_MAX_AGE_DAYS : MAX_AGE_DAYS;
     if (rep.days == null || rep.days > maxAge) { stats.stale++; continue; }
-    if (blacklist.has(rep.company.toLowerCase())) { stats.blacklisted++; continue; }
+    if (blacklist.length && blacklistEntry(rep.company, blacklist)) { stats.blacklisted++; continue; }
 
     const conflict = variants.find(v => v !== rep && v.score !== rep.score);
     cand.push({ ...rep, altScore: conflict ? conflict.score : null, altFile: conflict ? conflict.file : null });
@@ -248,7 +262,11 @@ const main = async () => {
   // output/<slug>/ is a directory, so two roles sharing a slug would share a
   // pack. Indeed lists "Product Manager II" and "Product Manager II
   // (Responsible AI)" at the same employer; both slugify identically.
+  // output/ holds 249 directories against 54 queue slugs, so checking the queue
+  // alone left 190 invisible: a new card taking one of those names would write
+  // into an already-staged application pack.
   const usedSlugs = new Set(queue.items.map(i => i.slug));
+  for (const d of await readdir(path.join(ROOT, 'output')).catch(() => [])) usedSlugs.add(d);
 
   for (const c of fresh) {
     let slug = slugify(`${c.company}-${c.role}`);
