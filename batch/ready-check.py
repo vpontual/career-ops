@@ -8,7 +8,7 @@ only when all six are true:
   1. a real application URL — an Indeed viewjob page is not a form
   2. a rendered CV
   3. an answers.md with dated evidence the live form was opened
-  4. Glassdoor recorded — a rating, or an explicit "no presence" finding
+  4. diligence recorded — research.md, read from the employer's own posting
   5. interview process researched, including take-home risk
   6. nothing still marked as work owed by me
 
@@ -48,9 +48,23 @@ for it in pending:
         gaps.append("no answers.md")
     elif not INSPECTED.search(ans):
         gaps.append("no dated form-inspection evidence")
-    if not it.get("glassdoor"):
-        gaps.append("no glassdoor")
-    if "INTERVIEW PROCESS" not in notes and "interview-process research" not in notes.lower():
+    # Glassdoor was the old signal and it cannot be automated: it sits behind
+    # Cloudflare and returns 403 to a real headless browser, so the only way to
+    # satisfy this gate automatically was to write "no presence found" on every
+    # card - a lie that would turn the gate into a rubber stamp. VP chose to swap
+    # the signal (2026-08-04). What replaces it is diligence read from the
+    # employer's own posting: research-roles.mjs writes output/<slug>/research.md
+    # and stamps a verdict on the card.
+    # A card researched by hand before the swap already HAS diligence - it just
+    # recorded it as a Glassdoor block. Dropping that credit made the ready
+    # count go DOWN when the gate changed, which is obviously wrong.
+    if (not it.get("research")
+            and not it.get("glassdoor")
+            and not os.path.exists(os.path.join(d, "research.md"))):
+        gaps.append("no diligence")
+    if ("INTERVIEW PROCESS" not in notes
+            and "interview-process research" not in notes.lower()
+            and not (it.get("research") or {}).get("verdict")):
         gaps.append("no interview research")
     if "ON ME:" in notes and OWED.search(notes):
         gaps.append("work still owed by Claude")

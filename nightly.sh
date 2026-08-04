@@ -45,5 +45,8 @@ step enqueue     ; /usr/bin/node enqueue-review.mjs
 # Turns a scored card into a filled-in application. Runs after enqueue so a card
 # gets its answers the same night it appears.
 step answers     ; /usr/bin/docker compose run --rm applier node generate-answers.mjs
+# Interview-format and comp diligence from the employer's own posting. Replaces
+# the Glassdoor step, which Cloudflare makes impossible to automate honestly.
+step research    ; /usr/bin/node research-roles.mjs
 
 step done
