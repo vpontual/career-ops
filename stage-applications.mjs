@@ -184,6 +184,45 @@ async function callGeminiWithRetry(prompt, maxAttempts = 6) {
   }
 }
 
+// Is a cover letter actually wanted? VP's rule (MISSION-nyc-job.md, 2026-07-29):
+// "If the cover letter is optional, do not submit one at all. If it is required,
+// keep it short and specific to that role." Staging ignored that and wrote a
+// Gemini letter for every pack - work he will not send, on a free-tier quota of
+// 5 requests a minute.
+//
+// Greenhouse is authoritative and free: ?questions=true returns every field with
+// a `required` flag. Anything else stays "unknown", and unknown still gets a
+// letter, because losing one he needed is worse than writing one he did not.
+async function coverLetterRequirement(url) {
+  const u = String(url || '');
+  let slug = null, id = null;
+  let m = u.match(/greenhouse\.io\/([a-z0-9-]+)\/jobs\/(\d+)/i);
+  if (m) { slug = m[1]; id = m[2]; }
+  if (!slug) {
+    const g = u.match(/gh_jid=(\d+)/);
+    const host = (() => { try { return new URL(u).host; } catch { return ''; } })();
+    const branded = { 'careers.datadoghq.com': 'datadog', 'www.brex.com': 'brex', 'brex.com': 'brex',
+                      'stripe.com': 'stripe', 'www.stripe.com': 'stripe' };
+    if (g && branded[host]) { slug = branded[host]; id = g[1]; }
+  }
+  if (!slug || !id) return 'unknown';
+  try {
+    const res = await fetch(
+      `https://boards-api.greenhouse.io/v1/boards/${slug}/jobs/${id}?questions=true`,
+      { headers: { 'User-Agent': 'career-ops/1.0' }, signal: AbortSignal.timeout(15000) }
+    );
+    if (!res.ok) return 'unknown';
+    const data = await res.json();
+    const qs = data.questions || [];
+    const cover = qs.find((q) => /cover.?letter/i.test(q.label || '') ||
+      (q.fields || []).some((f) => /cover_letter/i.test(f.name || '')));
+    if (!cover) return 'absent';
+    return cover.required ? 'required' : 'optional';
+  } catch {
+    return 'unknown';
+  }
+}
+
 async function generateCoverLetter(candidate, profile, cv, profileOverrides) {
   const prompt = `You are writing a one-page cover letter for Vitor Pontual applying to a job.
 Constraints:
@@ -304,31 +343,53 @@ async function main() {
     await mkdir(dir, { recursive: true });
 
     // Skip if already staged (rerun-friendly)
+    // A pack that correctly has NO cover letter must still count as staged, or it
+    // is regenerated every single night and the skip never fires.
     const coverMdPath = path.join(dir, 'cover-letter.md');
-    try {
-      await stat(coverMdPath);
+    const coverSkipPath = path.join(dir, 'cover-letter-skipped.md');
+    let already = false;
+    for (const p of [coverMdPath, coverSkipPath]) {
+      try { await stat(p); already = true; break; } catch {}
+    }
+    if (already) {
       console.log(`[${idx}] SKIP (already staged): ${c.slug}`);
       staged++;
       return;
-    } catch {}
+    }
 
-    console.log(`[${idx}] generating cover letter for ${c.company} | ${c.role} (${c.days}d, score ${c.score})`);
-    const letterText = sanitizeAtsText(await generateCoverLetter(c, profile, cv, profileOverrides));
+    const clReq = await coverLetterRequirement(c.url);
+    if (clReq === 'absent' || clReq === 'optional') {
+      // Record the finding so the review card can say so, and move on. No Gemini
+      // call, no PDF, nothing for VP to read and discard.
+      await writeFile(path.join(dir, 'cover-letter-skipped.md'),
+        `# No cover letter for ${c.company}: ${c.role}\n\n` +
+        `**URL:** ${c.url}\n**Checked:** ${new Date().toISOString()}\n` +
+        `**Greenhouse says the cover letter field is:** ${clReq}\n\n` +
+        `Not written, per the standing rule: if it is optional, do not submit one at all.\n`);
+      console.log(`[${idx}] no cover letter needed (${clReq}): ${c.company} | ${c.role}`);
+    }
+
+    let letterText = null;
+    if (clReq === 'required' || clReq === 'unknown') {
+      console.log(`[${idx}] generating cover letter (${clReq}) for ${c.company} | ${c.role} (${c.days}d, score ${c.score})`);
+      letterText = sanitizeAtsText(await generateCoverLetter(c, profile, cv, profileOverrides));
+    }
 
     // Fact check: flag metric-like claims in the letter that aren't in cv.md/
     // profile.yml (Gemini invention guard, zero extra LLM calls). Warn, don't
     // block — a human reviews every letter before submitting.
-    const fc = checkFacts(letterText, factSource, cvFacts);
+    const fc = letterText ? checkFacts(letterText, factSource, cvFacts) : { ok: true, invented: [], forbidden: [] };
     let factNote = '';
     if (!fc.ok) {
       const bits = [...fc.invented.map(m => `unverified metric "${m}"`), ...fc.forbidden.map(p => `forbidden phrase "${p}"`)];
       factNote = `\n> ⚠ **FACT CHECK — review before sending:** ${bits.join('; ')}\n`;
       console.log(`  [${idx}] ⚠ fact check: ${bits.join('; ')}`);
     }
-    await writeFile(coverMdPath, `# Cover letter — ${c.company}: ${c.role}\n\n**URL:** ${c.url}\n**Generated:** ${new Date().toISOString()}\n**Days old at staging:** ${c.days}\n**Score:** ${c.score}\n${factNote}\n---\n\n${letterText}\n`);
-
-    const coverPdfPath = path.join(dir, 'cover-letter.pdf');
-    await renderPdf(renderCoverLetterHtml(letterText, profile, `Re: ${c.role} - ${c.company}`), coverPdfPath, browser);
+    if (letterText) {
+      await writeFile(coverMdPath, `# Cover letter — ${c.company}: ${c.role}\n\n**URL:** ${c.url}\n**Generated:** ${new Date().toISOString()}\n**Days old at staging:** ${c.days}\n**Score:** ${c.score}\n**Cover letter field:** ${clReq}\n${factNote}\n---\n\n${letterText}\n`);
+      const coverPdfPath = path.join(dir, 'cover-letter.pdf');
+      await renderPdf(renderCoverLetterHtml(letterText, profile, `Re: ${c.role} - ${c.company}`), coverPdfPath, browser);
+    }
 
     // Per-role tailored CV: classify the JD's archetype (tailor-cv.mjs) and render
     // the matching cv-variants/cv-{variant}.md into this packet instead of copying
