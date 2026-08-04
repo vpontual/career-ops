@@ -72,6 +72,49 @@ title_filter:
   - Manager
   - Principal
   negative:
+  - Tax
+  - Audit
+  - Payroll
+  - Controller
+  - Treasury
+  - Accounting
+  - Accountant
+  - FP&A
+  - Compensation
+  - Benefits
+  - Recruiter
+  - Recruiting
+  - Talent Acquisition
+  - People Analytics
+  - HRBP
+  - Counsel
+  - Legal
+  - Paralegal
+  - Compliance Officer
+  - Information Security
+  - Security Engineer
+  - SOC Analyst
+  - GRC
+  - Creative
+  - Brand Campaigns
+  - Art Direction
+  - Copywriter
+  - Designer
+  - Clinical
+  - Nurse
+  - Physician
+  - Actuary
+  - Underwriting
+  - Quantitative
+  - Sales Leader
+  - Account Executive
+  - Account Manager
+  - Sales Manager
+  - Field Marketing
+  - Performance Marketing
+  - Demand Generation
+  - SEO
+  # -- original exclusions below --
   # Hours-for-minimum-wage work, excluded by VP by name.
   - Driver
   - Courier
