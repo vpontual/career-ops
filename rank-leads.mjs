@@ -24,7 +24,7 @@ import dotenv from 'dotenv';
 import { loadBlacklist, blacklistEntry } from './blacklist.mjs';
 import { canonKey } from './lib/canonical.mjs';
 import { parseJd } from './lib/jd-parse.mjs';
-import { detectTrack, titlePassesForTrack, trackFacts, scoreTeaching, scoreNonprofit } from './lib/track.mjs';
+import { detectTrack, titlePassesForTrack, trackFacts, scoreTeaching, scoreNonprofit, scoreNow } from './lib/track.mjs';
 
 dotenv.config();
 
@@ -452,6 +452,7 @@ async function scoreOne(jd, resume, targets) {
       const allFacts = { ...facts, ...extra, track };
       const score = track === 'teaching' ? scoreTeaching(allFacts)
                   : track === 'nonprofit' ? scoreNonprofit(allFacts)
+                  : track === 'now' ? scoreNow(allFacts)
                   : scoreFromFacts(allFacts);
 
       return {

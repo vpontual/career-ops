@@ -1,0 +1,85 @@
+# portals-now.yml - Track D, "Get Hired Now".
+#
+# The point of this track is a good path to INCOME, not a good fit for the NYC
+# search. VP set it deliberately loose (2026-08-04): no NYC requirement, no $150K
+# floor, no archetype. Another country, another currency, contract or full-time,
+# all fine. He is fluent in English, Portuguese, Spanish and French, and that is
+# a real market with far less competition than the NYC PM pool.
+#
+# There is therefore NO location_filter here on purpose. Do not add one.
+#
+# Every board below was probed on 2026-08-04 and returned live product roles.
+# Slugs that answered but carried nothing were discarded rather than trusted.
+
+title_filter:
+  positive:
+  # Fast-start engagements
+  - Fractional
+  - Interim
+  - Contract Product
+  - Product Consultant
+  - Consultant
+  - Advisor
+  # Ordinary product titles - at these employers they ARE the opportunity
+  - Product Manager
+  - Senior Product Manager
+  - Staff Product Manager
+  - Group Product Manager
+  - Principal Product Manager
+  - Lead Product Manager
+  - Product Lead
+  - Director of Product
+  - Head of Product
+  - Product Marketing Manager
+  - Product Builder
+  negative:
+  # The exclusions VP named: hours-for-minimum-wage work.
+  - Driver
+  - Courier
+  - Delivery
+  - Warehouse
+  - Cashier
+  - Retail Associate
+  - Call Center
+  - Customer Service Representative
+  # Still not a software developer.
+  - Software Engineer
+  - Backend
+  - Frontend
+  - Full Stack
+  - Data Engineer
+  - Intern
+
+tracked_companies:
+- name: Nubank
+  careers_url: https://jobs.ashbyhq.com/nubank
+  enabled: true
+- name: QuintoAndar
+  careers_url: https://job-boards.greenhouse.io/quintoandar
+  api: https://boards-api.greenhouse.io/v1/boards/quintoandar/jobs
+  enabled: true
+- name: Wellhub
+  careers_url: https://job-boards.greenhouse.io/gympass
+  api: https://boards-api.greenhouse.io/v1/boards/gympass/jobs
+  enabled: true
+- name: VTEX
+  careers_url: https://job-boards.greenhouse.io/vtex
+  api: https://boards-api.greenhouse.io/v1/boards/vtex/jobs
+  enabled: true
+- name: EBANX
+  careers_url: https://job-boards.greenhouse.io/ebanx
+  api: https://boards-api.greenhouse.io/v1/boards/ebanx/jobs
+  enabled: true
+- name: N26
+  careers_url: https://job-boards.greenhouse.io/n26
+  api: https://boards-api.greenhouse.io/v1/boards/n26/jobs
+  enabled: true
+- name: GitLab
+  careers_url: https://job-boards.greenhouse.io/gitlab
+  api: https://boards-api.greenhouse.io/v1/boards/gitlab/jobs
+  enabled: true
+
+scan_settings:
+  max_results_per_company: 40
+  max_age_days: 45
+  default_scan_method: greenhouse_api

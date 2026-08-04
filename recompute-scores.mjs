@@ -21,7 +21,7 @@ import { readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { parseJd } from './lib/jd-parse.mjs';
-import { detectTrack, trackFacts, scoreTeaching, scoreNonprofit } from './lib/track.mjs';
+import { detectTrack, trackFacts, scoreTeaching, scoreNonprofit, scoreNow } from './lib/track.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const SCORES = path.join(ROOT, 'data', 'lead-scores.json');
@@ -72,6 +72,7 @@ for (const [k, v] of Object.entries(scores)) {
   const facts = { ...v, ...extra, geo, archetype, track };
   const score = track === 'teaching' ? scoreTeaching(facts)
               : track === 'nonprofit' ? scoreNonprofit(facts)
+              : track === 'now' ? scoreNow(facts)
               : mod.scoreFromFacts(facts);
   if (geo !== v.geo || score !== v.score) {
     moves.push({ k, from: v.score, to: score, geoFrom: v.geo, geoTo: geo });

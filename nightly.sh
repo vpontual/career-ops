@@ -31,6 +31,7 @@ step scan        ; /usr/bin/docker compose run --rm scanner node scan.mjs
 # boards VP asked for produced nothing at all.
 step scan-teach  ; /usr/bin/docker compose run --rm -e PORTALS_FILE=portals-teaching.yml scanner node scan.mjs
 step scan-np     ; /usr/bin/docker compose run --rm -e PORTALS_FILE=portals-nonprofit.yml scanner node scan.mjs
+step scan-now    ; /usr/bin/docker compose run --rm -e PORTALS_FILE=portals-now.yml scanner node scan.mjs
 step gmail       ; /usr/bin/node fetch-gmail-leads.mjs
 step resolve     ; /usr/bin/docker compose run --rm applier node resolve-lensa.mjs
 step fetch-jds   ; /usr/bin/docker compose run --rm scanner node fetch-jds.mjs

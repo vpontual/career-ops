@@ -81,6 +81,7 @@ function cvVariantFor(archetype, title, track) {
   // cv-variants/cv-teaching.md exists; without this branch an auto-enqueued
   // teaching card was stamped `ai-enterprise` - a product CV staged for a school.
   if (track === 'teaching') return 'teaching';
+  if (track === 'now') return 'leadership';
   if (a.includes('marketing') || t.includes('product marketing')) return 'pmm';
   if (a.includes('director') || a.includes('head')) return 'leadership';
   if (a.includes('ai') || t.includes(' ai') || t.includes('machine learning')) return 'ai-infra';
@@ -214,7 +215,10 @@ const main = async () => {
     }
 
     if (!(rep.score >= MIN_SCORE)) { stats.lowScore++; continue; }
-    if (!GEO_OK.has(String(rep.geo || 'unclear'))) { stats.geo++; continue; }
+    // Track D has no geography gate by design. The brief was "few constraints,
+    // the important thing is a good path to income" - another country and
+    // another currency are the point, not a problem.
+    if (rep.track !== 'now' && !GEO_OK.has(String(rep.geo || 'unclear'))) { stats.geo++; continue; }
     const maxAge = rep.track === 'teaching' ? TEACHING_MAX_AGE_DAYS : MAX_AGE_DAYS;
     if (rep.days == null || rep.days > maxAge) { stats.stale++; continue; }
     if (blacklist.length && blacklistEntry(rep.company, blacklist)) { stats.blacklisted++; continue; }
