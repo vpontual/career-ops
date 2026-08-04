@@ -32,6 +32,7 @@ import { fileURLToPath } from 'url';
 import { canonKey } from './lib/canonical.mjs';
 import { detectTrack } from './lib/track.mjs';
 import { parseBlacklist, blacklistEntry } from './blacklist.mjs';
+import { canonicalizeUrl } from './lib/url-canonical.mjs';
 import { parseJd } from './lib/jd-parse.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -130,8 +131,12 @@ const main = async () => {
   const knownUrls = new Set();
   for (const it of queue.items) {
     known.set(canonKey(it.company || '', it.role || ''), it.decision || 'pending');
+    // canonicalizeUrl, NOT a bare query strip. Stripe posts every role at
+    // stripe.com/jobs/search?gh_jid=NNNN, so dropping the query string collapsed
+    // all of them to one URL and suppressed 366 roles as "already in queue".
+    // canonicalizeUrl removes tracking params and keeps identifying ones.
     for (const u of [it.applyUrl, it.sourceUrl]) {
-      if (u) knownUrls.add(String(u).split('?')[0].replace(/\/$/, ''));
+      if (u) knownUrls.add(canonicalizeUrl(String(u)));
     }
   }
 
@@ -182,7 +187,7 @@ const main = async () => {
 
   for (const [key, variants] of groups) {
     if (known.has(key)) { stats.already++; continue; }
-    if (variants.some(v => knownUrls.has(String(v.url || '').split('?')[0].replace(/\/$/, '')))) {
+    if (variants.some(v => v.url && knownUrls.has(canonicalizeUrl(String(v.url))))) {
       stats.already++; continue;
     }
 
