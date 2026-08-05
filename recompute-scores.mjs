@@ -72,7 +72,11 @@ for (const [k, v] of Object.entries(scores)) {
   const extra = jd ? trackFacts(track, jd) : {};
   // Entries scored before functionArea existed get it derived from the title,
   // which costs nothing and is the same fallback the live scorer uses.
-  const functionArea = mod.normalizeFunctionArea(v.functionAreaRaw ?? v.functionArea, jd ? jd.title : '');
+  // Pass the model's RAW answer only, never the previously-derived value.
+  // 'other' is a legal enum value, so feeding it back in short-circuited the
+  // normalizer and the label stuck forever - widening the product pattern
+  // moved 2 roles instead of 47 because of exactly this.
+  const functionArea = mod.normalizeFunctionArea(v.functionAreaRaw, jd ? jd.title : '');
   const facts = { ...v, ...extra, geo, archetype, track, functionArea };
   const score = track === 'teaching' ? scoreTeaching(facts)
               : track === 'nonprofit' ? scoreNonprofit(facts)

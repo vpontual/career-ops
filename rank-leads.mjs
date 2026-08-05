@@ -315,7 +315,7 @@ const FUNCTION_AREA = [
   ['hr', /human resources|\bhr\b|people ops|people operations|talent acquisition|recruit|compensation|benefits|hrbp|people business partner/i],
   ['security', /information security|security engineer|\bsoc\b|\bgrc\b|infosec|cyber/i],
   ['clinical', /clinical|medical|nurse|physician|patient care/i],
-  ['support', /technical support|help ?desk|support engineer|tier [123]/i],
+  ['support', /technical support|help ?desk|support engineer|tier [123]|director,? support|head of support/i],
   ['customer-success', /customer success|client success|customer experience|onboarding manager/i],
   ['partnerships', /partnership|alliances|channel|business development(?! rep)/i],
   ['consulting', /consultant|consulting|advisory|advisor/i],
@@ -324,7 +324,13 @@ const FUNCTION_AREA = [
   ['operations', /operations|\bops\b|business operations/i],
   ['strategy', /strategy|strategic|corporate development|chief of staff/i],
   ['general-management', /general manager|country manager|managing director/i],
-  ['product', /product manager|product marketing|product lead|head of product|product owner|product director/i],
+  // Widened after an audit: 47 tier-4+ roles were landing in 'other' and nearly
+  // all of them were Director of Product, Director Product Management or VP of
+  // Product. The pattern matched 'product manager' but not 'product management',
+  // and not 'director of product' - so it missed exactly the senior titles VP
+  // most wants. Not harmful (other is allowed through) but wrong, and it would
+  // have mattered the moment anything keyed off the label.
+  ['product', /product manage(r|ment)|product marketing|product lead|head of product|product owner|product director|(director|vp|vice president|chief)[, ]+(of )?product|chief product officer/i],
 ];
 
 export function normalizeFunctionArea(raw, title = '') {
