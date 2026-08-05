@@ -34,6 +34,7 @@ import { detectTrack } from './lib/track.mjs';
 import { classifyArchetype } from './tailor-cv.mjs';
 import { parseBlacklist, blacklistEntry } from './blacklist.mjs';
 import { canonicalizeUrl } from './lib/url-canonical.mjs';
+import yaml from 'js-yaml';
 import { parseJd } from './lib/jd-parse.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -50,6 +51,11 @@ const argN = (flag, dflt) => {
 };
 const MIN_SCORE = argN('--min-score', Number(process.env.MIN_SCORE || 4));
 const MAX_AGE_DAYS = argN('--max-age', Number(process.env.MAX_AGE_DAYS || 30));
+// VP, 2026-08-05, after clearing the queue: "if i saw 4 or more days i just
+// rejected it. i want fresh postings unless its a whale like anthropic." He
+// rejected 57 of 61 pending cards on age alone, so this is the real rule now,
+// stricter than the old 5-day goal. A whale falls back to MAX_AGE_DAYS.
+const FRESH_MAX_AGE_DAYS = Number(process.env.FRESH_MAX_AGE_DAYS || 3);
 // Must agree with rank-leads' TEACHING_MAX_AGE_DAYS or the scorer admits a
 // school-year requisition and this immediately drops it again as stale.
 const TEACHING_MAX_AGE_DAYS = Number(process.env.TEACHING_MAX_AGE_DAYS || 150);
@@ -116,6 +122,17 @@ const main = async () => {
   // gate that can stop a company already present in lead-scores.json, because
   // rank-leads filters blacklisted companies before scoring and never removes
   // entries scored before the company was blacklisted.
+  // Read live from config/whales.yml so VP can edit it without a deploy.
+  let whales = [];
+  try {
+    const wraw = await readFile(path.join(ROOT, 'config', 'whales.yml'), 'utf-8');
+    whales = (yaml.load(wraw)?.whales || []).map((w) => String(w).toLowerCase());
+  } catch { /* no list is fine, everything is then held to the fresh window */ }
+  const isWhale = (company) => {
+    const c = String(company || '').toLowerCase();
+    return whales.some((w) => c.includes(w));
+  };
+
   const blacklist = existsSync(BLACKLIST)
     ? parseBlacklist(await readFile(BLACKLIST, 'utf-8'))
     : [];
@@ -220,7 +237,9 @@ const main = async () => {
     // the important thing is a good path to income" - another country and
     // another currency are the point, not a problem.
     if (rep.track !== 'now' && !GEO_OK.has(String(rep.geo || 'unclear'))) { stats.geo++; continue; }
-    const maxAge = rep.track === 'teaching' ? TEACHING_MAX_AGE_DAYS : MAX_AGE_DAYS;
+    const maxAge = rep.track === 'teaching' ? TEACHING_MAX_AGE_DAYS
+                 : isWhale(rep.company) ? MAX_AGE_DAYS
+                 : FRESH_MAX_AGE_DAYS;
     if (rep.days == null || rep.days > maxAge) { stats.stale++; continue; }
     if (blacklist.length && blacklistEntry(rep.company, blacklist)) { stats.blacklisted++; continue; }
 
@@ -230,7 +249,7 @@ const main = async () => {
 
   const fresh = cand.sort((a, b) => b.score - a.score || a.days - b.days);
 
-  console.log(`enqueue-review: tier >= ${MIN_SCORE}, geo in {${[...GEO_OK].join(', ')}}, <= ${MAX_AGE_DAYS}d`);
+  console.log(`enqueue-review: tier >= ${MIN_SCORE}, geo in {${[...GEO_OK].join(', ')}}, <= ${FRESH_MAX_AGE_DAYS}d (whales <= ${MAX_AGE_DAYS}d, teaching <= ${TEACHING_MAX_AGE_DAYS}d)`);
   console.log(`scanned ${stats.scanned} scored JDs → ${groups.size} distinct roles`);
   console.log(`  dropped: ${stats.lowScore} below tier, ${stats.geo} geo, ${stats.stale} stale, ` +
               `${stats.blacklisted} blacklisted, ${stats.already} already in queue,`);

@@ -1,0 +1,43 @@
+# whales.yml — employers worth applying to even when the posting is not fresh.
+#
+# VP, 2026-08-05: "if i saw 4 or more days i just rejected it. i want fresh
+# postings unless its a whale like anthropic."
+#
+# So the default freshness gate is now 3 days, which is stricter than the old
+# 5-day goal. A whale bypasses it and falls back to the ordinary 30-day window.
+# The reasoning is that for most employers a 5-day-old posting means the pile is
+# already deep, but for a company he would drop everything for, being late is
+# better than being absent.
+#
+# Matching is on the company name, case-insensitive substring, against the name
+# on the posting. Keep entries specific enough not to collide: "Scale AI" not
+# "Scale", "Meta" is deliberately absent because it matches Metabase, Metadata
+# and others.
+#
+# EDIT THIS FREELY. It is read live, no rebuild and no deploy.
+
+whales:
+  # Frontier labs
+  - Anthropic
+  - OpenAI
+  - Google DeepMind
+  - DeepMind
+  - Mistral
+  - Cohere
+  - Scale AI
+  - Perplexity
+
+  # AI-native products at scale
+  - Figma
+  - Notion
+  - Linear
+  - Vercel
+  - Databricks
+  - Stripe
+  - Ramp
+  - Brex
+  - Cursor
+  - Anysphere
+  - Sierra
+  - Harvey
+  - Suno
