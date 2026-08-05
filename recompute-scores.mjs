@@ -41,7 +41,8 @@ function extract(name) {
   throw new Error(`${name} unterminated`);
 }
 const consts = src.slice(src.indexOf('const NYC_METRO'), src.indexOf('function normalizeGeo'));
-const mod = new Function(`${consts}\n${extract('normalizeGeo')}\n${extract('normalizeArchetype')}\n${extract('scoreFromFacts')}\nreturn { normalizeGeo, normalizeArchetype, scoreFromFacts };`)();
+const faConsts = src.slice(src.indexOf('const FUNCTION_AREA'), src.indexOf('export function normalizeFunctionArea'));
+const mod = new Function(`${consts}\n${faConsts}\n${extract('normalizeGeo')}\n${extract('normalizeArchetype')}\n${extract('normalizeFunctionArea').replace('export ', '')}\n${extract('scoreFromFacts')}\nreturn { normalizeGeo, normalizeArchetype, normalizeFunctionArea, scoreFromFacts };`)();
 
 const scores = JSON.parse(await readFile(SCORES, 'utf8'));
 let changed = 0, gated = 0, skipped = 0;
@@ -69,7 +70,10 @@ for (const [k, v] of Object.entries(scores)) {
   try { jd = parseJd(readFileSync(path.join(ROOT, 'jds', k), 'utf8'), k); } catch {}
   const track = jd ? detectTrack(jd) : (v.track || 'pm');
   const extra = jd ? trackFacts(track, jd) : {};
-  const facts = { ...v, ...extra, geo, archetype, track };
+  // Entries scored before functionArea existed get it derived from the title,
+  // which costs nothing and is the same fallback the live scorer uses.
+  const functionArea = mod.normalizeFunctionArea(v.functionAreaRaw ?? v.functionArea, jd ? jd.title : '');
+  const facts = { ...v, ...extra, geo, archetype, track, functionArea };
   const score = track === 'teaching' ? scoreTeaching(facts)
               : track === 'nonprofit' ? scoreNonprofit(facts)
               : track === 'now' ? scoreNow(facts)
@@ -81,6 +85,7 @@ for (const [k, v] of Object.entries(scores)) {
   }
   Object.assign(v, extra);
   v.track = track;
+  v.functionArea = functionArea;
   v.archetypeRaw = v.archetypeRaw ?? v.archetype;
   v.archetype = archetype;
   v.geoRaw = raw;

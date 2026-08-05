@@ -212,6 +212,7 @@ const SYSTEM_PROMPT = `You are a job-fit ANALYST, not a scorer. Do not rate the 
   "level": "<one of: below | at | above — relative to Senior PM / Principal / Director. 'below' means new-grad, associate, or 0-3 years>",
   "leadGen": <true if a Product Marketing title is really demand generation, pipeline, campaigns, or sales enablement rather than explaining the product to customers>,
   "technicalScreen": <true if the JD requires coding tests, take-home assignments, SQL tests, or live technical exercises>,
+  "functionArea": "<the discipline this role actually belongs to, one of: product | program | operations | strategy | partnerships | customer-success | consulting | research | teaching | general-management | engineering | design | sales | marketing-demand | finance | legal | hr | security | clinical | support | other>",
   "compLow": <lowest stated base salary as a plain number, or null if not stated>,
   "verdict": "<A FULL SENTENCE of at least 12 words describing what this role actually is — the product, the seniority, and the company stage. NOT a rating. NOT a label. \"Strong Match\", \"Good fit\" and \"Senior PM role\" are all WRONG ANSWERS. Good example: \"Staff PM owning the agent-evaluation surface at a Series C developer-tools company, reporting to the Head of Product.\">",
   "redFlags": "<empty string or 1-2 concrete concerns>"
@@ -297,6 +298,46 @@ function normalizeArchetype(raw) {
   return 'Other';
 }
 
+// Fourth field to need this, and for the same reason as geo and archetype: the
+// model is given an enum and answers in its own words. This one replaces four
+// rounds of keyword exclusions on Track D. A keyword list cannot express "a job
+// VP could actually do" - it let through Deal Desk Analyst, Lead Designer, SOX
+// PMO, Regional Sales Director and Systems Engineer, one round at a time - so
+// the model reports the DISCIPLINE and the policy lives in code.
+const FUNCTION_AREA = [
+  ['engineering', /engineer|developer|programmer|devops|\bsre\b|machine learning|data scien|architect/i],
+  ['teaching', /teacher|teaching|instructor|lecturer|adjunct|faculty|curriculum|instructional/i],
+  ['design', /\bdesign(er)?\b|\bux\b|\bui\b|visual|creative|art director/i],
+  ['sales', /\bsales\b|account executive|account manager|quota|business development rep|deal desk|renewals|pipeline/i],
+  ['marketing-demand', /demand gen|growth marketing|performance marketing|campaign|\bseo\b|lifecycle marketing|field marketing|brand marketing|acquisition marketing/i],
+  ['finance', /financ|accounting|accountant|\btax\b|audit|treasury|controller|payroll|fp&a|\bsox\b|billing|\bsec (analyst|report)/i],
+  ['legal', /legal|counsel|attorney|lawyer|paralegal|compliance officer|regulatory affairs/i],
+  ['hr', /human resources|\bhr\b|people ops|people operations|talent acquisition|recruit|compensation|benefits|hrbp|people business partner/i],
+  ['security', /information security|security engineer|\bsoc\b|\bgrc\b|infosec|cyber/i],
+  ['clinical', /clinical|medical|nurse|physician|patient care/i],
+  ['support', /technical support|help ?desk|support engineer|tier [123]/i],
+  ['customer-success', /customer success|client success|customer experience|onboarding manager/i],
+  ['partnerships', /partnership|alliances|channel|business development(?! rep)/i],
+  ['consulting', /consultant|consulting|advisory|advisor/i],
+  ['research', /research|insights|competitive intelligence|analyst relations/i],
+  ['program', /program manager|project manager|delivery manager|\bpmo\b|portfolio manager/i],
+  ['operations', /operations|\bops\b|business operations/i],
+  ['strategy', /strategy|strategic|corporate development|chief of staff/i],
+  ['general-management', /general manager|country manager|managing director/i],
+  ['product', /product manager|product marketing|product lead|head of product|product owner|product director/i],
+];
+
+export function normalizeFunctionArea(raw, title = '') {
+  const t = String(raw ?? '').trim().toLowerCase();
+  const known = new Set(FUNCTION_AREA.map((x) => x[0]).concat(['other']));
+  if (known.has(t)) return t;
+  // The model answered in prose, or not at all. Fall back to the title, which is
+  // the same authority the rest of this file trusts over the model's wording.
+  const hay = `${t} ${title}`;
+  for (const [name, re] of FUNCTION_AREA) if (re.test(hay)) return name;
+  return 'other';
+}
+
 function scoreFromFacts(f) {
   // Hard gates — things VP will not do, which no upside can offset.
   //
@@ -370,7 +411,7 @@ function buildUserPrompt(jd, resume, targets) {
     body,
     ``,
     `=== TASK ===`,
-    `Return ONLY the JSON object defined in the system prompt, with the keys archetype, aiNative, geo, level, leadGen, technicalScreen, compLow, verdict, redFlags. Do NOT return a "score" key. Do NOT return a "reasoning" key. The verdict must be a real sentence describing the role, not a two-word rating — 370 of the last 403 replies said only "Strong Match", which is useless. /no_think`,
+    `Return ONLY the JSON object defined in the system prompt, with the keys archetype, aiNative, geo, level, leadGen, technicalScreen, functionArea, compLow, verdict, redFlags. Do NOT return a "score" key. Do NOT return a "reasoning" key. The verdict must be a real sentence describing the role, not a two-word rating — 370 of the last 403 replies said only "Strong Match", which is useless. /no_think`,
   ].join('\n');
 }
 
@@ -434,6 +475,8 @@ async function scoreOne(jd, resume, targets) {
         geoModel: String(parsed.geo || '').slice(0, 40),  // what the model guessed, for auditing
         level: String(parsed.level || 'at').slice(0, 12),
         leadGen: parsed.leadGen === true,
+        functionArea: normalizeFunctionArea(parsed.functionArea, jd.title),
+        functionAreaRaw: String(parsed.functionArea || '').slice(0, 40),
         technicalScreen: parsed.technicalScreen === true,
         // The model returns things like 1 and 124 for compLow. Treated as a real
         // salary, 1 is below every floor and silently caps a good role; 32 such
