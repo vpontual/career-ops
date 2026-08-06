@@ -141,7 +141,17 @@ const QUERIES = [
   { label: 'subsidiaries', params: { 'business_category[]': 'subsidiaries' } },
   { label: 'nyc',          params: { 'city[]': 'New York' } },
   { label: 'newark',       params: { 'city[]': 'Newark' } },
-  { label: 'remote',       params: { base_query: 'product manager remote' } },
+  // ⚠ WAS `base_query: 'product manager remote'`, which returned 0 raw results on
+  // 6 of 6 runs — a quarter of the sweep, dead, reporting as a legitimate zero.
+  // amazon.jobs treats base_query near-literally: measured against the live API,
+  // "product manager remote" -> 0 hits and "product manager" -> 759. Adding the
+  // word killed the search rather than filtering it.
+  //
+  // Replaced with the plain US-wide query, which is strictly better: it is the
+  // only query here with no city or category filter, so it is the one that can
+  // surface a fully-remote role at all, and the location rules below already
+  // KEEP remote and drop Seattle/Bellevue.
+  { label: 'us-recent',    params: {} },
 ];
 
 function url(extra) {

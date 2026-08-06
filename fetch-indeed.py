@@ -183,6 +183,13 @@ def main():
 
     collected = []  # (url, company, title, location, iso, days, description)
     run_seen = set()
+    # Every query failing must not look like a quiet night. The exception below
+    # printed to stderr and continued, and the summary counted only what was
+    # KEPT - so 14 failed searches and 14 searches that legitimately matched
+    # nothing produced the same "Added 0 new Indeed roles" and the same exit 0.
+    queries_run = 0
+    queries_failed = 0
+    queries_empty = 0
 
     for site, term, loc, remote in QUERIES:
         try:
@@ -205,9 +212,12 @@ def main():
                 verbose=0,
             )
         except Exception as e:
-            print(f"  search failed [{site}: {term} @ {loc}]: {e}", file=sys.stderr)
+            queries_failed += 1
+            print(f"  search FAILED [{site}: {term} @ {loc}]: {e}", file=sys.stderr)
             continue
+        queries_run += 1
         if df is None or len(df) == 0:
+            queries_empty += 1
             print(f"  0 results  [{site}: {term} @ {loc}]")
             continue
 
@@ -234,21 +244,34 @@ def main():
 
     if not collected:
         print("No new Indeed roles passed the title filter.")
+        _report(queries_run, queries_failed, queries_empty, 0, 0)
+        # A run where EVERY query failed is a broken run, not a quiet one.
+        if queries_failed and queries_run == 0:
+            sys.exit(1)
         return
 
     # Write jds/, pipeline.md, scan-history.tsv
     today = dt.date.today().isoformat()
     pipe_lines, hist_lines = [], []
+    duplicates = 0
     for url, company, title, location, iso, days, desc in collected:
-        slug = "indeed-" + slugify(f"{company}-{title}") or "indeed-role"
-        # ensure jd filename uniqueness
+        # `"indeed-" + slugify(...) or "indeed-role"` never reached the fallback:
+        # + binds tighter than or, and "indeed-" is always truthy, so an empty
+        # slugify produced the filename "indeed-.md".
+        body = slugify(f"{company}-{title}") or "role"
+        slug = "indeed-" + body
+
+        # ⚠ DO NOT create indeed-<slug>-2.md. The old loop suffixed until it
+        # found a free name, so the same role reposted under a new Indeed jk=
+        # became a SECOND JD file - 23 (company,title) groups spanned more than
+        # one file, 32 duplicate scorings at ~34s of LLM time each, and the
+        # duplicates then disagreed with each other about the score. The same
+        # company and title is the same role; a repost is not new information.
         jd_name = f"{slug}.md"
         jd_path = os.path.join(JDS_DIR, jd_name)
-        n = 2
-        while os.path.exists(jd_path):
-            jd_name = f"{slug}-{n}.md"
-            jd_path = os.path.join(JDS_DIR, jd_name)
-            n += 1
+        if os.path.exists(jd_path):
+            duplicates += 1
+            continue
 
         posted = f"{iso} ({days} days ago)" if iso and days is not None else "(date unknown)"
         header = (f"# {title}\n"
@@ -272,8 +295,22 @@ def main():
             f.write("url\tfirst_seen\tportal\ttitle\tcompany\tstatus\n")
         f.writelines(hist_lines)
 
-    print(f"\nAdded {len(collected)} new Indeed roles -> pipeline.md + jds/ (title-filtered).")
+    _report(queries_run, queries_failed, queries_empty, len(pipe_lines), duplicates)
     print("Next: rank-leads.mjs scores them; stage-applications.mjs packages tier 4+.")
+    if queries_failed and queries_run == 0:
+        sys.exit(1)
+
+
+def _report(run, failed, empty, added, duplicates):
+    """One place that says what actually happened, so a broken run is
+    distinguishable from a quiet one in the nightly log."""
+    print("")
+    print(f"queries: {run + failed} attempted, {run} ok, {failed} FAILED, {empty} returned nothing")
+    print(f"roles:   {added} new -> pipeline.md + jds/ (title-filtered)")
+    if duplicates:
+        print(f"         {duplicates} skipped as a repost of a role already on disk")
+    if failed:
+        print(f"⚠ {failed} search(es) failed — this run saw less than the board actually holds")
 
 
 if __name__ == "__main__":

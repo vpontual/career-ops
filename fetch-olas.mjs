@@ -124,7 +124,13 @@ const SEARCHES = [
   { zip: '11772', label: 'Suffolk' },
   { zip: '10901', label: 'Rockland' },
 ];
-const KEYWORDS = ['business', 'marketing'];
+// ⚠ 'marketing' REMOVED 2026-08-06: it returned 0 rows and 0 kept in 30 of 30
+// searches — half the OLAS query budget, spent nightly, that has never produced
+// a single row. It was also redundant: SUBJECT below already matches 'marketing'
+// in a title, so a marketing-adjacent CTE vacancy surfaced by the 'business'
+// search is kept anyway. School districts simply do not title a teaching
+// vacancy "marketing".
+const KEYWORDS = ['business'];
 
 // Two independent tests, because "business" alone is badly ambiguous in a school
 // district: every district has an Assistant Superintendent for Business &
