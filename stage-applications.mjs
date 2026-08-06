@@ -395,6 +395,28 @@ async function main() {
     for (const p of [coverMdPath, coverSkipPath]) {
       try { await stat(p); already = true; break; } catch {}
     }
+
+    // ⚠ A PACK WITHOUT A CV IS NOT STAGED, whatever markers it carries.
+    //
+    // This tested only for a cover letter or a skip marker, and the CV is
+    // rendered LAST — so any failure between the two (a Gemini quota trip is the
+    // common one, on a free tier of 5 requests a minute) left a directory
+    // holding cover-letter-skipped.md and no cv.pdf. Every subsequent run then
+    // said "SKIP (already staged)" and the CV was never rendered. With the CV
+    // gate added 2026-08-06 that is now permanent invisibility: no CV means
+    // enqueue holds the role, and staging refuses to fix it.
+    //
+    // Caught on the first full unattended run: Innovid, Chainguard, Amazon,
+    // Scale AI and GitLab were all stuck in exactly this state, and re-running
+    // staging could not recover them.
+    if (already) {
+      try { await stat(path.join(dir, 'cv.pdf')); }
+      catch {
+        already = false;
+        console.log(`[${idx}] RESTAGING — has a cover-letter marker but no cv.pdf: ${c.slug}`);
+      }
+    }
+
     if (already) {
       console.log(`[${idx}] SKIP (already staged): ${c.slug}`);
       staged++;
@@ -420,7 +442,11 @@ async function main() {
     }
 
     let letterText = null;
-    if (clReq === 'required' || clReq === 'unknown') {
+    // Only a REQUIRED cover letter is written. 'unknown' used to appear here as
+    // well, which after the 2026-08-06 rule change meant a pack got BOTH a
+    // skip marker and a generated letter — contradictory, and the Gemini call
+    // it triggered is what was failing between the marker and the CV render.
+    if (clReq === 'required') {
       console.log(`[${idx}] generating cover letter (${clReq}) for ${c.company} | ${c.role} (${c.days}d, score ${c.score})`);
       letterText = sanitizeAtsText(await generateCoverLetter(c, profile, cv, profileOverrides));
     }
