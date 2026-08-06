@@ -317,8 +317,15 @@ function greenhouseRef(url) {
   const g = u.match(/gh_jid=(\d+)/);
   let host = '';
   try { host = new URL(u).host; } catch {}
+  // Employers who host Greenhouse behind their own domain. The board API answers
+  // authoritatively and for free; without an entry here the URL falls through to
+  // the browser reader, and several of these serve a JS-only shell that yields no
+  // fields at all - Instacart's card sat "form not enumerable" while
+  // boards-api.greenhouse.io/v1/boards/instacart/jobs/8100148 returned 200 with
+  // the full question list.
   const branded = { 'careers.datadoghq.com': 'datadog', 'www.brex.com': 'brex', 'brex.com': 'brex',
-    'stripe.com': 'stripe', 'www.stripe.com': 'stripe', 'jobs.elastic.co': 'elastic' };
+    'stripe.com': 'stripe', 'www.stripe.com': 'stripe', 'jobs.elastic.co': 'elastic',
+    'instacart.careers': 'instacart', 'www.instacart.careers': 'instacart' };
   if (g && branded[host]) return { slug: branded[host], id: g[1] };
   return null;
 }

@@ -128,7 +128,13 @@ if (brokenReports === 0) ok('All report links valid');
 let badScores = 0;
 for (const e of entries) {
   const s = e.score.replace(/\*\*/g, '').trim();
-  if (!/^\d+\.?\d*\/5$/.test(s) && s !== 'N/A' && s !== 'DUP') {
+  // Upstream writes "4/5". This fork's scorer emits a bare TIER 1-5 (see
+  // scoreFromFacts) and "-" for a row that predates scoring or was applied to by
+  // hand. The validator was still enforcing the upstream shape, so it rejected
+  // all three rows in applications.md - including the plain "4" - and had been
+  // failing continuously. Nothing noticed, because nothing ran test-all.mjs.
+  // Both forms are accepted; the fork's own is the bare integer.
+  if (!/^\d+\.?\d*\/5$/.test(s) && !/^[1-5]$/.test(s) && s !== '-' && s !== 'N/A' && s !== 'DUP') {
     error(`#${e.num}: Invalid score format: "${e.score}"`);
     badScores++;
   }
