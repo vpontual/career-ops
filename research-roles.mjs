@@ -33,6 +33,7 @@ import { readFile, writeFile, mkdir, readdir, stat } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { parseJd } from './lib/jd-parse.mjs';
+import { canonicalizeUrl } from './lib/url-canonical.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const QUEUE = path.join(ROOT, 'data', 'review-queue.json');
@@ -100,11 +101,24 @@ const main = async () => {
   const scores = JSON.parse(await readFile(SCORES, 'utf-8'));
   const jdFiles = await readdir(JDS);
 
-  // JD lookup by canonicalised URL, so a card finds its own posting text.
+  // JD lookup by CANONICALISED url — not by chopping the query string.
+  //
+  // This said "canonicalised" and did `url.split('?')[0]`, which is the exact
+  // bug enqueue-review.mjs documents having fixed on its own dedup: Stripe posts
+  // every role at stripe.com/jobs/search?gh_jid=NNNN, so dropping the query
+  // collapses the whole board to ONE key. Measured across the corpus: 45
+  // stripped URLs collide over 674 JD files — 436 Indeed onto one key, 67
+  // Stripe, 36 Elastic, 35 Databricks. Last file read wins, so a card was handed
+  // a DIFFERENT requisition's posting text, and since research.md's header is
+  // written from the CARD it named the right company while the interview
+  // verdict, comp figure and location came from another job.
+  //
+  // canonicalizeUrl strips tracking parameters and KEEPS identifying ones, which
+  // is the distinction that matters here.
   const byUrl = new Map();
   for (const f of jdFiles) {
     const jd = parseJd(await readFile(path.join(JDS, f), 'utf-8'), f);
-    if (jd.url) byUrl.set(jd.url.split('?')[0].replace(/\/$/, ''), { f, jd });
+    if (jd.url) byUrl.set(canonicalizeUrl(String(jd.url)), { f, jd });
   }
 
   let cards = queue.items.filter(i => !i.decision);
@@ -116,14 +130,17 @@ const main = async () => {
 
   for (const c of cards) {
     let hit = null;
-    for (const u of [c.applyUrl, c.sourceUrl]) {
-      if (!u) continue;
-      hit = byUrl.get(String(u).split('?')[0].replace(/\/$/, ''));
-      if (hit) break;
+    // scoreSource FIRST. It is the JD filename enqueue-review recorded for this
+    // exact card, so it is an identity rather than a lookup. It was previously
+    // only a fallback and could never fire, because the URL map above always
+    // "found" something — the wrong thing.
+    if (c.scoreSource && jdFiles.includes(c.scoreSource)) {
+      hit = { f: c.scoreSource, jd: parseJd(await readFile(path.join(JDS, c.scoreSource), 'utf-8'), c.scoreSource) };
     }
-    if (!hit && c.scoreSource) {
-      const f = c.scoreSource;
-      if (jdFiles.includes(f)) hit = { f, jd: parseJd(await readFile(path.join(JDS, f), 'utf-8'), f) };
+    for (const u of hit ? [] : [c.applyUrl, c.sourceUrl]) {
+      if (!u) continue;
+      hit = byUrl.get(canonicalizeUrl(String(u)));
+      if (hit) break;
     }
     if (!hit) { nojd++; continue; }
 
@@ -184,8 +201,20 @@ coding screen is actually disclosed._
       // The card carries the verdict so ready-check and the UI can see it, and
       // the "work still owed" marker is cleared because it no longer is.
       c.research = { verdict: v.code, signals: hits.map(h => h.label), researchedAt: new Date().toISOString().slice(0, 10) };
-      c.notes = `INTERVIEW PROCESS — ${v.code}: ${v.text}${hits.length ? ' Signals: ' + hits.map(h => h.label).join(', ') + '.' : ''} || ` +
-        String(c.notes || '').replace(/ON ME:[^|]*?(?:auto-enqueued from the nightly score\.|not yet done[^|]*?\.)\s*(?:\|\|\s*)?/i, '');
+      // IDEMPOTENT. This prepended its verdict on every run with no check for one
+      // already there, and nothing skips an already-researched card, so notes
+      // grew by ~600 characters per pending card per night: one card carried
+      // FIVE identical copies of the same paragraph, and 54 of 108 cards had
+      // verbatim-duplicated segments. ready-check.py greps these notes.
+      const verdictLine = `INTERVIEW PROCESS — ${v.code}: ${v.text}${hits.length ? ' Signals: ' + hits.map(h => h.label).join(', ') + '.' : ''}`;
+      const rest = String(c.notes || '')
+        .replace(/ON ME:[^|]*?(?:auto-enqueued from the nightly score\.|not yet done[^|]*?\.)\s*(?:\|\|\s*)?/i, '')
+        // drop any previous INTERVIEW PROCESS segment, however many there are
+        .split('||')
+        .map((seg) => seg.trim())
+        .filter((seg) => seg && !/^INTERVIEW PROCESS —/.test(seg))
+        .join(' || ');
+      c.notes = rest ? `${verdictLine} || ${rest}` : verdictLine;
     }
     done++;
     console.log(`  ${String(v.code).padEnd(15)} ${c.company.slice(0, 26).padEnd(26)} ${c.role.slice(0, 42)}`);

@@ -89,7 +89,16 @@ run_step olas       /usr/bin/docker compose run --rm applier node fetch-olas.mjs
 run_step resolve-apply /usr/bin/docker compose run --rm applier node resolve-apply-paths.mjs
 
 # ── scoring and packaging ──────────────────────────────────────────────────
+# Refresh which employers actually CLOSE their requisitions. The freshness gate
+# reads data/employer-closure.json, and a stale measurement quietly turns into a
+# stale policy. One API call per board, ~94 calls.
+run_step lifespan   /usr/bin/node measure-req-lifespan.mjs
 run_step rank-leads /usr/bin/node rank-leads.mjs
+# Reapply the CURRENT policy to every stored fact. rank-leads cache-hits on
+# filename forever, so without this a policy change reaches only newly-scored
+# JDs - 52 of 718 on the 08-06 run - and the other 666 keep yesterday's verdict.
+# Costs no LLM calls; that is the whole point of facts-in-code.
+run_step recompute  /usr/bin/node recompute-scores.mjs
 run_step stage      /usr/bin/docker compose run --rm -e MAX_AGE_DAYS=30 applier node stage-applications.mjs
 run_step enqueue    /usr/bin/node enqueue-review.mjs
 # Fills the form and does the diligence for whatever enqueue just created.

@@ -559,6 +559,33 @@ if (!fileExists('test-normalizers.mjs')) {
   else pass(`normalizers ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
 }
 
+// ── 14. BLACKLIST GATE SHAPE ────────────────────────────────────
+//
+// parseBlacklist returns a Map. enqueue-review.mjs guarded its gate with
+// `blacklist.length`, which on a Map is undefined, so the gate never blocked
+// anything for its entire life. It was masked only because data/blacklist.md
+// does not exist — the day VP creates one, rank-leads would honour it (it tests
+// .size) and enqueue would not. A gate must be proven to FIRE.
+
+console.log('\n14. Blacklist gate fires');
+
+try {
+  const { parseBlacklist, blacklistEntry } =
+    await import(pathToFileURL(join(ROOT, 'blacklist.mjs')).href);
+  const bl = parseBlacklist('| Company | Why |\n|---|---|\n| Acme Corp | test |\n');
+  if (typeof bl.size !== 'number') {
+    fail('parseBlacklist no longer returns a sized collection — check enqueue-review guard');
+  } else if (bl.size && blacklistEntry('Acme Corp', bl)) {
+    pass('blacklist gate blocks a listed company');
+  } else {
+    fail('blacklist gate did NOT block a listed company');
+  }
+  if (!blacklistEntry('Some Other Co', bl)) pass('blacklist gate passes an unlisted company');
+  else fail('blacklist gate blocked an unlisted company');
+} catch (e) {
+  fail(`blacklist gate test crashed: ${e.message}`);
+}
+
 // ── SUMMARY ─────────────────────────────────────────────────────
 
 console.log('\n' + '='.repeat(50));

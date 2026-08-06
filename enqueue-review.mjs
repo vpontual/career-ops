@@ -314,7 +314,14 @@ const main = async () => {
                  : isEvergreen(rep.company) ? EVERGREEN_MAX_AGE_DAYS
                  : FRESH_MAX_AGE_DAYS;
     if (rep.days == null || rep.days > maxAge) { stats.stale++; continue; }
-    if (blacklist.length && blacklistEntry(rep.company, blacklist)) { stats.blacklisted++; continue; }
+    // parseBlacklist returns a MAP. `.length` on a Map is undefined, so this gate
+    // has never blocked anything. rank-leads.mjs:647 tests `.size` and works.
+    // Currently masked because data/blacklist.md does not exist — but the moment
+    // VP creates one, the scorer would honour it and this would not, and the
+    // comment above states this is "the only gate that can stop a company
+    // already present in lead-scores.json", because rank-leads filters before
+    // scoring and never removes an entry cached before the company was listed.
+    if (blacklist.size && blacklistEntry(rep.company, blacklist)) { stats.blacklisted++; continue; }
 
     const conflict = variants.find(v => v !== rep && v.score !== rep.score);
     cand.push({ ...rep, altScore: conflict ? conflict.score : null, altFile: conflict ? conflict.file : null });
