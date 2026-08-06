@@ -66,7 +66,23 @@ export async function checkUrl(page, url) {
     return classifyLiveness({ status, finalUrl, bodyText, applyControls });
 
   } catch (err) {
-    return { result: 'expired', reason: `navigation error: ${err.message.split('\n')[0]}` };
+    // ⚠ NOT 'expired'. A navigation exception means WE could not reach the page —
+    // a 15s timeout, a DNS blip, a Cloudflare challenge, a reset connection. It
+    // says nothing about whether the requisition is open, and treating it as
+    // death is the most expensive possible error: the role loses its pack, and
+    // since enqueue-review now refuses to card a role with no CV, VP never sees
+    // it at all.
+    //
+    // Observed live on 2026-08-06 during a full nightly run: "Datadog | Senior
+    // Product Manager - Fleet and Lifecycle Management — navigation error:
+    // page.goto: Timeout 15000ms exceeded" pruned a tier-5 NYC role that had
+    // become visible only that morning.
+    //
+    // prune-stale.mjs already compensated for this LOCALLY, with a comment
+    // describing the exact defect, while stage-applications.mjs did not — the
+    // same one-fix-in-one-of-two-callers drift that produced the branded-board
+    // and slug bugs. Fixed at the source so neither caller has to know.
+    return { result: 'unreachable', reason: `navigation error: ${err.message.split('\n')[0]}` };
   }
 }
 

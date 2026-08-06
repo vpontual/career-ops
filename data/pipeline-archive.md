@@ -687,3 +687,96 @@ Rows removed from the board by prune-stale.mjs. Kept so a bad prune is recoverab
 - 2026-08-06 | age 77d | https://www.amazon.jobs/en/jobs/10426678/principal-product-manager-tech-fauna | Amazon.com Services | Principal Product Manager - Tech, Fauna
 - 2026-08-06 | age 77d | https://www.amazon.jobs/en/jobs/10426437/senior-product-manager-technical | Audible | Senior Product Manager - Technical,
 - 2026-08-06 | age 157d | https://www.amazon.jobs/en/jobs/3193640/senior-product-manager-commerce | Twitch Interactive | Senior Product Manager, Commerce
+- 2026-08-06 | no JD after 8d | https://www.betterment.com/careers/current-openings/job?gh_jid=7922405 | Betterment | Product Manager, User Trust
+- 2026-08-06 | no JD after 8d | https://www.fivetran.com/careers/job?gh_jid=6645141003 | Fivetran | Senior Product Manager, Observability & Monitoring
+- 2026-08-06 | no JD after 8d | https://movableink.com/job-listing?gh_jid=8075494 | Movable Ink | Director of Product Management, Data Integrations
+- 2026-08-06 | age 51d | http://www.hioscar.com/careers/7958947?gh_jid=7958947 | Oscar Health | Product Manager, Network
+- 2026-08-06 | age 51d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5994355004 | Achievement First | CT Art Teacher-Hartford (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5670892004 | Achievement First | CT-Certified SPED Teacher (Per Diem)-Immediate Start (2025-26)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5734496004 | Achievement First | CT Elementary SPED Teacher-Bridgeport (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5734497004 | Achievement First | CT Elementary SPED Teacher-Hartford (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5628717004 | Achievement First | CT Elementary SPED Teacher-Immediate Opening (2025-26)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5734493004 | Achievement First | CT Elementary SPED Teacher-New Haven (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5831734004 | Achievement First | CT Elementary Teacher-Bridgeport (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5831745004 | Achievement First | CT Elementary Teacher-Hartford (2026-27)
+- 2026-08-06 | age 77d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5831742004 | Achievement First | CT Elementary Teacher-New Haven (2026-27)
+- 2026-08-06 | age 52d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=6026894004 | Achievement First | CT Foundations of Leadership Teacher -Hartford (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5735735004 | Achievement First | CT High School Biology Teacher - New Haven (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5735741004 | Achievement First | CT High School Chemistry Teacher-Hartford (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5735736004 | Achievement First | CT High School Chemistry Teacher-New Haven (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5994347004 | Achievement First | CT High School Computer Science Teacher-Hartford (2026-27)
+- 2026-08-06 | age 57d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=6018440004 | Achievement First | CT High School History Teacher-New Haven (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5735743004 | Achievement First | CT High School Math Teacher-Hartford (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5735742004 | Achievement First | CT High School Math Teacher-New Haven (2026-27)
+- 2026-08-06 | age 71d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=6007034004 | Achievement First | CT High School Spanish Teacher-New Haven (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5734542004 | Achievement First | CT High School SPED Teacher-Hartford (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5822979004 | Achievement First | CT Middle School ELA Teacher-New Haven (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5831209004 | Achievement First | CT Middle School History Teacher-New Haven (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5735730004 | Achievement First | CT Middle School Math Teacher-Bridgeport (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5735731004 | Achievement First | CT Middle School Math Teacher-Hartford (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5735729004 | Achievement First | CT Middle School Math Teacher-New Haven (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5734903004 | Achievement First | CT Middle School Science Teacher-New Haven (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5734511004 | Achievement First | CT Middle School SPED Teacher-Bridgeport (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5734532004 | Achievement First | CT Middle School SPED Teacher-Hartford (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5628738004 | Achievement First | CT Middle School SPED Teacher-Immediate Opening (2025-26)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5734504004 | Achievement First | CT Middle School SPED Teacher-New Haven (2026-27)
+- 2026-08-06 | age 72d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5988577004 | Achievement First | CT Physical Education Teacher-New Haven (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5814577004 | Achievement First | NY Elementary Teacher (2026-2027)
+- 2026-08-06 | age 50d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=6030891004 | Achievement First | NY Foundations of Leadership Teacher (2026-2027)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5734494004 | Achievement First | NY High School Math Teacher (2026-2027)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5734489004 | Achievement First | NY High School Science Teacher (2026-2027)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5814593004 | Achievement First | NY Middle School ELA Teacher (2026-2027)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5814599004 | Achievement First | NY Middle School History Teacher (2026-2027)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5734475004 | Achievement First | NY Middle School Math Teacher (2026-2027)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5734438004 | Achievement First | NY Middle School Science Teacher (2026-2027)
+- 2026-08-06 | age 57d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=6018541004 | Achievement First | NY Physical Education Teacher (2026-2027)
+- 2026-08-06 | age 52d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=6018579004 | Achievement First | NY Visual Arts Teacher (2026-2027)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5737264004 | Achievement First | RI Elementary Grades 5&6 Teacher (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5734455004 | Achievement First | RI Elementary SPED Teacher (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5628441004 | Achievement First | RI Elementary SPED Teacher-Immediate Opening (2025-26)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5734449004 | Achievement First | RI Elementary Teacher (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5980253004 | Achievement First | RI Founding Envision Middle School-Math Teacher (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5980258004 | Achievement First | RI Founding Envision Middle School-Science Teacher (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5980260004 | Achievement First | RI Founding Envision Middle School-SPED Teacher (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5734483004 | Achievement First | RI High School Math Teacher (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5810809004 | Achievement First | RI Middle School ELA Teacher(2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5734457004 | Achievement First | RI Middle School Math Teacher (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5734466004 | Achievement First | RI Middle School Science Teacher (2026-27)
+- 2026-08-06 | age 79d | https://www.achievementfirst.org/careers/career-opportunities-apply-teaching-roles/?gh_jid=5734486004 | Achievement First | RI Middle School SPED Teacher (2026-27)
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/successacademycharterschool/jobs/5032418008 | Success Academy Charter Schools | Elementary School Science Teacher
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/successacademycharterschool/jobs/5032420008 | Success Academy Charter Schools | Entry-Level to Experienced Teacher - Bronx
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/successacademycharterschool/jobs/5032422008 | Success Academy Charter Schools | Entry-Level to Experienced Teacher - Brooklyn
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/successacademycharterschool/jobs/5032421008 | Success Academy Charter Schools | Entry-Level to Experienced Teacher - Manhattan
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/successacademycharterschool/jobs/5032423008 | Success Academy Charter Schools | Entry-Level to Experienced Teacher - Queens
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/successacademycharterschool/jobs/5032427008 | Success Academy Charter Schools | Experienced Teacher
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/successacademycharterschool/jobs/5032429008 | Success Academy Charter Schools | High School Math Teacher
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/successacademycharterschool/jobs/5112834008 | Success Academy Charter Schools | High School Teacher, AP Art History
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/successacademycharterschool/jobs/5112865008 | Success Academy Charter Schools | High School Teacher, AP Biology
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/successacademycharterschool/jobs/5112850008 | Success Academy Charter Schools | High School Teacher, AP Calculus
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/successacademycharterschool/jobs/5112874008 | Success Academy Charter Schools | High School Teacher, AP Literature
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/successacademycharterschool/jobs/5112860008 | Success Academy Charter Schools | High School Teacher, AP Macroeconomics
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/successacademycharterschool/jobs/5112864008 | Success Academy Charter Schools | High School Teacher, AP Physics
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/successacademycharterschool/jobs/5112859008 | Success Academy Charter Schools | High School Teacher, AP Psychology
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/successacademycharterschool/jobs/5032424008 | Success Academy Charter Schools | School Year 26-27  High School Teacher
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/successacademycharterschool/jobs/5032426008 | Success Academy Charter Schools | Teacher
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/successacademycharterschool/jobs/5032417008 | Success Academy Charter Schools | Teacher (All Experience Levels) - School Year 26-27 New Bronx K-12 Campus
+- 2026-08-06 | age 51d | http://www.hioscar.com/careers/7917902?gh_jid=7917902 | Oscar Health | Product Manager, Network
+- 2026-08-06 | age 51d | http://www.hioscar.com/careers/7958951?gh_jid=7958951 | Oscar Health | Product Manager, Network
+- 2026-08-06 | age 51d | http://www.hioscar.com/careers/7958948?gh_jid=7958948 | Oscar Health | Product Manager, Network
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/gympass/jobs/8623211002 | Wellhub | Channel Partners Director
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/gitlab/jobs/8578321002 | GitLab | Customer Success Architect, NEUR
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/gitlab/jobs/8475077002 | GitLab | Staff Product Designer, Knowledge Graph
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/libertasfunding/jobs/7820469003 | Libertas Funding | Vice President, Head of Product Management
+- 2026-08-06 | age 176d | https://www.indeed.com/viewjob?jk=b6d05443fe355948 | Frontline Insurance Managers | Product Manager
+- 2026-08-06 | age 65d | https://www.amazon.jobs/en/jobs/10436860/product-manager-technical | Audible | Product Manager - Technical
+- 2026-08-06 | age 77d | https://www.amazon.jobs/en/jobs/10426678/principal-product-manager-tech-fauna | Amazon.com Services | Principal Product Manager - Tech, Fauna
+- 2026-08-06 | age 77d | https://www.amazon.jobs/en/jobs/10426437/senior-product-manager-technical | Audible | Senior Product Manager - Technical,
+- 2026-08-06 | age 157d | https://www.amazon.jobs/en/jobs/3193640/senior-product-manager-commerce | Twitch Interactive | Senior Product Manager, Commerce
+- 2026-08-06 | not a posting (search url) | https://careers.upstart.com/jobs?gh_jid=8075070 | Upstart | Principal Product Manager, Communications Platform
+- 2026-08-06 | age 1155d | https://flatiron.com/careers/open-positions/job?gh_jid=8036692 | Flatiron Health | Product Manager
+- 2026-08-06 | page: insufficient content — likely nav/footer only | https://www.mongodb.com/careers/job/?gh_jid=8028587 | MongoDB | Senior Staff Product Manager, Query
+- 2026-08-06 | page: insufficient content — likely nav/footer only | https://www.mongodb.com/careers/job/?gh_jid=7942539 | MongoDB | Senior Technical Product Marketing Manager
+- 2026-08-06 | age 65d | https://www.amazon.jobs/en/jobs/10436860/product-manager-technical | Audible | Product Manager - Technical
+- 2026-08-06 | age 77d | https://www.amazon.jobs/en/jobs/10426678/principal-product-manager-tech-fauna | Amazon.com Services | Principal Product Manager - Tech, Fauna
+- 2026-08-06 | age 77d | https://www.amazon.jobs/en/jobs/10426437/senior-product-manager-technical | Audible | Senior Product Manager - Technical,
+- 2026-08-06 | age 157d | https://www.amazon.jobs/en/jobs/3193640/senior-product-manager-commerce | Twitch Interactive | Senior Product Manager, Commerce

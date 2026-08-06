@@ -364,9 +364,10 @@ async function main() {
         browserChecked++;
         try {
           const res = await checkUrl(page, r.url);
-          // checkUrl reports a navigation timeout as 'expired'. That conflates
-          // a slow page with a pulled req, and archiving a live role is far
-          // worse than leaving a dead one up, so only a positive expiry counts.
+          // checkUrl returns 'unreachable' for a navigation error since
+          // 2026-08-06, so this can no longer fire on a timeout. The guard is
+          // kept as belt and braces: archiving a live role is far worse than
+          // leaving a dead one up, so only a POSITIVE expiry may count.
           const navError = /navigation error/i.test(res?.reason ?? '');
           if (res?.result === 'expired' && !navError) {
             verdicts.set(r.idx, `page: ${res.reason ?? 'expired'}`);

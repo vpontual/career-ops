@@ -31,7 +31,7 @@ INSPECTED = re.compile(
 )
 OWED = re.compile(r"ON ME:(?!.{0,400}?(not enumerable|cannot|could not))", re.I)
 
-rows, ready = [], 0
+rows, ready, thin = [], 0, []
 for it in pending:
     slug = it["slug"]
     d = os.path.join(ROOT, "output", slug)
@@ -79,7 +79,20 @@ for it in pending:
             and not research_text):
         gaps.append("no diligence")
     elif "NOT DILIGENCE" in research_text:
-        gaps.append("diligence found nothing (posting states no comp/format/bar)")
+        # ⚠ THIN, NOT BROKEN — and this must NOT fail the gate.
+        #
+        # A posting that states no comp, no experience bar and no interview
+        # format is a fact about the EMPLOYER's ad. Nothing this pipeline does
+        # can change it, so failing the nightly on it means the nightly is red
+        # every single night, forever — and a permanently-red signal is one VP
+        # stops reading, at which point it protects nothing. That is the same
+        # failure as the fact checker that fired on 40% of letters and the first
+        # diligence bar that failed 27 of 29 cards.
+        #
+        # It is still WORTH SAYING: VP should know he is about to spend a review
+        # slot on a posting that told us nothing. So it is reported, loudly, and
+        # separately — and the exit code stays clean.
+        thin.append(slug)
     if ("INTERVIEW PROCESS" not in notes
             and "interview-process research" not in notes.lower()
             and not (it.get("research") or {}).get("verdict")):
@@ -89,11 +102,25 @@ for it in pending:
 
     if not gaps:
         ready += 1
-    rows.append((slug, it.get("track", "?"), it["company"], gaps))
+    rows.append((slug, it.get("track", "?"), it["company"], gaps, slug in thin))
 
-print("PENDING ROLES: %d   READY: %d   INCOMPLETE: %d\n" % (len(pending), ready, len(pending) - ready))
-for slug, track, company, gaps in sorted(rows, key=lambda r: (bool(r[3]), r[1])):
-    mark = "✓" if not gaps else "✗"
-    print("%s %-10s %-32s %s" % (mark, track, company[:31], "; ".join(gaps) if gaps else "ready"))
+print("PENDING ROLES: %d   READY: %d   INCOMPLETE: %d   THIN POSTING: %d\n"
+      % (len(pending), ready, len(pending) - ready, len(thin)))
+for slug, track, company, gaps, is_thin in sorted(rows, key=lambda r: (bool(r[3]), r[1])):
+    mark = "✗" if gaps else ("~" if is_thin else "✓")
+    note = "; ".join(gaps) if gaps else ("thin posting — states no comp/format/bar" if is_thin else "ready")
+    print("%s %-10s %-32s %s" % (mark, track, company[:31], note))
 
+if thin:
+    print("\n~ %d card(s) sit on a posting that states nothing decision-changing."
+          % len(thin))
+    print("  That is the employer's ad, not a broken pack — reported, not failed.")
+
+# The exit code answers one question: is any pack BROKEN in a way this pipeline
+# can fix? A thin posting is not, and must never make the nightly permanently red.
+#
+# `ready` ALREADY includes the thin cards — they carry no gap — so adding
+# len(thin) here double-counts and the gate exits 1 while reporting
+# "READY: 38 INCOMPLETE: 0". Caught by checking the exit code rather than the
+# summary line, which is exactly the discrepancy a green-looking report hides.
 sys.exit(0 if ready == len(pending) else 1)

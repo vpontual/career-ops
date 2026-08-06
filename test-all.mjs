@@ -635,6 +635,23 @@ if (!fileExists('test-gmail-leads.mjs')) {
   else pass(`gmail-leads ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
 }
 
+// ── 18. LIVENESS VERDICT ────────────────────────────────────────
+//
+// checkUrl returned `expired` for ANY navigation exception. Caught live during
+// a full nightly run: a 15s timeout pruned Datadog's tier-5 NYC Senior PM role
+// the morning it first became visible. The role loses its pack, and since
+// enqueue-review refuses to card a role with no CV, VP never sees it at all.
+
+console.log('\n18. Liveness verdict');
+
+if (!fileExists('test-liveness-verdict.mjs')) {
+  fail('test-liveness-verdict.mjs missing — liveness verdicts have no specification');
+} else {
+  const out = run('node', ['test-liveness-verdict.mjs']);
+  if (out === null) fail('liveness-verdict tests failing — run: node test-liveness-verdict.mjs');
+  else pass(`liveness-verdict ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
+}
+
 // ── SUMMARY ─────────────────────────────────────────────────────
 
 console.log('\n' + '='.repeat(50));

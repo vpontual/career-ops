@@ -142,3 +142,10 @@ there is nothing to fill. Resolving the employer's own posting promotes it into 
 - [ ] [4] TicketManager | Head of Product (Enterprise SaaS) | 1d | https://www.indeed.com/viewjob?jk=e5bfd40944a1ea0f
 - [ ] [4] JPMorganChase | Point-of-Sale Product Manager - Payments - Vice President | 2d | https://www.indeed.com/viewjob?jk=391ed02100625fdb
 - [ ] [5] U.S. Bank | Senior Technical Product Manager - Data Governance Technology Platform Lead | 2d | https://www.indeed.com/viewjob?jk=7f0ffae42ddc4b24
+- [ ] [4] FanDuel | Product Manager | 0d | https://www.indeed.com/viewjob?jk=75cc51c3e8da1ab1
+- [ ] [4] Gartner | Sr. Product Director - BuySmart | 0d | https://www.indeed.com/viewjob?jk=ce476f7ab606ad2f
+- [ ] [4] Indeed | Principal Product Manager | 0d | https://www.indeed.com/viewjob?jk=351b49257153b9ad
+- [ ] [5] Indeed | Product Manager III | 0d | https://www.indeed.com/viewjob?jk=787465d92542f808
+- [ ] [5] Ocrolus | Director of Product - Mortgage | 0d | https://www.indeed.com/viewjob?jk=48d002dc4f508e97
+- [ ] [4] SingleStore | Principal Product Manager Lead | 0d | https://www.indeed.com/viewjob?jk=6ee46b18ab5dcdce
+- [ ] [4] Amazon Web Services | Senior Product Manager - Technical, External Services, Elastic Container Registry | 6d | https://www.indeed.com/viewjob?jk=e4f82fb8b4a4335a
