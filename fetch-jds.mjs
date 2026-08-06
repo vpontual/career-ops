@@ -100,11 +100,48 @@ const BRANDED_GREENHOUSE = {
   'careers.datadoghq.com': 'datadog',
   'www.brex.com': 'brex',
   'brex.com': 'brex',
-  'jobs.elastic.co': 'elastic'
+  'jobs.elastic.co': 'elastic',
+  // Added 2026-08-06 after counting the nightly failures. fetch-jds reported
+  // failed=150 EVERY night, forever, with no negative cache and nothing
+  // watching, and 61 of those were Achievement First alone - a Track C employer
+  // whose new roles scan-teach reported every night and which therefore never
+  // produced a single JD, was never scored, and could never be enqueued. It
+  // publishes gh_jid on its own domain; the board slug is 'achievementfirst'
+  // (verified: boards-api.greenhouse.io/.../achievementfirst/jobs/5979455004
+  // returns 200).
+  'www.achievementfirst.org': 'achievementfirst',
+  'achievementfirst.org': 'achievementfirst',
+  'instacart.careers': 'instacart',
+  'www.instacart.careers': 'instacart',
+  // The rest of the nightly failure list, each slug verified against
+  // boards-api.greenhouse.io before being added. Note two where the host name
+  // does NOT predict the board: hioscar.com -> 'oscar', abnormal.ai ->
+  // 'abnormalsecurity'.
+  'www.hioscar.com': 'oscar',
+  'hioscar.com': 'oscar',
+  'www.fivetran.com': 'fivetran',
+  'fivetran.com': 'fivetran',
+  'coreweave.com': 'coreweave',
+  'www.coreweave.com': 'coreweave',
+  'www.mongodb.com': 'mongodb',
+  'mongodb.com': 'mongodb',
+  'careers.duolingo.com': 'duolingo',
+  'seatgeek.com': 'seatgeek',
+  'www.seatgeek.com': 'seatgeek',
+  'www.cockroachlabs.com': 'cockroachlabs',
+  'cockroachlabs.com': 'cockroachlabs',
+  'abnormal.ai': 'abnormalsecurity',
+  'www.abnormal.ai': 'abnormalsecurity',
+  'www.betterment.com': 'betterment',
+  'betterment.com': 'betterment',
+  'pubmatic.com': 'pubmatic',
+  'www.pubmatic.com': 'pubmatic',
 };
 
 function detectAts(url) {
-  if (/job-boards\.greenhouse\.io|boards\.greenhouse\.io/.test(url)) {
+  // The `.eu.` subdomain was not matched, so EVERY European Greenhouse board
+  // failed to fetch even though scan.mjs deliberately supports scanning them.
+  if (/job-boards(\.[a-z]{2})?\.greenhouse\.io|boards(\.[a-z]{2})?\.greenhouse\.io/.test(url)) {
     const m = url.match(/greenhouse\.io\/([a-z0-9-]+)\/jobs\/(\d+)/i);
     if (!m) return null;
     return { type: 'greenhouse', slug: m[1], id: m[2] };
