@@ -231,7 +231,8 @@ const main = async () => {
   }
 
   const stats = { scanned: 0, noJd: 0, badCompany: 0, lowScore: 0, geo: 0, stale: 0,
-                  blacklisted: 0, already: 0, noApplyPath: 0 };
+                  blacklisted: 0, already: 0, noApplyPath: 0,
+                  aggregatorOther: 0, legacyNoFacts: 0 };
 
   // ── Pass 1: every scored JD, grouped by the canonical role it describes ────
   // The same posting arrives from several places - the company's Greenhouse
@@ -300,9 +301,29 @@ const main = async () => {
           rep.days != null && rep.days <= unresolvedMaxAge) {
         unresolved.push(rep);
         stats.noApplyPath++;
+      } else {
+        // Aggregator-only AND failing some other gate. This branch used to
+        // `continue` with no counter at all, so the printed stats were
+        // arithmetically incomplete by ~250 roles a run - the block VP reads to
+        // reason about coverage did not add up, in a file whose own header says
+        // "a role that is scored but not enqueued is invisible, and invisible is
+        // the same as not found".
+        stats.aggregatorOther++;
       }
       continue;
     }
+
+    // A pre-2026-07-31 record carries no geo and no functionArea, so every gate
+    // below compares against undefined and it is dropped as a GEOGRAPHY failure.
+    // That is a lie about the cause: 207 such records exist, 58 at tier 4+, and
+    // none of them can be recovered by a policy change because they have no
+    // facts to re-derive from. Counted honestly and separately. Measured
+    // 2026-08-06: 0 of the 207 has a JD under 30 days old, so this is a
+    // reporting fix, not a recovery - they are already unreachable on age.
+    const repFacts = scores[rep.file] ?? {};
+    const repIsLegacy = (repFacts.facts ?? repFacts).geo === undefined
+      && (repFacts.facts ?? repFacts).functionArea === undefined;
+    if (repIsLegacy) { stats.legacyNoFacts++; continue; }
 
     if (!(rep.score >= MIN_SCORE)) { stats.lowScore++; continue; }
     // Track D has no geography gate by design. The brief was "few constraints,
@@ -335,6 +356,14 @@ const main = async () => {
               `${stats.blacklisted} blacklisted, ${stats.already} already in queue,`);
   console.log(`           ${stats.noJd} no JD on disk, ${stats.badCompany} unusable company name, ` +
               `${stats.noApplyPath} aggregator-only (no form to fill)`);
+  console.log(`           ${stats.aggregatorOther} aggregator-only AND failing another gate, ` +
+              `${stats.legacyNoFacts} pre-audit records with no facts to score`);
+  // The numbers must reconcile, or they cannot be used to reason about coverage.
+  const accounted = stats.lowScore + stats.geo + stats.stale + stats.blacklisted + stats.already +
+                    stats.noApplyPath + stats.aggregatorOther + stats.legacyNoFacts + fresh.length;
+  if (accounted !== groups.size) {
+    console.log(`           ⚠ ${groups.size - accounted} role(s) UNACCOUNTED — the drop counters do not sum to ${groups.size}`);
+  }
   console.log(`\nNEW CARDS: ${fresh.length}\n`);
 
   for (const c of fresh) {
