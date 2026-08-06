@@ -68,7 +68,10 @@ const scripts = [
   { name: 'normalize-statuses.mjs', expectExit: 0 },
   { name: 'dedup-tracker.mjs', expectExit: 0 },
   { name: 'merge-tracker.mjs', expectExit: 0 },
-  { name: 'update-system.mjs check', expectExit: 0 },
+  // REMOVED 2026-08-06: `update-system.mjs check` contacts santifer/career-ops.
+  // CLAUDE.md and GEMINI.md now prohibit running it in any form - this fork has
+  // diverged by hundreds of commits and `apply` would clobber the system layer.
+  // The prohibition was worthless while the test suite invoked it on every run.
 ];
 
 for (const { name, allowFail } of scripts) {
@@ -537,6 +540,23 @@ if (!fileExists('test-screen-evidence.mjs')) {
   const out = run('node', ['test-screen-evidence.mjs']);
   if (out === null) fail('screen-evidence tests failing — run: node test-screen-evidence.mjs');
   else pass(`screen-evidence ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
+}
+
+// ── 13. SCORING NORMALIZERS ─────────────────────────────────────
+//
+// The recurring defect in this scorer is policy comparing against enum values
+// the model never returns. `level` was one: free text in 785 of 806 records, so
+// its gate never fired once. functionArea was another: ordered so a domain word
+// beat a job title, which hard-rejected a role VP had approved.
+
+console.log('\n13. Scoring normalizers');
+
+if (!fileExists('test-normalizers.mjs')) {
+  fail('test-normalizers.mjs missing — the scoring enums have no specification');
+} else {
+  const out = run('node', ['test-normalizers.mjs']);
+  if (out === null) fail('normalizer tests failing — run: node test-normalizers.mjs');
+  else pass(`normalizers ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
 }
 
 // ── SUMMARY ─────────────────────────────────────────────────────

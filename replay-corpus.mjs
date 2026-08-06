@@ -33,7 +33,7 @@ import { readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import { canonKey } from './lib/canonical.mjs';
 import { parseJd } from './lib/jd-parse.mjs';
-import { scoreFromFacts } from './rank-leads.mjs';
+import { scoreFromFacts, normalizeGeo, normalizeLevel, normalizeFunctionArea } from './rank-leads.mjs';
 import { screenVerdict } from './lib/screen-evidence.mjs';
 import { detectTrack, scoreTeaching, scoreNonprofit, scoreNow } from './lib/track.mjs';
 
@@ -88,10 +88,29 @@ for (const [file, rec] of Object.entries(scores)) {
     if (!raw) continue;
     const jd = parseJd(raw, file);
     const f = rec.facts ?? rec;
-    if (f && typeof f === 'object' && f.technicalScreenStated === undefined) {
+    // Only enrich records that ALREADY carry facts. Deriving fields onto a legacy
+    // record would manufacture the very evidence `replay()` uses to detect one -
+    // an earlier version of this block set functionArea unconditionally and the
+    // legacy count collapsed from 207 to 0, silently scoring 207 pre-audit
+    // records on invented facts.
+    if (!f || typeof f !== 'object' || (f.geo === undefined && f.functionArea === undefined)) continue;
+    if (f.technicalScreenStated === undefined) {
       const v = screenVerdict(`${jd.title || ''}\n${jd.body || ''}`, f.technicalScreen === true);
       f.technicalScreenStated = v.action === 'gate';
       f.technicalScreenEvidence = v.phrase || '';
+    }
+    // Re-derive the normalized fields from the RAW values the record stored, so
+    // a change to a normalizer is measurable without re-asking the model. geoRaw
+    // is the ATS location string; level was stored as the model's free text
+    // before normalizeLevel existed.
+    if (f && typeof f === 'object') {
+      if (f.geoRaw) f.geo = normalizeGeo(f.geoRaw);
+      f.level = normalizeLevel(f.levelRaw ?? f.level);
+      // functionArea is derived from the model's word PLUS the title, and the
+      // title is the part that decides a domain-PM role. Records predating
+      // functionAreaRaw store only the normalised value, so pass the title and
+      // let the normaliser re-run.
+      f.functionArea = normalizeFunctionArea(f.functionAreaRaw ?? '', jd.title || '');
     }
     byKey.set(canonKey(jd.company || '', jd.title || ''), { file, rec });
   } catch { /* an unreadable JD is not a scoring question */ }

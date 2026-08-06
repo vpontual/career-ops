@@ -251,6 +251,42 @@ const HYBRID = /\bhybrid|days? (?:a|per) week|in[- ]office\b/i;
 // Anywhere he cannot reach daily from Manhattan. Non-US entries land here too.
 const ELSEWHERE = /\b(san francisco|sf\b|bay area|palo alto|mountain view|san mateo|redwood city|seattle|bellevue|redmond|austin|denver|chicago|boston|los angeles|miami|toronto|london|dublin|ireland|uk\b|spain|madrid|portugal|greece|germany|india|israel|tel aviv|sydney|dubai|bogota|canada|europe|morrisville|howell)\b/i;
 
+// Countries and non-US metros. ELSEWHERE above is a mix of US cities and foreign
+// ones, which is fine for the onsite test but useless for the question "is this
+// remote role inside the US". This list is only consulted for remote postings.
+const NON_US = /\b(france|paris|brazil|brasil|s[aã]o paulo|netherlands|amsterdam|singapore|india|bangalore|bengaluru|hyderabad|pune|philippines|manila|romania|bucharest|turkey|istanbul|mexico|argentina|colombia|bogota|chile|peru|poland|warsaw|krakow|japan|tokyo|china|shanghai|korea|seoul|vietnam|thailand|indonesia|nigeria|kenya|egypt|south africa|australia|sydney|melbourne|new zealand|berlin|munich|hamburg|barcelona|madrid|spain|lisbon|portugal|greece|athens|london|manchester|dublin|ireland|u\.?k\.?|united kingdom|england|scotland|germany|austria|vienna|switzerland|zurich|sweden|stockholm|norway|denmark|copenhagen|finland|helsinki|belgium|brussels|czech|prague|hungary|budapest|ukraine|israel|tel aviv|dubai|u\.?a\.?e\.?|saudi|qatar|canada|toronto|vancouver|montreal|ottawa|europe|emea|latam|apac|anz)\b/i;
+
+// An explicit US signal beats a foreign mention, so multi-region postings that
+// include the US stay eligible.
+const US_SIGNAL = /\b(u\.?s\.?a?\b|united states|nationwide|anywhere in the (?:us|united states)|us[- ]based|us[- ]remote)\b/i;
+
+// The model was given below|at|above and returned free text in 785 of 806
+// records - "Senior", "Staff", "Mid", "L6", "AVP", "Individual C". So
+// `if (f.level === 'below') return 1` has NEVER FIRED in the system's life.
+// Same failure as geo and archetype, missed when those two were normalised.
+//
+// ⚠ "Individual Contributor" appears 48 times and is NOT junior - a Staff or
+// Principal PM is an IC. Mapping it to 'below' would hard-reject 48 senior
+// roles, which is the opposite of the point.
+//
+// 'below' is defined by the scoring prompt as "new-grad, associate, or 0-3
+// years". "Mid" is deliberately NOT below: it is 3-5+ years and outside the
+// stated definition, so gating on it would be inventing a rule VP did not set.
+const LEVEL_BELOW = /\b(entry|entry[- ]level|junior|jr\b|new[- ]?grad|graduate|associate|intern|internship|apprentice|trainee|assistant|early[- ]career)\b/i;
+const LEVEL_ABOVE = /\b(director|vp\b|vice president|head\b|chief|executive|principal|staff|senior|sr\b|lead\b|expert|l[5-9]\b|avp)\b/i;
+
+export function normalizeLevel(raw) {
+  const t = String(raw ?? '').trim();
+  if (!t) return 'at';
+  if (/^(below|at|above)$/i.test(t)) return t.toLowerCase();
+  // Order matters: "Senior Associate" and "Early Career Director" both exist.
+  // Seniority wins, because a false 'below' hard-rejects and a false 'at' merely
+  // declines to reject - the asymmetry should favour not burying a real role.
+  if (LEVEL_ABOVE.test(t)) return 'above';
+  if (LEVEL_BELOW.test(t)) return 'below';
+  return 'at';
+}
+
 function normalizeGeo(raw) {
   const t = String(raw ?? '').trim();
   if (!t) return 'unclear';
@@ -271,7 +307,21 @@ function normalizeGeo(raw) {
 
   // Fully remote is fine wherever the company is. Check this before ELSEWHERE
   // so "Remote (US)" at an SF company is not misread as an SF office.
-  if (remote && !hybrid) return 'remote-us';
+  //
+  // But "wherever the company is" only holds INSIDE the US. This returned
+  // 'remote-us' for "Remote, France", "Remote, Bangalore", "Remote, Singapore"
+  // and "Brazil (Remote)" - 9 records - because ELSEWHERE was never reached and
+  // had no entry for most of those countries anyway. GitLab's Senior Deal Desk
+  // Analyst, Philippines was enqueued as remote-us on 2026-08-05. VP cannot take
+  // a role in another country's payroll and time zone; the mission's three
+  // acceptable modes are NYC, fully-remote US, and hybrid NYC.
+  //
+  // A listing naming both ("Remote, Canada; Remote, US") keeps remote-us - he
+  // takes the US one - which is why this tests for a US signal rather than
+  // simply rejecting on any foreign mention.
+  if (remote && !hybrid) {
+    return NON_US.test(t) && !US_SIGNAL.test(t) ? 'onsite-elsewhere' : 'remote-us';
+  }
 
   // Recurring days at an office he cannot reach - the one hard exclusion.
   if (elsewhere) return hybrid ? 'hybrid-elsewhere' : 'onsite-elsewhere';
@@ -311,7 +361,11 @@ const FUNCTION_AREA = [
   ['teaching', /teacher|teaching|instructor|lecturer|adjunct|faculty|curriculum|instructional/i],
   ['design', /\bdesign(er)?\b|\bux\b|\bui\b|visual|creative|art director/i],
   ['sales', /\bsales\b|account executive|account manager|quota|business development rep|deal desk|renewals|pipeline/i],
-  ['marketing-demand', /demand gen|growth marketing|performance marketing|campaign|\bseo\b|lifecycle marketing|field marketing|brand marketing|acquisition marketing/i],
+  // Widened 2026-08-06. 'Paid Media Manager (B2B)' normalised to 'other', so the
+  // lead-gen gate - which already lists marketing-demand - never saw it, and a
+  // demand-generation role reached tier 5 and a review card. Paid media, paid
+  // search/social, SEM, PPC and programmatic ARE demand generation.
+  ['marketing-demand', /demand gen|growth marketing|performance marketing|performance media|paid media|media buying|paid social|paid search|\bsem\b|\bppc\b|programmatic|campaign|\bseo\b|lifecycle marketing|field marketing|brand marketing|acquisition marketing/i],
   ['finance', /financ|accounting|accountant|\btax\b|audit|treasury|controller|payroll|fp&a|\bsox\b|billing|\bsec (analyst|report)/i],
   ['legal', /legal|counsel|attorney|lawyer|paralegal|compliance officer|regulatory affairs/i],
   ['hr', /human resources|\bhr\b|people ops|people operations|talent acquisition|recruit|compensation|benefits|hrbp|people business partner/i],
@@ -342,6 +396,22 @@ export function normalizeFunctionArea(raw, title = '') {
   // The model answered in prose, or not at all. Fall back to the title, which is
   // the same authority the rest of this file trusts over the model's wording.
   const hay = `${t} ${title}`;
+
+  // An unambiguous product-management title wins over any DOMAIN word in the
+  // rest of the title, because FUNCTION_AREA is first-match-wins and the domain
+  // categories are listed first. "Staff Product Manager, RevOps & Finance
+  // Systems" matched /financ/ and classified as `finance`, which Track D's
+  // CANNOT_DO then hard-rejected to 1 - a role VP had personally APPROVED. A PM
+  // who owns finance systems is a PM, not an accountant. Same for "Product
+  // Manager, Security", "PM, Support Platform" and every other domain PM role.
+  //
+  // Product MARKETING is deliberately excluded here and left to fall through, so
+  // the marketing-demand test above keeps its say on the lead-gen trap.
+  if (/\bproduct (manager|management|lead|owner|director)\b|\bhead of product\b|\bchief product officer\b/i.test(hay)
+      && !/product marketing/i.test(hay)) {
+    return 'product';
+  }
+
   for (const [name, re] of FUNCTION_AREA) if (re.test(hay)) return name;
   return 'other';
 }
@@ -349,10 +419,18 @@ export function normalizeFunctionArea(raw, title = '') {
 function scoreFromFacts(f) {
   // Hard gates — things VP will not do, which no upside can offset.
   //
-  // leadGen is only a gate on Product Marketing titles. Applied to every
-  // archetype it fired on ordinary PM roles at Stripe, Pinecone and Writer
-  // that merely mentioned go-to-market, and buried four good roles at tier 1.
-  if (f.leadGen && f.archetype === 'Product Marketing') return 1;
+  // The lead-gen trap, gated on the DISCIPLINE rather than on the model's
+  // judgement call. It used to read `f.leadGen && f.archetype === 'Product
+  // Marketing'`, which failed in both directions: 81 records carry leadGen and
+  // the gate fired on only 53, so GitLab's Enablement Content Manager (raw
+  // archetype "Sales Enablement" - the thing the mission rejects by name) sailed
+  // through at 4; while Mercury's Senior PMM, Cards & Spend was gated to 1 and
+  // VP APPROVED IT ANYWAY. That approval is the strongest evidence available
+  // that the model's leadGen boolean is not a policy input.
+  //
+  // functionArea is normalised in code from the title, so it says what the role
+  // IS. leadGen is retained as a card flag, not a gate.
+  if (f.functionArea === 'marketing-demand') return 1;
   if (f.level === 'below') return 1;                          // not entry level
   if (f.geo === 'onsite-elsewhere') return 1;                 // he is in NYC
   if (f.geo === 'hybrid-elsewhere') return 1;                 // weekly flights
@@ -497,7 +575,8 @@ async function scoreOne(jd, resume, targets) {
         geo: normalizeGeo(jd.location || parsed.geo),
         geoRaw: String(jd.location || parsed.geo || '').slice(0, 60),
         geoModel: String(parsed.geo || '').slice(0, 40),  // what the model guessed, for auditing
-        level: String(parsed.level || 'at').slice(0, 12),
+        level: normalizeLevel(parsed.level),
+        levelRaw: String(parsed.level || '').slice(0, 24),   // what it actually said
         leadGen: parsed.leadGen === true,
         functionArea: normalizeFunctionArea(parsed.functionArea, jd.title),
         functionAreaRaw: String(parsed.functionArea || '').slice(0, 40),
