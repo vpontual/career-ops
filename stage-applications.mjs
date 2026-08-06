@@ -353,6 +353,22 @@ async function main() {
     const dir = path.join(OUTPUT_DIR, c.slug);
     await mkdir(dir, { recursive: true });
 
+    // Record WHAT THIS PACK IS FOR, so enqueue-review can tell a pack it just
+    // built for this same role from a different role that happens to slugify
+    // identically. Without it, enqueue treated every existing output/ directory
+    // as a name collision - including the one staged minutes earlier in the same
+    // nightly run - and minted the card as <slug>-2 pointing at an empty
+    // directory while the CV sat in <slug>. 8 of 9 pending cards were in that
+    // state on 2026-08-06 and every file link on them 404'd.
+    await writeFile(path.join(dir, 'pack-meta.json'), JSON.stringify({
+      company: c.company,
+      role: c.role,
+      canonKey: canonKey(c.company, c.role),
+      url: c.url ?? null,
+      scoreSource: c.file ?? null,
+      stagedAt: new Date().toISOString(),
+    }, null, 2));
+
     // Skip if already staged (rerun-friendly)
     // A pack that correctly has NO cover letter must still count as staged, or it
     // is regenerated every single night and the skip never fires.

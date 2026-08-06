@@ -112,6 +112,33 @@ function atsOf(url) {
   return 'other';
 }
 
+/**
+ * Decide which slug a new card should take. Pure, so it can be tested - the bug
+ * this replaces was a one-line collision guard that nothing exercised.
+ *
+ * Rules, in order of authority:
+ *   1. A slug already held by a CARD is never reused.
+ *   2. A free name is taken.
+ *   3. A DIRECTORY alone is not a conflict. It is this role's pack when its
+ *      pack-meta.json canonKey matches, and adoptable when it carries no marker
+ *      at all (every pack staged before pack-meta.json existed) - that is the
+ *      orphan case that produced 25 dead `-N` cards.
+ *   4. Only a directory marked as a DIFFERENT role pushes to the next suffix.
+ *
+ * @param {{base:string, canon:string, claimedByCard:Set<string>,
+ *          outputDirs:Set<string>, packKeys:Map<string,string|null>}} o
+ */
+export function chooseSlug({ base, canon, claimedByCard, outputDirs, packKeys }) {
+  for (let n = 1; n <= 50; n++) {
+    const slug = n === 1 ? base : `${base}-${n}`;
+    if (claimedByCard.has(slug)) continue;
+    if (!outputDirs.has(slug)) return slug;
+    const key = packKeys.get(slug) ?? null;
+    if (key === null || key === canon) return slug;
+  }
+  return `${base}-${Date.now()}`;   // pathological; never seen, but never loop forever
+}
+
 const main = async () => {
   const scores = JSON.parse(await readFile(SCORES, 'utf-8'));
   const queue = JSON.parse(await readFile(QUEUE, 'utf-8'));
@@ -296,17 +323,57 @@ const main = async () => {
   // output/ holds 249 directories against 54 queue slugs, so checking the queue
   // alone left 190 invisible: a new card taking one of those names would write
   // into an already-staged application pack.
-  const usedSlugs = new Set(queue.items.map(i => i.slug));
-  for (const d of await readdir(path.join(ROOT, 'output')).catch(() => [])) usedSlugs.add(d);
+  // A slug already claimed by a CARD is a real conflict. A DIRECTORY in output/
+  // is not, by itself: stage-applications.mjs runs earlier in the same nightly
+  // and builds this role's pack there. Treating that as a collision is what
+  // produced 25 `-N` slugs pointing at empty directories while the CV sat in the
+  // un-suffixed sibling, and 404'd every file link on 8 of 9 pending cards.
+  //
+  // So identity, not name-avoidance: a directory belongs to THIS role when its
+  // pack-meta.json carries the same canonical key. Packs staged before
+  // pack-meta.json existed have no marker, and for those the honest fallback is
+  // that an un-owned orphan directory is adoptable - which is exactly the
+  // historical case - while an owned one is not.
+  const claimedByCard = new Set(queue.items.map(i => i.slug));
+  const outputDirs = new Set(await readdir(path.join(ROOT, 'output')).catch(() => []));
 
-  for (const c of fresh) {
-    let slug = slugify(`${c.company}-${c.role}`);
-    if (usedSlugs.has(slug)) {
-      let n = 2;
-      while (usedSlugs.has(`${slug}-${n}`)) n++;
-      slug = `${slug}-${n}`;
+  async function packCanonKey(slug) {
+    try {
+      const m = JSON.parse(await readFile(path.join(ROOT, 'output', slug, 'pack-meta.json'), 'utf-8'));
+      return m.canonKey ?? null;
+    } catch { return null; }
+  }
+
+  // Resolve the slug a card should use: its own pack when there is one, a fresh
+  // suffixed name only when the directory demonstrably belongs to someone else.
+  async function resolveSlug(c) {
+    const base = slugify(`${c.company}-${c.role}`);
+    const mine = canonKey(c.company, c.role);
+    const keys = new Map();
+    for (let n = 1; n <= 50; n++) {
+      const slug = n === 1 ? base : `${base}-${n}`;
+      if (outputDirs.has(slug)) keys.set(slug, await packCanonKey(slug));
     }
-    usedSlugs.add(slug);
+    return chooseSlug({ base, canon: mine, claimedByCard, outputDirs, packKeys: keys });
+  }
+
+  const held = [];
+  for (const c of fresh) {
+    const slug = await resolveSlug(c);
+
+    // VP's standing rule (2026-08-06, the second time he had to say it): a role
+    // that reaches the Review Queue MUST have a completed CV. A card he cannot
+    // act on is worse than a card that never appeared - it costs a click, breaks
+    // trust in every other card, and hides the roles that are genuinely ready.
+    // Enqueueing and rendering the pack are one unit of work; if the pack is not
+    // there, the role waits rather than becoming a dead card.
+    if (!existsSync(path.join(ROOT, 'output', slug, 'cv.pdf'))) {
+      held.push({ ...c, slug });
+      continue;
+    }
+
+    claimedByCard.add(slug);
+    outputDirs.add(slug);
     const notes = [
       c.verdict ? `SCORER: ${c.verdict}.` : '',
       c.redFlags ? `RED FLAGS: ${c.redFlags}` : '',
@@ -346,9 +413,32 @@ const main = async () => {
     });
   }
 
-  queue.note = `${queue.note || ''} | auto-enqueued ${fresh.length} on ${new Date().toISOString().slice(0, 10)}`.replace(/^ \| /, '');
+  // Roles that qualified but have no rendered pack. These are NOT dropped - they
+  // are recorded so the gap is visible and so the next staging run can pick them
+  // up. Silently discarding them would trade one invisible failure for another.
+  if (held.length) {
+    await writeFile(
+      path.join(ROOT, 'data', 'held-no-pack.md'),
+      `# Qualified roles held back for a missing CV\n\n` +
+      `Written by enqueue-review.mjs on ${new Date().toISOString().slice(0, 10)}. Each of these\n` +
+      `passed every gate but has no output/<slug>/cv.pdf, so it was NOT enqueued: per VP's\n` +
+      `standing rule, a card in the review queue must have a completed CV. Run\n` +
+      `stage-applications.mjs and re-run enqueue to promote them.\n\n` +
+      held.map(h => `- [ ] [${h.score}] ${h.company} | ${h.role} | ${h.days}d | output/${h.slug}/ | ${h.url}`).join('\n') + '\n'
+    );
+    console.log(`\n⚠ HELD ${held.length} qualified role(s) with no rendered CV — see data/held-no-pack.md`);
+    for (const h of held.slice(0, 10)) console.log(`    [${h.score}] ${h.company} | ${String(h.role).slice(0, 52)}`);
+  }
+
+  const written = fresh.length - held.length;
+  if (!written) {
+    console.log('\nno cards written (every qualifying role was held for a missing CV)');
+    return;
+  }
+
+  queue.note = `${queue.note || ''} | auto-enqueued ${written} on ${new Date().toISOString().slice(0, 10)}`.replace(/^ \| /, '');
   await writeFile(QUEUE, JSON.stringify(queue, null, 2));
-  console.log(`\nwrote ${fresh.length} new cards to data/review-queue.json`);
+  console.log(`\nwrote ${written} new cards to data/review-queue.json`);
   console.log(`queue now: ${queue.items.filter(i => !i.decision).length} pending, ${queue.items.length} total`);
 };
 
