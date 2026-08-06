@@ -586,6 +586,22 @@ try {
   fail(`blacklist gate test crashed: ${e.message}`);
 }
 
+// ── 15. COVER-LETTER FACT CHECK ─────────────────────────────────
+//
+// It fired on 109 of 275 letters and was wrong essentially every time — 100 of
+// those were one phrasing mismatch against cv.md. A gate wrong 40% of the time
+// is one VP learns to skip, and then it stops catching the real thing.
+
+console.log('\n15. Cover-letter fact check');
+
+if (!fileExists('test-fact-check.mjs')) {
+  fail('test-fact-check.mjs missing — the fact checker has no specification');
+} else {
+  const out = run('node', ['test-fact-check.mjs']);
+  if (out === null) fail('fact-check tests failing — run: node test-fact-check.mjs');
+  else pass(`fact-check ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
+}
+
 // ── SUMMARY ─────────────────────────────────────────────────────
 
 console.log('\n' + '='.repeat(50));

@@ -60,17 +60,79 @@ function loadConfig(path) {
  * @param {string} sourceText  concatenated source-of-truth text (cv.md, profile)
  * @param {{allow_metrics?:string[], forbidden_phrases?:string[]}} config
  */
-export function checkFacts(targetText, sourceText, config = {}) {
-  const allowed = new Set([
+// Bare numeric magnitudes present in a text, so a claim can be verified against a
+// source that PHRASES IT DIFFERENTLY. Exact string matching of "number + unit"
+// was the whole defect: cv.md says "from ~20 brands to over 100" and the letter
+// says "to over 100 brands", which is the SAME FACT and matched nothing. That
+// single mismatch produced 100 of the 109 warnings on disk - a checker firing on
+// 40% of output and wrong nearly every time, which is a checker VP learns to
+// skip, at which point it stops catching the real one.
+function magnitudes(text) {
+  const clean = stripMarkup(text || '');
+  const out = new Set();
+  // ⚠ the suffix must NOT be followed by another letter. `[kKmMbB]?` alone eats
+  // the first letter of the unit word: "100 brands" parses as "100 b" and is read
+  // as 100 BILLION, so the magnitude never matches the CV's plain "100".
+  for (const m of clean.matchAll(/\b\d[\d,.]*\s?[kKmMbB]?(?![a-zA-Z])/g)) {
+    const raw = m[0].trim().replace(/,/g, '');
+    const mult = /[kK]$/.test(raw) ? 1e3 : /[mM]$/.test(raw) ? 1e6 : /[bB]$/.test(raw) ? 1e9 : 1;
+    const n = parseFloat(raw);
+    if (Number.isFinite(n)) out.add(String(n * mult));
+  }
+  return out;
+}
+
+const numOf = (claim) => {
+  // normalizeClaim has already turned "16,000" into "16 000", so re-join digit
+  // groups before parsing or this reads 16 and never matches the source's 16000.
+  const joined = String(claim).replace(/(\d)\s+(?=\d{3}(?!\d))/g, '$1');
+  const m = /\d[\d,.]*\s?[kKmMbB]?(?![a-zA-Z])/.exec(joined);
+  if (!m) return null;
+  const raw = m[0].trim().replace(/,/g, '');
+  const mult = /[kK]$/.test(raw) ? 1e3 : /[mM]$/.test(raw) ? 1e6 : /[bB]$/.test(raw) ? 1e9 : 1;
+  const n = parseFloat(raw);
+  return Number.isFinite(n) ? String(n * mult) : null;
+};
+
+/**
+ * Pure check. Returns { ok, invented, quoted, forbidden }.
+ * @param {string} targetText  generated document text
+ * @param {string} sourceText  source of truth about VP (cv.md, profile)
+ * @param {object} config      { allow_metrics, forbidden_phrases }
+ * @param {{jdText?: string}} context
+ *   jdText is the EMPLOYER'S OWN POSTING. A number the letter takes from there -
+ *   "data from over 16,000 customers", "Grubhub's 415,000+ merchants", "unlock
+ *   10x growth" - is a quotation, not a claim VP is making about himself, and
+ *   flagging it as a hallucinated metric is simply wrong. Every non-"100 brands"
+ *   warning on disk was one of these. They are reported separately as `quoted`
+ *   and do not fail the check.
+ */
+export function checkFacts(targetText, sourceText, config = {}, context = {}) {
+  const allowedClaims = new Set([
     ...metricClaims(sourceText || ''),
     ...(config.allow_metrics || []).map(normalizeClaim),
   ]);
-  const invented = [...metricClaims(targetText || '')].filter((c) => !allowed.has(c));
+  const allowedNums = new Set([
+    ...magnitudes(sourceText || ''),
+    ...(config.allow_metrics || []).map(numOf).filter(Boolean),
+  ]);
+  const jdNums = magnitudes(context.jdText || '');
+
+  const invented = [];
+  const quoted = [];
+  for (const c of metricClaims(targetText || '')) {
+    if (allowedClaims.has(c)) continue;              // exact phrasing matches
+    const n = numOf(c);
+    if (n && allowedNums.has(n)) continue;           // same magnitude, phrased differently
+    if (n && jdNums.has(n)) { quoted.push(c); continue; }   // the employer's own number
+    invented.push(c);
+  }
+
   const clean = stripMarkup(targetText || '').toLowerCase();
   const forbidden = (config.forbidden_phrases || [])
     .filter(Boolean)
     .filter((p) => clean.includes(String(p).toLowerCase()));
-  return { ok: invented.length === 0 && forbidden.length === 0, invented, forbidden };
+  return { ok: invented.length === 0 && forbidden.length === 0, invented, quoted, forbidden };
 }
 
 // ---- CLI --------------------------------------------------------------------

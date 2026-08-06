@@ -429,8 +429,18 @@ async function main() {
     // Fact check: flag metric-like claims in the letter that aren't in cv.md/
     // profile.yml (Gemini invention guard, zero extra LLM calls). Warn, don't
     // block — a human reviews every letter before submitting.
-    const fc = letterText ? checkFacts(letterText, factSource, cvFacts) : { ok: true, invented: [], forbidden: [] };
+    // The JD is passed as context so a number the letter QUOTES from the
+    // employer's own posting is not reported as a hallucinated metric. Measured
+    // 2026-08-06: the checker fired on 109 of 275 letters and every one I opened
+    // was either that, or the "100 brands" phrasing mismatch against cv.md. A
+    // gate that is wrong 40% of the time is one VP learns to skip.
+    const fc = letterText
+      ? checkFacts(letterText, factSource, cvFacts, { jdText: c.jdContent || c.body || '' })
+      : { ok: true, invented: [], quoted: [], forbidden: [] };
     let factNote = '';
+    if (fc.quoted?.length) {
+      console.log(`  [${idx}] fact check: ${fc.quoted.length} figure(s) quoted from the posting (not flagged)`);
+    }
     if (!fc.ok) {
       const bits = [...fc.invented.map(m => `unverified metric "${m}"`), ...fc.forbidden.map(p => `forbidden phrase "${p}"`)];
       factNote = `\n> ⚠ **FACT CHECK — review before sending:** ${bits.join('; ')}\n`;
