@@ -618,6 +618,23 @@ if (!fileExists('test-jd-findings.mjs')) {
   else pass(`jd-findings ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
 }
 
+// ── 17. GMAIL LEAD EXTRACTION ───────────────────────────────────
+//
+// The digest subject was stamped onto every URL in the message, so 11 of the 12
+// live rows carried a role that was not the job — and jobot.com is unscrapeable,
+// so no JD ever corrected it. Separately, per-email eid/uid params meant 49
+// distinct postings were written as 168 rows.
+
+console.log('\n17. Gmail lead extraction');
+
+if (!fileExists('test-gmail-leads.mjs')) {
+  fail('test-gmail-leads.mjs missing — gmail lead extraction has no specification');
+} else {
+  const out = run('node', ['test-gmail-leads.mjs']);
+  if (out === null) fail('gmail-leads tests failing — run: node test-gmail-leads.mjs');
+  else pass(`gmail-leads ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
+}
+
 // ── SUMMARY ─────────────────────────────────────────────────────
 
 console.log('\n' + '='.repeat(50));

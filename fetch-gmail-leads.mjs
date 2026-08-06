@@ -33,6 +33,7 @@ import { writeFile, appendFile, mkdir } from 'fs/promises';
 import { existsSync, readFileSync } from 'fs';
 import { canonicalizeUrl } from './lib/url-canonical.mjs';
 import path from 'path';
+import { pathToFileURL } from 'url';
 
 // Subjects that are a marketing hook rather than a job title. See the drop site
 // in the message loop for why these are poison specifically here.
@@ -143,6 +144,22 @@ function looksLikeJobPosting(url) {
   return JOB_PATH_HINTS.some(h => url.toLowerCase().includes(h));
 }
 
+// The role, read off the URL itself. Job boards put the title in the path
+// (/apply/talent-acquisition-manager/8b05...), which is per-URL and therefore
+// correct in a digest, where the email subject is not.
+const ID_LIKE = /^[0-9a-f]{6,}$|^\d+$|^[0-9a-f]{8}-[0-9a-f]{4}-/i;
+export function roleFromUrl(url) {
+  let segs = [];
+  try { segs = new URL(url).pathname.split('/').filter(Boolean); } catch { return ''; }
+  const words = segs
+    .filter((sg) => !ID_LIKE.test(sg) && sg.includes('-') && sg.length > 8)
+    .sort((a, b) => b.length - a.length)[0];
+  if (!words) return '';
+  const title = words.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()).trim();
+  // A path segment that is mostly hex noise is not a title.
+  return /[a-z]/i.test(title) && title.split(' ').length >= 2 ? title.slice(0, 120) : '';
+}
+
 async function resolveRedirect(url, timeoutMs) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -247,6 +264,7 @@ async function main() {
 
   await client.connect();
   const lock = await client.getMailboxLock('[Gmail]/All Mail');
+  let truncatedMessages = 0, truncatedUrls = 0;
   let scanned = 0;
   let matchedSenders = 0;
   let extractedUrls = 0;
@@ -295,7 +313,17 @@ async function main() {
       const body = (parsed.text || '') + '\n' + (parsed.html ? stripHtml(parsed.html) : '');
       const allUrls = extractUrls(body);
       const filtered = allUrls.filter(u => !isNoiseUrl(u, sources.url_noise_patterns));
-      const urls = filtered.slice(0, 25);
+      // ⚠ TRUNCATION IS LOSS. The cursor advances past this message once it is
+      // processed, so anything dropped here is never seen again. It used to slice
+      // silently and the log recorded only the post-slice count, which made the
+      // loss invisible AND unmeasurable. Raised, and any drop is now reported.
+      const URL_CAP = Number(process.env.GMAIL_URL_CAP || 80);
+      const urls = filtered.slice(0, URL_CAP);
+      if (filtered.length > URL_CAP) {
+        truncatedMessages++;
+        truncatedUrls += filtered.length - URL_CAP;
+        console.log(`  ⚠ ${filtered.length - URL_CAP} URL(s) dropped past the ${URL_CAP} cap — these are lost, the cursor moves on`);
+      }
       extractedUrls += urls.length;
       if (urls.length === 0) continue;
 
@@ -306,6 +334,13 @@ async function main() {
 
       const sourceDomain = (msg.envelope?.from?.[0]?.address || '').split('@')[1] || 'unknown';
       const msgDate = (msg.internalDate || parsed.date || new Date()).toISOString().slice(0, 10);
+
+      // How many JOBS this message is actually about. One means the subject is
+      // very likely the role; more than one means it is a digest and the subject
+      // is a marketing hook that must not be stamped onto every row.
+      // resolved is a Map, not an array — spread before filtering.
+      const jobUrlCount = [...resolved].filter(([, f]) =>
+        !isNoiseUrl(f, sources.url_noise_patterns) && looksLikeJobPosting(f)).length;
 
       for (const [origUrl, finalUrl] of resolved) {
         if (process.env.DEBUG_URLS) console.log(`     → ${origUrl.slice(0, 60)} → ${finalUrl.slice(0, 100)}`);
@@ -319,7 +354,15 @@ async function main() {
         newRows.push({
           url: canonical,
           company: inferCompanyFromUrl(canonical),
-          role: subject.slice(0, 120),
+          // The SUBJECT is the role only when the message is about one job.
+          // This used to stamp the subject onto every URL in the message, so a
+          // digest titled "Head of Product openings are available" produced 12
+          // rows all claiming that role while the URLs pointed at an Enterprise
+          // Account Executive, a Fullstack AI Engineer, a Talent Acquisition
+          // Manager and a Key Account Manager. Nothing corrected it either:
+          // jobot.com is in fetch-jds' UNSCRAPEABLE_HOSTS, so no JD ever
+          // overwrote the wrong title. 11 of the 12 live rows were wrong.
+          role: roleFromUrl(canonical) || (jobUrlCount === 1 ? subject.slice(0, 120) : ''),
           sourceDomain,
           date: msgDate
         });
@@ -337,6 +380,8 @@ async function main() {
   await saveCursor(latestSeenDate);
 
   const summary = {
+    truncatedMessages,
+    truncatedUrls,
     scanned,
     matchedSenders,
     extractedUrls,
@@ -388,7 +433,13 @@ function stripHtml(html) {
     .replace(/\s+/g, ' ');
 }
 
-main().catch(err => {
-  console.error(err);
-  process.exit(1);
-});
+// Import-safe. Connecting to VP's mailbox and advancing the read cursor must be
+// an explicit invocation, never a side effect of `import` — testing roleFromUrl
+// opened an IMAP session and started processing 122 messages. Same guard as
+// tailor-cv.mjs and rank-leads.mjs.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch(err => {
+    console.error(err);
+    process.exit(1);
+  });
+}
