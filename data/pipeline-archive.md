@@ -656,3 +656,34 @@ Rows removed from the board by prune-stale.mjs. Kept so a bad prune is recoverab
 - 2026-08-04 | age 46d | https://job-boards.greenhouse.io/democracypreppublicschools/jobs/8016221 | Democracy Prep Public Schools | High School ELA Teacher (2026-2027 School Year)
 - 2026-08-04 | ats: req gone | https://job-boards.greenhouse.io/codeforamerica/jobs/8064228 | Code for America | Senior Program Manager
 - 2026-08-04 | age 46d | https://jobs.ashbyhq.com/instructure/ddffa558-ca81-4803-be30-fa61e5770038 | Instructure | Product Manager, Canvas - US Remote
+- 2026-08-05 | age 46d | https://jobs.ashbyhq.com/decagon/7d9e30a4-249b-4032-930c-4bd7bc8addb1 | Decagon | Senior Agent Product Manager - Sydney
+- 2026-08-05 | age 46d | https://careers.datadoghq.com/detail/8012549/?gh_jid=8012549 | Datadog | Product Manager II, AI & Data Security
+- 2026-08-05 | ats: req gone | https://boards.greenhouse.io/justworks/jobs/7972369?gh_jid=7972369 | Justworks | Product Manager, Time
+- 2026-08-05 | age 64d | https://www.amazon.jobs/en/jobs/10436860/product-manager-technical | Audible | Product Manager - Technical
+- 2026-08-05 | age 76d | https://www.amazon.jobs/en/jobs/10426678/principal-product-manager-tech-fauna | Amazon.com Services | Principal Product Manager - Tech, Fauna
+- 2026-08-05 | age 76d | https://www.amazon.jobs/en/jobs/10426437/senior-product-manager-technical | Audible | Senior Product Manager - Technical,
+- 2026-08-05 | age 156d | https://www.amazon.jobs/en/jobs/3193640/senior-product-manager-commerce | Twitch Interactive | Senior Product Manager, Commerce
+- 2026-08-05 | not a posting (search url) | https://zetaschools.org/careers?gh_jid=4196508003 | Zeta Charter Schools | Art Teacher - Specialty Program Teacher
+- 2026-08-05 | not a posting (search url) | https://zetaschools.org/careers?gh_jid=4196606003 | Zeta Charter Schools | Dance Teacher - Specialty Program Teacher
+- 2026-08-05 | not a posting (search url) | https://zetaschools.org/careers?gh_jid=7516247003 | Zeta Charter Schools | High School Physics Teacher - NYC [Signing Bonus]
+- 2026-08-05 | not a posting (search url) | https://zetaschools.org/careers?gh_jid=6284578003 | Zeta Charter Schools | Middle School Humanities Teacher - NYC
+- 2026-08-05 | not a posting (search url) | https://zetaschools.org/careers?gh_jid=4196492003 | Zeta Charter Schools | Taekwondo Instructor - Specialty Program Teacher
+- 2026-08-05 | age 50d | https://job-boards.greenhouse.io/vtex/jobs/5983377004 | VTEX | Commercial Negotiation Specialist
+- 2026-08-05 | age 50d | https://job-boards.greenhouse.io/quintoandar/jobs/4251984009 | QuintoAndar | Grupo QuintoAndar
+- 2026-08-05 | age 49d | https://job-boards.greenhouse.io/quintoandar/jobs/4252021009 | QuintoAndar | Grupo QuintoAndar
+- 2026-08-05 | ats: req gone | https://job-boards.greenhouse.io/gitlab/jobs/8599175002 | GitLab | Senior Manager, Customer Trust & Security Governance
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/coneyislandprep/jobs/7311629 | Coney Island Prep | 2026-2027 High School French Teacher
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/ebanx/jobs/7545036003 | EBANX | Product Manager
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/vtex/jobs/6098565004 | VTEX | Senior Product Manager, Content Management
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/quintoandar/jobs/4300636009 | QuintoAndar | Grupo QuintoAndar
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/ebanx/jobs/7809541003 | EBANX | Senior Engagement Manager Analyst
+- 2026-08-06 | page: HTTP 404 | https://n26.com/en-eu/careers/positions/8096040?gh_jid=8096040 | N26 | Lead Project Manager
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/gitlab/jobs/8578341002 | GitLab | Customer Success Manager, SEUR
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/gitlab/jobs/8614683002 | GitLab | Manager, Business Development
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/gitlab/jobs/8675597002 | GitLab | New Business Account Executive - Netherlands
+- 2026-08-06 | ats: req gone | https://job-boards.greenhouse.io/gitlab/jobs/8627022002 | GitLab | Senior Solutions Architect - Turkey
+- 2026-08-06 | page: HTTP 404 | https://n26.com/en-eu/careers/positions/8083076?gh_jid=8083076 | N26 | Executive Business Partner
+- 2026-08-06 | age 65d | https://www.amazon.jobs/en/jobs/10436860/product-manager-technical | Audible | Product Manager - Technical
+- 2026-08-06 | age 77d | https://www.amazon.jobs/en/jobs/10426678/principal-product-manager-tech-fauna | Amazon.com Services | Principal Product Manager - Tech, Fauna
+- 2026-08-06 | age 77d | https://www.amazon.jobs/en/jobs/10426437/senior-product-manager-technical | Audible | Senior Product Manager - Technical,
+- 2026-08-06 | age 157d | https://www.amazon.jobs/en/jobs/3193640/senior-product-manager-commerce | Twitch Interactive | Senior Product Manager, Commerce
