@@ -1,0 +1,124 @@
+{
+  "measuredAt": "2026-08-06",
+  "matureDays": 30,
+  "note": "pctAlive = share of this employer's postings, watched MATURE+ days, that are STILL OPEN. High means the board is evergreen and an old posting there signals nothing about hiring intent.",
+  "curve": [
+    {
+      "lo": 0,
+      "hi": 3,
+      "n": 299,
+      "alive": 289,
+      "pct": 96.65551839464882
+    },
+    {
+      "lo": 4,
+      "hi": 7,
+      "n": 45,
+      "alive": 41,
+      "pct": 91.11111111111111
+    },
+    {
+      "lo": 8,
+      "hi": 14,
+      "n": 183,
+      "alive": 157,
+      "pct": 85.79234972677595
+    },
+    {
+      "lo": 15,
+      "hi": 21,
+      "n": 15,
+      "alive": 15,
+      "pct": 100
+    },
+    {
+      "lo": 22,
+      "hi": 30,
+      "n": 15,
+      "alive": 14,
+      "pct": 93.33333333333333
+    },
+    {
+      "lo": 31,
+      "hi": 45,
+      "n": 8,
+      "alive": 8,
+      "pct": 100
+    },
+    {
+      "lo": 46,
+      "hi": 60,
+      "n": 15,
+      "alive": 10,
+      "pct": 66.66666666666667
+    },
+    {
+      "lo": 61,
+      "hi": 90,
+      "n": 25,
+      "alive": 9,
+      "pct": 36
+    },
+    {
+      "lo": 91,
+      "hi": 9999,
+      "n": 106,
+      "alive": 40,
+      "pct": 37.735849056603776
+    }
+  ],
+  "employers": {
+    "sierra": {
+      "n": 18,
+      "pctAlive": 94
+    },
+    "figma": {
+      "n": 4,
+      "pctAlive": 75
+    },
+    "decagon": {
+      "n": 11,
+      "pctAlive": 64
+    },
+    "cohere": {
+      "n": 6,
+      "pctAlive": 50
+    },
+    "suno": {
+      "n": 4,
+      "pctAlive": 50
+    },
+    "glean": {
+      "n": 17,
+      "pctAlive": 47
+    },
+    "mercury": {
+      "n": 5,
+      "pctAlive": 40
+    },
+    "anthropic": {
+      "n": 13,
+      "pctAlive": 38
+    },
+    "algolia": {
+      "n": 4,
+      "pctAlive": 25
+    },
+    "ramp": {
+      "n": 4,
+      "pctAlive": 25
+    },
+    "harvey": {
+      "n": 17,
+      "pctAlive": 24
+    },
+    "crusoe": {
+      "n": 5,
+      "pctAlive": 20
+    },
+    "intercom": {
+      "n": 11,
+      "pctAlive": 9
+    }
+  }
+}

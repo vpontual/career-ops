@@ -202,8 +202,24 @@ async function callGeminiWithRetry(prompt, maxAttempts = 6) {
 // 5 requests a minute.
 //
 // Greenhouse is authoritative and free: ?questions=true returns every field with
-// a `required` flag. Anything else stays "unknown", and unknown still gets a
-// letter, because losing one he needed is worse than writing one he did not.
+// a `required` flag.
+//
+// ⚠ UNKNOWN NO LONGER GETS A LETTER (changed 2026-08-06). This used to say
+// "unknown still gets a letter, because losing one he needed is worse than
+// writing one he did not" - which was me overriding a rule VP had stated and
+// writing the justification into the source. His rule, recorded verbatim: "If
+// the cover letter is optional, do not submit one. Not a short one, not a good
+// one. None."
+//
+// The result of the override, counted on 2026-08-06: 275 cover letters on disk
+// against 29 skips, and across 108 queue cards the coverLetter field reads
+// absent 20, optional 9, unknown 79 - and ZERO required. Every one of those 275
+// was work VP did not ask for, on a free-tier quota of 5 requests a minute, and
+// six of them render a literal [Date] into the PDF.
+//
+// A default of "write it anyway" also removed the incentive to detect properly.
+// The branded-host map below is how a non-Greenhouse-domain employer gets
+// resolved; extending it is cheap and is the real fix for a specific board.
 async function coverLetterRequirement(url) {
   const u = String(url || '');
   let slug = null, id = null;
@@ -213,7 +229,9 @@ async function coverLetterRequirement(url) {
     const g = u.match(/gh_jid=(\d+)/);
     const host = (() => { try { return new URL(u).host; } catch { return ''; } })();
     const branded = { 'careers.datadoghq.com': 'datadog', 'www.brex.com': 'brex', 'brex.com': 'brex',
-                      'stripe.com': 'stripe', 'www.stripe.com': 'stripe' };
+                      'stripe.com': 'stripe', 'www.stripe.com': 'stripe',
+                      'jobs.elastic.co': 'elastic', 'instacart.careers': 'instacart',
+                      'www.instacart.careers': 'instacart' };
     if (g && branded[host]) { slug = branded[host]; id = g[1]; }
   }
   if (!slug || !id) return 'unknown';
@@ -385,13 +403,19 @@ async function main() {
     }
 
     const clReq = await coverLetterRequirement(c.url);
-    if (clReq === 'absent' || clReq === 'optional') {
+    if (clReq === 'absent' || clReq === 'optional' || clReq === 'unknown') {
       // Record the finding so the review card can say so, and move on. No Gemini
       // call, no PDF, nothing for VP to read and discard.
       await writeFile(path.join(dir, 'cover-letter-skipped.md'),
         `# No cover letter for ${c.company}: ${c.role}\n\n` +
         `**URL:** ${c.url}\n**Checked:** ${new Date().toISOString()}\n` +
-        `**Greenhouse says the cover letter field is:** ${clReq}\n\n` +
+        (clReq === 'unknown'
+          ? `**Cover letter requirement:** could not be determined for this ATS.\n\n` +
+            `Not written. VP's standing rule is that an optional cover letter is not ` +
+            `submitted at all, and an undetermined requirement is not evidence that ` +
+            `one is required. Add this employer's board to the branded-host map in ` +
+            `coverLetterRequirement() to resolve it properly, or ask for one by hand.\n\n`
+          : `**Greenhouse says the cover letter field is:** ${clReq}\n\n`) +
         `Not written, per the standing rule: if it is optional, do not submit one at all.\n`);
       console.log(`[${idx}] no cover letter needed (${clReq}): ${c.company} | ${c.role}`);
     }

@@ -51,11 +51,44 @@ const argN = (flag, dflt) => {
 };
 const MIN_SCORE = argN('--min-score', Number(process.env.MIN_SCORE || 4));
 const MAX_AGE_DAYS = argN('--max-age', Number(process.env.MAX_AGE_DAYS || 30));
-// VP, 2026-08-05, after clearing the queue: "if i saw 4 or more days i just
-// rejected it. i want fresh postings unless its a whale like anthropic." He
-// rejected 57 of 61 pending cards on age alone, so this is the real rule now,
-// stricter than the old 5-day goal. A whale falls back to MAX_AGE_DAYS.
-const FRESH_MAX_AGE_DAYS = Number(process.env.FRESH_MAX_AGE_DAYS || 3);
+// FRESHNESS — rewritten 2026-08-06 from measurement, superseding the flat 3-day
+// rule.
+//
+// The old rule came from VP on 2026-08-05, after he rejected 57 of 61 cards on
+// age: "if i saw 4 or more days i just rejected it." He then superseded it on
+// 2026-08-06: "freshness should be at whatever means the role is actually open
+// and being considered, not just sitting there... you are supposed to become an
+// expert on it and know."
+//
+// So it was measured. measure-req-lifespan.mjs asks the Greenhouse and Ashby
+// board APIs which of 711 tracked postings are still open, giving a survival
+// curve by age at first sighting:
+//
+//     0-3 d   97% still open        22-30 d   93%
+//     4-7 d   91%                   46-60 d   67%
+//     8-14 d  86%                   61-90 d   36%
+//
+// A posting stays open for WEEKS. The cliff is at 45-60 days, not at 3. The old
+// gate was discarding roles with an ~86-93% chance of still being live - it cost
+// 67 tier-4/5 roles including Brex, Vanta, Spotify, Airtable and Datadog.
+//
+// But being OPEN is not the same as being actively filled, which is the thing VP
+// actually asked for, so the second signal is the employer's own closure
+// behaviour: of their postings watched 30+ days, how many are still open?
+//
+//     Intercom 9%   Crusoe 20%   Harvey 24%   Ramp 25%   Anthropic 38%
+//     ... these close requisitions, which means they fill them
+//     Sierra 94%    Figma 75%    Decagon 64%
+//     ... these do not; an old posting on that board signals nothing
+//
+// So the window is wide by default, and stays tight for employers whose boards
+// are demonstrably evergreen. Measurements live in data/employer-closure.json
+// and are refreshed by re-running measure-req-lifespan.mjs.
+const FRESH_MAX_AGE_DAYS = Number(process.env.FRESH_MAX_AGE_DAYS || 21);
+// An evergreen board's old postings carry no hiring signal, so they must be
+// genuinely new to be worth a review slot.
+const EVERGREEN_MAX_AGE_DAYS = Number(process.env.EVERGREEN_MAX_AGE_DAYS || 7);
+const EVERGREEN_PCT = Number(process.env.EVERGREEN_PCT || 80);
 // Must agree with rank-leads' TEACHING_MAX_AGE_DAYS or the scorer admits a
 // school-year requisition and this immediately drops it again as stale.
 const TEACHING_MAX_AGE_DAYS = Number(process.env.TEACHING_MAX_AGE_DAYS || 150);
@@ -155,6 +188,18 @@ const main = async () => {
     const wraw = await readFile(path.join(ROOT, 'config', 'whales.yml'), 'utf-8');
     whales = (yaml.load(wraw)?.whales || []).map((w) => String(w).toLowerCase());
   } catch { /* no list is fine, everything is then held to the fresh window */ }
+  // Employers whose requisitions demonstrably do not close. Read live so a
+  // re-measurement takes effect without a deploy; absent file means nobody is
+  // treated as evergreen, which fails open rather than hiding roles.
+  let closure = {};
+  try {
+    closure = JSON.parse(await readFile(path.join(ROOT, 'data', 'employer-closure.json'), 'utf-8')).employers || {};
+  } catch { /* not measured yet */ }
+  const isEvergreen = (company) => {
+    const e = closure[String(company || '').toLowerCase()];
+    return Boolean(e && e.n >= 4 && e.pctAlive >= EVERGREEN_PCT);
+  };
+
   const isWhale = (company) => {
     const c = String(company || '').toLowerCase();
     return whales.some((w) => c.includes(w));
@@ -266,6 +311,7 @@ const main = async () => {
     if (rep.track !== 'now' && !GEO_OK.has(String(rep.geo || 'unclear'))) { stats.geo++; continue; }
     const maxAge = rep.track === 'teaching' ? TEACHING_MAX_AGE_DAYS
                  : isWhale(rep.company) ? MAX_AGE_DAYS
+                 : isEvergreen(rep.company) ? EVERGREEN_MAX_AGE_DAYS
                  : FRESH_MAX_AGE_DAYS;
     if (rep.days == null || rep.days > maxAge) { stats.stale++; continue; }
     if (blacklist.length && blacklistEntry(rep.company, blacklist)) { stats.blacklisted++; continue; }

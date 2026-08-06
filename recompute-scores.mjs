@@ -27,22 +27,22 @@ const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const SCORES = path.join(ROOT, 'data', 'lead-scores.json');
 const DRY = process.argv.includes('--dry-run');
 
-// Pull the two functions out of rank-leads rather than copying them, so this
-// can never drift from the policy it is meant to reapply.
-const src = await readFile(path.join(ROOT, 'rank-leads.mjs'), 'utf8');
-function extract(name) {
-  const start = src.indexOf(`function ${name}(`);
-  if (start === -1) throw new Error(`${name} not found in rank-leads.mjs`);
-  let depth = 0, i = src.indexOf('{', start);
-  for (let j = i; j < src.length; j++) {
-    if (src[j] === '{') depth++;
-    else if (src[j] === '}' && --depth === 0) return src.slice(start, j + 1);
-  }
-  throw new Error(`${name} unterminated`);
-}
-const consts = src.slice(src.indexOf('const NYC_METRO'), src.indexOf('function normalizeGeo'));
-const faConsts = src.slice(src.indexOf('const FUNCTION_AREA'), src.indexOf('export function normalizeFunctionArea'));
-const mod = new Function(`${consts}\n${faConsts}\n${extract('normalizeGeo')}\n${extract('normalizeArchetype')}\n${extract('normalizeFunctionArea').replace('export ', '')}\n${extract('scoreFromFacts')}\nreturn { normalizeGeo, normalizeArchetype, normalizeFunctionArea, scoreFromFacts };`)();
+// Import the policy functions from rank-leads rather than copying them, so this
+// can never drift from the policy it exists to reapply.
+//
+// This block used to slice them out of rank-leads.mjs's SOURCE TEXT with
+// indexOf + brace matching and evaluate the result with `new Function`. The
+// intent was right - one source of truth - but the mechanism broke the moment a
+// function gained an `export` keyword or a brace moved, and it did: adding
+// normalizeLevel made this throw "SyntaxError: Unexpected token 'export'" and
+// took the whole tool down. rank-leads.mjs is import-safe now (it guards main()
+// behind the argv check), so the same guarantee costs nothing and cannot break.
+import {
+  normalizeGeo, normalizeArchetype, normalizeFunctionArea, normalizeLevel, scoreFromFacts,
+} from './rank-leads.mjs';
+import { screenVerdict } from './lib/screen-evidence.mjs';
+
+const mod = { normalizeGeo, normalizeArchetype, normalizeFunctionArea, scoreFromFacts };
 
 const scores = JSON.parse(await readFile(SCORES, 'utf8'));
 let changed = 0, gated = 0, skipped = 0;
@@ -61,6 +61,21 @@ for (const [k, v] of Object.entries(scores)) {
   } catch {}
   const geo = mod.normalizeGeo(raw);
   const archetype = mod.normalizeArchetype(v.archetypeRaw ?? v.archetype);
+
+  // Facts decided in CODE, which stored records predate. Recomputing them here
+  // is the whole point of facts-in-code: a policy change reaches the entire
+  // corpus without a single LLM call.
+  //   level              - was free text; the 'below' gate had never fired
+  //   technicalScreen... - now gates on evidence in the posting, not the
+  //                        model's inference (176 of 806 records carried an
+  //                        inferred screen with nothing in the text to support it)
+  v.level = normalizeLevel(v.levelRaw ?? v.level);
+  try {
+    const body = readFileSync(path.join(ROOT, 'jds', k), 'utf8');
+    const sv = screenVerdict(body, v.technicalScreen === true);
+    v.technicalScreenStated = sv.action === 'gate';
+    v.technicalScreenEvidence = sv.phrase || '';
+  } catch { v.technicalScreenStated = false; }
 
   // Track-aware, or this tool silently reverts Tracks B and C. It rewrites every
   // entry carrying an `aiNative` key, and teaching entries carry one, so a single
