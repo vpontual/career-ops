@@ -260,17 +260,47 @@ async function main() {
   // arrived is one this pipeline cannot parse: Jobot's twice-weekly blast of
   // twelve mislabeled reqs is the bulk of it. Keep the grace window generous
   // so a transient fetch failure doesn't cost a real role.
+  // ⚠ THIS SWEEP COULD ONLY EVER FIRE ON 5% OF THE BOARD. r.addedDays comes from
+  // a date cell in the pipeline row, and only fetch-amazon and the gmail step
+  // write one: 57 of 1,228 rows carry a date, 162 rows have no JD on disk, and
+  // 145 of those were structurally EXEMPT. Every night's log read
+  // "Never fetched: 0" and that number meant nothing.
+  //
+  // data/scan-history.tsv records first_seen for every URL the scanner has ever
+  // added, which is exactly the missing signal. Used as the fallback, so the
+  // sweep covers the whole board instead of the sliver that happened to carry a
+  // date.
+  const firstSeen = new Map();
+  try {
+    const tsv = await readFile(path.join(ROOT, 'data', 'scan-history.tsv'), 'utf-8');
+    for (const line of tsv.split('\n').slice(1)) {
+      const [u, seen] = line.split('\t');
+      if (u && seen) firstSeen.set(canon(u), seen);
+    }
+  } catch { /* no history yet — falls back to the old behaviour */ }
+  const daysSinceFirstSeen = (url) => {
+    const iso = firstSeen.get(canon(url));
+    if (!iso) return null;
+    const t = Date.parse(iso);
+    return Number.isFinite(t) ? Math.floor((Date.now() - t) / 86400000) : null;
+  };
+
   let neverFetched = 0;
+  let fromHistory = 0;
   for (const r of rows) {
     if (verdicts.has(r.idx) || applied.has(canon(r.url))) continue;
     if (jdDates.has(canon(r.url))) continue;
-    const added = r.addedDays;
+    let added = r.addedDays;
+    if (added == null) {
+      added = daysSinceFirstSeen(r.url);
+      if (added != null) fromHistory++;
+    }
     if (added != null && added > NO_JD_GRACE_DAYS) {
       verdicts.set(r.idx, `no JD after ${added}d`);
       neverFetched++;
     }
   }
-  console.log(`Never fetched: ${neverFetched}`);
+  console.log(`Never fetched: ${neverFetched} (${fromHistory} dated from scan-history rather than the row)`);
 
   // Pass 1 — age. Free, and it removes the bulk.
   let agedOut = 0;
