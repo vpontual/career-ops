@@ -30,6 +30,7 @@ import { existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { canonKey } from './lib/canonical.mjs';
+import { updateQueue } from './lib/queue-file.mjs';
 import { detectTrack } from './lib/track.mjs';
 import { classifyArchetype } from './tailor-cv.mjs';
 import { parseBlacklist, blacklistEntry } from './blacklist.mjs';
@@ -518,8 +519,16 @@ const main = async () => {
     return;
   }
 
-  queue.note = `${queue.note || ''} | auto-enqueued ${written} on ${new Date().toISOString().slice(0, 10)}`.replace(/^ \| /, '');
-  await writeFile(QUEUE, JSON.stringify(queue, null, 2));
+  // Append the new cards to a FRESHLY read queue, under an exclusive lock. This
+  // used to write the copy loaded at the top of the run, so a decision VP made
+  // in the UI during the nightly was silently reverted - and vice versa, the
+  // UI's write could drop a whole night's new cards.
+  const appended = queue.items.slice(-written);
+  await updateQueue(QUEUE, (fresh) => {
+    const have = new Set(fresh.items.map((i) => i.slug));
+    for (const card of appended) if (!have.has(card.slug)) fresh.items.push(card);
+    fresh.note = `${fresh.note || ''} | auto-enqueued ${written} on ${new Date().toISOString().slice(0, 10)}`.replace(/^ \| /, '');
+  });
   console.log(`\nwrote ${written} new cards to data/review-queue.json`);
   console.log(`queue now: ${queue.items.filter(i => !i.decision).length} pending, ${queue.items.length} total`);
 };

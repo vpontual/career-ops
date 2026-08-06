@@ -35,6 +35,7 @@ import { fileURLToPath } from 'url';
 import { parseJd } from './lib/jd-parse.mjs';
 import { canonicalizeUrl } from './lib/url-canonical.mjs';
 import { extractFindings, isSubstantive } from './lib/jd-findings.mjs';
+import { updateQueue } from './lib/queue-file.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const QUEUE = path.join(ROOT, 'data', 'review-queue.json');
@@ -127,6 +128,7 @@ const main = async () => {
   if (LIMIT) cards = cards.slice(0, LIMIT);
 
   let done = 0, nojd = 0;
+  const noteEdits = new Map();   // slug -> notes, re-applied under the lock
   const tally = {};
 
   for (const c of cards) {
@@ -233,12 +235,23 @@ coding screen is actually disclosed._
         .filter((seg) => seg && !/^INTERVIEW PROCESS —/.test(seg))
         .join(' || ');
       c.notes = rest ? `${verdictLine} || ${rest}` : verdictLine;
+      noteEdits.set(c.slug, c.notes);
     }
     done++;
     console.log(`  ${String(v.code).padEnd(15)} ${c.company.slice(0, 26).padEnd(26)} ${c.role.slice(0, 42)}`);
   }
 
-  if (!DRY) await writeFile(QUEUE, JSON.stringify(queue, null, 2));
+  // Re-apply the note edits to a FRESHLY read queue, under an exclusive lock.
+  // Writing the copy loaded minutes ago would silently discard any decision VP
+  // made in the UI while this was running - and this runs at 04:17, when the
+  // enqueue step is writing the same file.
+  if (!DRY && noteEdits.size) {
+    await updateQueue(QUEUE, (fresh) => {
+      for (const it of fresh.items) {
+        if (noteEdits.has(it.slug)) it.notes = noteEdits.get(it.slug);
+      }
+    });
+  }
   console.log(`\nresearched ${done}, no JD on disk for ${nojd}${DRY ? ' (dry run)' : ''}`);
   console.log('verdicts:', JSON.stringify(tally));
 };
