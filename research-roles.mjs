@@ -34,6 +34,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { parseJd } from './lib/jd-parse.mjs';
 import { canonicalizeUrl } from './lib/url-canonical.mjs';
+import { extractFindings, isSubstantive } from './lib/jd-findings.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const QUEUE = path.join(ROOT, 'data', 'review-queue.json');
@@ -147,6 +148,11 @@ const main = async () => {
     const rec = scores[hit.f] || {};
     const hits = scanInterview(hit.jd.body);
     const v = verdictOf(hits);
+    // What the posting ACTUALLY says, beyond interview format. Without this the
+    // document was a template: 73 of 74 files said only "NOT STATED" and the
+    // rest of the page was byte-identical across every role.
+    const findings = extractFindings(hit.jd.body);
+    const substantive = isSubstantive(findings, hits);
     tally[v.code] = (tally[v.code] || 0) + 1;
 
     const comp = rec.compLow
@@ -182,11 +188,23 @@ If the answer is yes:
 > I don't do take-home assignments, but I'm glad to do a live working session
 > of the same length - happy to dig into a real problem with your team on a call.
 
-` : ''}## Compensation
+` : ''}## What the posting states
+
+${findings.length
+  ? findings.map(f => `- **${f.label}:** ${f.value}\n  > ${f.quote}`).join('\n')
+  : '_Nothing extractable. This posting states no compensation, no experience bar,\nno office requirement and no sponsorship stance — which is itself worth knowing\nbefore spending a slot on it._'}
+
+## Compensation
 
 ${comp}
 
 ${rec.geo ? `## Location\n\n\`${rec.geo}\`${rec.geoRaw ? ` — posting says: ${rec.geoRaw}` : ''}\n` : ''}
+${substantive ? '' : `> ⚠ **NOT DILIGENCE.** This file exists but the posting yielded nothing
+> decision-changing: no stated comp, no experience bar, no interview format, no
+> office requirement. Treat this role as unresearched. It is recorded so the gap
+> is visible rather than passing a readiness check by existing — which is exactly
+> how the Glassdoor gate it replaced became a rubber stamp.
+`}
 ---
 
 _Glassdoor is not used. It sits behind Cloudflare and returns 403 to a real

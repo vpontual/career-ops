@@ -602,6 +602,22 @@ if (!fileExists('test-fact-check.mjs')) {
   else pass(`fact-check ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
 }
 
+// ── 16. DILIGENCE FINDINGS ──────────────────────────────────────
+//
+// research.md replaced the Glassdoor gate and became the same thing: 74 files,
+// three distinct bodies, 73 saying only "NOT STATED", and ready-check.py
+// accepting mere existence as diligence.
+
+console.log('\n16. Diligence findings');
+
+if (!fileExists('test-jd-findings.mjs')) {
+  fail('test-jd-findings.mjs missing — diligence extraction has no specification');
+} else {
+  const out = run('node', ['test-jd-findings.mjs']);
+  if (out === null) fail('jd-findings tests failing — run: node test-jd-findings.mjs');
+  else pass(`jd-findings ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
+}
+
 // ── SUMMARY ─────────────────────────────────────────────────────
 
 console.log('\n' + '='.repeat(50));

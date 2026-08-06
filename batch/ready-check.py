@@ -58,10 +58,28 @@ for it in pending:
     # A card researched by hand before the swap already HAS diligence - it just
     # recorded it as a Glassdoor block. Dropping that credit made the ready
     # count go DOWN when the gate changed, which is obviously wrong.
+    # ⚠ EXISTENCE IS NOT DILIGENCE. This accepted the mere presence of
+    # research.md, and research-roles.mjs writes one for every card - so on
+    # 2026-08-06 there were 74 such files containing THREE distinct bodies, 73 of
+    # them saying only "INTERVIEW PROCESS — NOT STATED" with a byte-identical
+    # "ask this at the recruiter screen" block. This gate was the rubber stamp
+    # the Glassdoor swap was made to avoid, twenty lines under a comment
+    # congratulating itself for refusing to write "a lie that would turn the gate
+    # into a rubber stamp".
+    #
+    # research-roles.mjs now stamps a file NOT DILIGENCE when the posting yielded
+    # nothing decision-changing - no comp, no experience bar, no interview
+    # format, no office requirement. Such a file no longer satisfies this gate.
+    research_path = os.path.join(d, "research.md")
+    research_text = ""
+    if os.path.exists(research_path):
+        research_text = open(research_path, encoding="utf-8", errors="replace").read()
     if (not it.get("research")
             and not it.get("glassdoor")
-            and not os.path.exists(os.path.join(d, "research.md"))):
+            and not research_text):
         gaps.append("no diligence")
+    elif "NOT DILIGENCE" in research_text:
+        gaps.append("diligence found nothing (posting states no comp/format/bar)")
     if ("INTERVIEW PROCESS" not in notes
             and "interview-process research" not in notes.lower()
             and not (it.get("research") or {}).get("verdict")):
