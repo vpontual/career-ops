@@ -19,12 +19,14 @@
 import { readFile, writeFile, readdir, mkdir } from 'fs/promises';
 import { existsSync, readFileSync } from 'fs';
 import path from 'path';
+import { pathToFileURL } from 'url';
 import yaml from 'js-yaml';
 import dotenv from 'dotenv';
 import { loadBlacklist, blacklistEntry } from './blacklist.mjs';
 import { canonKey } from './lib/canonical.mjs';
 import { parseJd } from './lib/jd-parse.mjs';
 import { detectTrack, titlePassesForTrack, trackFacts, scoreTeaching, scoreNonprofit, scoreNow } from './lib/track.mjs';
+import { screenVerdict, findReportableFormats } from './lib/screen-evidence.mjs';
 
 dotenv.config();
 
@@ -377,15 +379,31 @@ function scoreFromFacts(f) {
   // held at 3 and has to be spotted by hand.
   if (f.compLow != null && f.compLow < 150000) score = Math.min(score, 3);
 
-  // A coding screen makes the role unwinnable for him regardless of fit. The
-  // mission is unambiguous and states it twice: "Do not shortlist roles that
-  // will run a live-coding technical screen", and "a role with a screen he
-  // cannot pass is not a candidate no matter how good the fit". As a -2 it was a
-  // price rather than a gate, and two tier-4 roles carried the flag and were
-  // eligible for the queue. The stated exception - a role that explicitly allows
-  // building through AI - is not extracted as a fact yet, so it cannot be
-  // honoured here; that is a known gap, not an oversight.
-  if (f.technicalScreen) return 1;
+  // A coding screen makes the role unwinnable for him regardless of fit, and the
+  // mission states it twice. That rule is unchanged. What changed (2026-08-06) is
+  // WHICH FACT it fires on.
+  //
+  // The mission's rule has two halves: "check the interview process before
+  // shortlisting WHERE IT IS KNOWABLE; FLAG THE RISK WHERE IT IS NOT." Only the
+  // first was implemented. This gated on `technicalScreen`, a boolean the LLM
+  // returns - and employers essentially never publish interview format, so the
+  // model was inferring a screen from technical vocabulary in the body. Measured
+  // over the corpus: it set the flag on 176 of 806 records, and **0 of those 176
+  // postings contain any statement of a screen**; across all 1,593 JDs on disk,
+  // zero state a disqualifying one. Two scrapes of the same requisition disagreed
+  // about 20% of the time - Datadog's Bits Agent Builder scored 1 from Datadog's
+  // own ATS and 5 from Indeed. An inference was being treated as knowledge and
+  // hard-rejecting to tier 1, burying a $240K Google GenAI GPM role and three of
+  // the six roles in the mission's own PREPARED ledger.
+  //
+  // So: gate on evidence, flag on inference. `technicalScreenStated` is set in
+  // CODE by lib/screen-evidence.mjs, which finds the verbatim phrase in the
+  // posting or returns nothing - the same facts-in-code discipline as geo. It
+  // also honours the mission's exception (a role that explicitly allows building
+  // through AI does not gate) which was previously listed as a known gap.
+  // `technicalScreen` is retained as the model's raw claim and surfaces as a card
+  // flag, so the risk is reported rather than silently priced in.
+  if (f.technicalScreenStated) return 1;
 
   // Geography he can work is assumed, not rewarded; only ambiguity costs.
   if (f.geo === 'unclear') score -= 1;
@@ -483,7 +501,20 @@ async function scoreOne(jd, resume, targets) {
         leadGen: parsed.leadGen === true,
         functionArea: normalizeFunctionArea(parsed.functionArea, jd.title),
         functionAreaRaw: String(parsed.functionArea || '').slice(0, 40),
+        // The model's raw claim, kept for the card flag and for auditing.
         technicalScreen: parsed.technicalScreen === true,
+        // The fact policy actually gates on, decided in CODE against the posting
+        // text rather than by the model - same discipline as geo above. Reads the
+        // verbatim phrase out of the JD, and honours the mission's exception for
+        // roles that explicitly allow building through AI.
+        ...(() => {
+          const v = screenVerdict(`${jd.title || ''}\n${jd.body || ''}`, parsed.technicalScreen === true);
+          return {
+            technicalScreenStated: v.action === 'gate',
+            technicalScreenEvidence: v.phrase || '',
+            interviewFormats: findReportableFormats(`${jd.title || ''}\n${jd.body || ''}`).join('; '),
+          };
+        })(),
         // The model returns things like 1 and 124 for compLow. Treated as a real
         // salary, 1 is below every floor and silently caps a good role; 32 such
         // values were live. Anything under $10k is not a US base salary, so it is
@@ -729,4 +760,14 @@ async function main() {
   });
 }
 
-main().catch(err => { console.error(err); process.exit(1); });
+// Import-safe. Scoring 700+ roles against the gateway must be an explicit
+// invocation, never a side effect of `import`. Same guard as tailor-cv.mjs.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch(err => { console.error(err); process.exit(1); });
+}
+
+// The policy functions, exported so they can be replayed and tested against the
+// corpus rather than re-derived. recompute-scores.mjs previously reached in and
+// sliced these out of this file's SOURCE TEXT to avoid drifting from them - which
+// works until a brace moves. Importing is the same guarantee without the fragility.
+export { normalizeGeo, normalizeArchetype, scoreFromFacts };

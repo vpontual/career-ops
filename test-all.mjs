@@ -521,6 +521,24 @@ if (!fileExists('test-answers-matcher.mjs')) {
   }
 }
 
+// ── 12. INTERVIEW-FORMAT GATE ───────────────────────────────────
+//
+// scoreFromFacts hard-rejects a role to tier 1 on a live-coding screen. That is
+// VP's rule and it stays. What it must fire on is EVIDENCE in the posting, not
+// the model's inference: measured 2026-08-06, the model flagged 176 of 806
+// records and 0 of those postings stated a screen, burying three of the six
+// roles in the mission's own PREPARED ledger.
+
+console.log('\n12. Interview-format gate (screen-evidence)');
+
+if (!fileExists('test-screen-evidence.mjs')) {
+  fail('test-screen-evidence.mjs missing — the interview-format gate has no specification');
+} else {
+  const out = run('node', ['test-screen-evidence.mjs']);
+  if (out === null) fail('screen-evidence tests failing — run: node test-screen-evidence.mjs');
+  else pass(`screen-evidence ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
+}
+
 // ── SUMMARY ─────────────────────────────────────────────────────
 
 console.log('\n' + '='.repeat(50));
