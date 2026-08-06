@@ -487,6 +487,40 @@ if (fileExists('VERSION')) {
   fail('VERSION file missing');
 }
 
+// ── 11. FORM-ANSWER MATCHER ─────────────────────────────────────
+//
+// generate-answers.mjs decides what goes into a live employer form. It shipped
+// untested and was found (2026-08-06) filling federal EEO self-identification
+// rows with contradictory values. The fixture is the specification; it is
+// EXPECTED to fail until the matcher is fixed. Do not weaken a case to go green.
+//
+// Requires application-defaults.md, which is gitignored and VM-only, so this
+// warns rather than fails where the file is absent (a dev checkout) — but a
+// non-zero exit WITH the file present is a hard failure.
+
+console.log('\n11. Form-answer matcher (golden fixture)');
+
+if (!fileExists('test-answers-matcher.mjs')) {
+  fail('test-answers-matcher.mjs missing — the matcher has no specification');
+} else if (!fileExists('application-defaults.md')) {
+  warn('application-defaults.md absent — matcher fixture skipped (expected off-VM)');
+} else {
+  const out = run('node', ['test-answers-matcher.mjs']);
+  if (out === null) {
+    // run() returns null on non-zero exit. Re-run to surface the tally.
+    let tally = '';
+    try {
+      execFileSync('node', ['test-answers-matcher.mjs'], { cwd: ROOT, encoding: 'utf-8', timeout: 30000 });
+    } catch (e) {
+      tally = String(e.stdout || '').split('\n').filter(l => /passed, \d+ failed/.test(l)).join(' ');
+    }
+    fail(`form-answer matcher fixture failing — ${tally || 'see: node test-answers-matcher.mjs'}`);
+  } else {
+    const tally = out.split('\n').filter(l => /passed, \d+ failed/.test(l)).join(' ');
+    pass(`form-answer matcher fixture green — ${tally}`);
+  }
+}
+
 // ── SUMMARY ─────────────────────────────────────────────────────
 
 console.log('\n' + '='.repeat(50));

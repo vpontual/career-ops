@@ -26,7 +26,7 @@
 
 import { readFile, writeFile, mkdir, readdir, stat } from 'fs/promises';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const QUEUE = path.join(ROOT, 'data', 'review-queue.json');
@@ -450,4 +450,13 @@ const main = async () => {
   console.log(`\nwrote ${ok}, could not enumerate ${failed}${DRY ? ' (dry run, nothing saved)' : ''}`);
 };
 
-main().catch(e => { console.error(e); process.exit(1); });
+// Import-safe: running the nightly form-filler must be an explicit invocation, not
+// a side effect of `import`. Same guard as tailor-cv.mjs. Without it the matcher
+// cannot be tested, which is the reason it went unmeasured for as long as it did.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch(e => { console.error(e); process.exit(1); });
+}
+
+// Exported for test-answers-matcher.mjs. These are the functions that decide what
+// goes into a live employer form; they are not helpers.
+export { loadDefaults, tokenize, canonMatch, bestMatch, renderAnswers, CANON, isNoise };
