@@ -27,6 +27,7 @@ import { checkUrl } from './check-liveness.mjs';
 import { checkFacts } from './verify-cv-facts.mjs';
 import { classifyArchetype } from './tailor-cv.mjs';
 import { canonKey } from './lib/canonical.mjs';
+import { BRANDED_GREENHOUSE } from './lib/branded-boards.mjs';
 import { parseJd } from './lib/jd-parse.mjs';
 import { renderCvHtml, renderCoverLetterHtml } from './lib/render.mjs';
 
@@ -228,11 +229,9 @@ async function coverLetterRequirement(url) {
   if (!slug) {
     const g = u.match(/gh_jid=(\d+)/);
     const host = (() => { try { return new URL(u).host; } catch { return ''; } })();
-    const branded = { 'careers.datadoghq.com': 'datadog', 'www.brex.com': 'brex', 'brex.com': 'brex',
-                      'stripe.com': 'stripe', 'www.stripe.com': 'stripe',
-                      'jobs.elastic.co': 'elastic', 'instacart.careers': 'instacart',
-                      'www.instacart.careers': 'instacart' };
-    if (g && branded[host]) { slug = branded[host]; id = g[1]; }
+    // Shared map — see lib/branded-boards.mjs. This copy knew four hosts while
+    // fetch-jds knew six, so a resolvable board still returned 'unknown' here.
+    if (g && BRANDED_GREENHOUSE[host]) { slug = BRANDED_GREENHOUSE[host]; id = g[1]; }
   }
   if (!slug || !id) return 'unknown';
   try {

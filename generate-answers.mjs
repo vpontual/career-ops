@@ -27,6 +27,7 @@
 import { readFile, writeFile, mkdir, readdir, stat } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
+import { greenhouseRef } from './lib/branded-boards.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const QUEUE = path.join(ROOT, 'data', 'review-queue.json');
@@ -310,31 +311,18 @@ function bestMatch(label, defaults) {
 }
 
 // ── Form readers ──────────────────────────────────────────────────────────
-function greenhouseRef(url) {
-  const u = String(url || '');
-  let m = u.match(/greenhouse\.io\/([a-z0-9-]+)\/jobs\/(\d+)/i);
-  if (m) return { slug: m[1], id: m[2] };
-  const g = u.match(/gh_jid=(\d+)/);
-  let host = '';
-  try { host = new URL(u).host; } catch {}
-  // Employers who host Greenhouse behind their own domain. The board API answers
-  // authoritatively and for free; without an entry here the URL falls through to
-  // the browser reader, and several of these serve a JS-only shell that yields no
-  // fields at all - Instacart's card sat "form not enumerable" while
-  // boards-api.greenhouse.io/v1/boards/instacart/jobs/8100148 returned 200 with
-  // the full question list.
-  const branded = { 'careers.datadoghq.com': 'datadog', 'www.brex.com': 'brex', 'brex.com': 'brex',
-    'stripe.com': 'stripe', 'www.stripe.com': 'stripe', 'jobs.elastic.co': 'elastic',
-    'instacart.careers': 'instacart', 'www.instacart.careers': 'instacart' };
-  if (g && branded[host]) return { slug: branded[host], id: g[1] };
-  return null;
-}
+// greenhouseRef and the branded-host map now live in lib/branded-boards.mjs.
+// Three files carried their own copy and they had already drifted - fetch-jds
+// knew six hosts, this file five, stage-applications four - so a card could sit
+// "form not enumerable" with no answers.md while the Greenhouse board API
+// returned the full question list for that exact requisition. Abnormal Security
+// and Betterment were both in that state on 2026-08-06.
 
 async function readGreenhouse(url) {
   const ref = greenhouseRef(url);
   if (!ref) return null;
   const res = await fetch(
-    `https://boards-api.greenhouse.io/v1/boards/${ref.slug}/jobs/${ref.id}?questions=true`,
+    `https://boards-api.greenhouse.io/v1/boards/${ref.board}/jobs/${ref.id}?questions=true`,
     { headers: { 'User-Agent': 'career-ops/1.0' }, signal: AbortSignal.timeout(20000) });
   if (!res.ok) throw new Error(`greenhouse HTTP ${res.status}`);
   const data = await res.json();

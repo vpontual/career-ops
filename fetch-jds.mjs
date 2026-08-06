@@ -12,6 +12,7 @@
  */
 
 import { readFile, writeFile, mkdir, readdir } from 'fs/promises';
+import { BRANDED_GREENHOUSE } from './lib/branded-boards.mjs';
 import path from 'path';
 import crypto from 'crypto';
 
@@ -92,51 +93,8 @@ async function fetchJson(url) {
   return res.json();
 }
 
-// Companies that wrap their Greenhouse postings behind a branded careers
-// URL but expose the canonical job ID as gh_jid in the query string.
-const BRANDED_GREENHOUSE = {
-  'stripe.com': 'stripe',
-  'databricks.com': 'databricks',
-  'careers.datadoghq.com': 'datadog',
-  'www.brex.com': 'brex',
-  'brex.com': 'brex',
-  'jobs.elastic.co': 'elastic',
-  // Added 2026-08-06 after counting the nightly failures. fetch-jds reported
-  // failed=150 EVERY night, forever, with no negative cache and nothing
-  // watching, and 61 of those were Achievement First alone - a Track C employer
-  // whose new roles scan-teach reported every night and which therefore never
-  // produced a single JD, was never scored, and could never be enqueued. It
-  // publishes gh_jid on its own domain; the board slug is 'achievementfirst'
-  // (verified: boards-api.greenhouse.io/.../achievementfirst/jobs/5979455004
-  // returns 200).
-  'www.achievementfirst.org': 'achievementfirst',
-  'achievementfirst.org': 'achievementfirst',
-  'instacart.careers': 'instacart',
-  'www.instacart.careers': 'instacart',
-  // The rest of the nightly failure list, each slug verified against
-  // boards-api.greenhouse.io before being added. Note two where the host name
-  // does NOT predict the board: hioscar.com -> 'oscar', abnormal.ai ->
-  // 'abnormalsecurity'.
-  'www.hioscar.com': 'oscar',
-  'hioscar.com': 'oscar',
-  'www.fivetran.com': 'fivetran',
-  'fivetran.com': 'fivetran',
-  'coreweave.com': 'coreweave',
-  'www.coreweave.com': 'coreweave',
-  'www.mongodb.com': 'mongodb',
-  'mongodb.com': 'mongodb',
-  'careers.duolingo.com': 'duolingo',
-  'seatgeek.com': 'seatgeek',
-  'www.seatgeek.com': 'seatgeek',
-  'www.cockroachlabs.com': 'cockroachlabs',
-  'cockroachlabs.com': 'cockroachlabs',
-  'abnormal.ai': 'abnormalsecurity',
-  'www.abnormal.ai': 'abnormalsecurity',
-  'www.betterment.com': 'betterment',
-  'betterment.com': 'betterment',
-  'pubmatic.com': 'pubmatic',
-  'www.pubmatic.com': 'pubmatic',
-};
+// The branded-host map lives in lib/branded-boards.mjs — see the note there on
+// why three separate copies of it was a silent bug in three different places.
 
 function detectAts(url) {
   // The `.eu.` subdomain was not matched, so EVERY European Greenhouse board
