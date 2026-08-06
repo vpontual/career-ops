@@ -82,55 +82,140 @@ function tokenize(s) {
 //
 // `from` names the heading or bullet in application-defaults.md that this comes
 // from, so the answer is traceable to VP's own file rather than invented here.
+// An OPTION is not a QUESTION. The Ashby reader emits each radio option as its
+// own field when it cannot find the group's legend, and CANON was then matched
+// against the option text. On four real packs that produced, verbatim:
+//
+//   | White (Not Hispanic or Latino)          | Hispanic or Latino            |
+//   | Black or African American (Not ...)     | Hispanic or Latino            |
+//   | I identify as one or more of the        | I am not a protected veteran  |
+//   |   classifications of protected veteran  |                               |
+//   | Yes, I have a disability, or have had   | No, I do not have a           |
+//   |   one in the past                       |   disability ...              |
+//
+// Followed as written, that ticks every race box, affirms protected-veteran
+// status and declares a disability — on a federally regulated form. An option
+// label is never auto-answered. The few affirmative checkboxes where VP has a
+// definite standing policy are marked `optionSafe` and are the only exceptions.
+function isOptionLabel(label) {
+  return /\((?:not\s+)?hispanic or latino\)/i.test(label)
+    || /^i\s+(identify|am not|do not|don'?t|have|decline|prefer not|wish)/i.test(label)
+    || /^(?:decline|prefer not)\s+to\s+(?:self.?identify|answer|say)/i.test(label)
+    || /^i do not wish/i.test(label)
+    || /^(?:yes|no)[,;]?\s+i\b/i.test(label);
+}
+
+// A conditional follow-up to an option that was not selected. Not work VP owes.
+function isConditional(label) {
+  return /^if\b/i.test(label) || /if\s+(?:you\s+)?(?:selected|answered|chose|checked)/i.test(label)
+    || /if\s+["“]?other/i.test(label);
+}
+
+// `from` names the heading or bullet in application-defaults.md this comes from,
+// so an answer is traceable to VP's own file rather than invented here.
+//
+// NOTE: no personal detail is written literally in this file — it is a public
+// fork and the pre-commit secret check rightly refuses it. Anything identifying
+// is a `lookup` resolved at runtime from the gitignored application-defaults.md.
 const CANON = [
-  { re: /authoriz(ed|ation)[^?]*\b(work|employment)\b|legally (able|authorized) to work|right to work/i,
+  // ── affirmative checkboxes with a standing policy (option-safe) ──────────
+  // "Yes, I will require <Company> to sponsor my employment". The old regex
+  // wanted the NOUN "sponsorship" and this phrasing uses the verb, so it fell
+  // through to a gap on every Ashby form that asks this way.
+  { re: /\b(?:require|need)\b[^?]*\bsponsor(?:ship)?\b|sponsorship (?:now|in the future)|visa sponsorship|sponsor (?:my|your) employment/i,
+    answer: 'No', from: 'Work authorization', optionSafe: true },
+  // "Yes, I'm based in this location and able to work from the office 3 days per
+  // week". Old regex required in-office/on-site/hybrid adjacent to a day word.
+  { re: /\b(?:in[-\s]?office|on[-\s]?site|hybrid|from the office)\b[^?]*(?:day|week|requirement)|days? (?:a|per) week[^?]*office|office \d+ days?|acknowledge[^?]*office|based in this location/i,
+    answer: 'Yes', from: 'Open to hybrid? Yes', optionSafe: true },
+
+  // ── work authorization ───────────────────────────────────────────────────
+  { re: /authoriz(?:ed|ation)[^?]*\b(?:work|employment)\b|legally (?:able|authorized) to work|right to work/i,
     answer: 'Yes', from: 'Work authorization' },
-  { re: /\b(require|need)[^?]*sponsorship|sponsorship (now|in the future)|visa sponsorship/i,
-    answer: 'No', from: 'Work authorization' },
-  { re: /what country[^?]*(based|located|resid)|country of (residence|origin)|where are you (based|located)/i,
+  { re: /what country[^?]*(?:based|located|resid)|country of (?:residence|origin)|where are you (?:based|located)/i,
     answer: 'United States', from: 'Identity' },
-  { re: /how did you hear about/i,
-    answer: 'Company website / job board', from: 'How did you hear about us?' },
-  { re: /consent[^?]*(process|privacy|personal (data|information))|privacy (policy|notice)|data protection/i,
-    answer: 'Yes', from: 'standard consent' },
-  { re: /relocat/i,
-    answer: 'No - already NYC-based', from: 'Logistics' },
-  { re: /\b(in.?office|on.?site|hybrid)\b[^?]*(day|requirement|week)|days per week[^?]*office|acknowledge[^?]*office/i,
-    answer: 'Yes', from: 'Open to hybrid? Yes' },
-  { re: /(available |earliest )?start date|when (can|could|would) you (start|begin)|availability to start/i,
-    answer: 'Two weeks notice from offer acceptance', from: 'Logistics' },
-  { re: /notice period/i,
-    answer: 'None (independent consultant)', from: 'Logistics' },
-  { re: /(desired|expected|target|requested)[^?]*(salary|compensation)|salary expectation|compensation expectation/i,
-    lookup: /target base salary/i, from: 'Target base salary' },
-  { re: /salary history/i,
-    answer: 'Decline to answer', from: 'Salary history' },
+
+  // ── EEO. Race and ethnicity are TWO DIFFERENT QUESTIONS and this had them
+  //    inverted: /\brace\b|ethnicit/ answered BOTH with "White", so "What is
+  //    your ethnicity?" came back White. VP's recorded rule is flagged "get this
+  //    right": ethnicity -> Hispanic or Latino, a separate race question -> White.
+  { re: /ethnicit|are you hispanic|hispanic or latino\?/i,
+    answer: 'Hispanic or Latino', from: 'EEO - ethnicity' },
+  { re: /\brace\b|racial/i, answer: 'White', from: 'EEO - race' },
   { re: /\bgender\b|gender identity/i,
     answer: 'Male (on Man/Woman/Non-Binary forms: Man)', from: 'EEO' },
-  { re: /pronoun/i,
-    answer: '_leave blank; if forced, he/him_', from: 'EEO' },
-  { re: /veteran/i,
-    answer: 'I am not a protected veteran', from: 'EEO' },
-  { re: /disability/i,
+  { re: /pronoun/i, answer: '_leave blank; if forced, he/him_', from: 'EEO' },
+  { re: /veteran/i, answer: 'I am not a protected veteran', from: 'EEO' },
+  { re: /disabilit/i,
     answer: 'No, I do not have a disability and have not had one in the past', from: 'EEO' },
   { re: /transgender/i, answer: 'No', from: 'EEO' },
-  { re: /hispanic|latino/i, answer: 'Hispanic or Latino', from: 'EEO - ethnicity' },
-  { re: /\brace\b|ethnicit/i, answer: 'White', from: 'EEO - race' },
-  // NOTE: no personal detail is written literally in this file - this is a public
-  // fork and the pre-commit hook rightly refuses it. Anything identifying is a
-  // `lookup` resolved at runtime from application-defaults.md, which is gitignored.
+
+  // ── identity ─────────────────────────────────────────────────────────────
+  // Name fields, most specific first. "Legal First and Last Name" must join both
+  // halves; it used to fall to token overlap, where "Legal first name" and
+  // "Legal last name" tie at 1.00 and the first one wins — hence "Vitor" as a
+  // full legal name, and "Vitor" again for "Preferred Last Name".
+  { re: /first and last name|full (?:legal )?name|^legal name$|^name$|^full name/i,
+    lookup: /^legal first name/i, join: /^legal last name/i, from: 'Identity' },
+  { re: /\b(?:last|family|sur)\s?name\b/i, lookup: /^legal last name/i, from: 'Identity' },
+  { re: /^preferred name$|preferred (?:first )?name|nickname|goes by/i,
+    lookup: /^preferred name/i, from: 'Identity' },
+  { re: /\b(?:first|given)\s?name\b/i, lookup: /^legal first name/i, from: 'Identity' },
+  // Country code before phone: "Please select your Country Phone Code" was
+  // answered with the full phone number on five packs.
+  { re: /country[^?]*(?:phone|dial|calling)? ?code|phone country code|dial(?:ling)? code/i,
+    lookup: /^country code/i, from: 'Identity' },
   { re: /^e-?mail|email address/i, lookup: /email.*canonical|email.*ats|^email/i, from: 'Identity' },
-  { re: /(mobile|cell|phone) ?(number)?$|telephone/i, lookup: /^phone/i, from: 'Identity' },
-  { re: /legal name|full name|^name$/i, lookup: /legal first name/i, from: 'Identity', join: /legal last name/i },
-  { re: /^(street )?address|address line/i, lookup: /street address/i, from: 'Identity' },
-  { re: /^city$|city, ?state|where do you live/i, lookup: /current city/i, from: 'Identity' },
+  { re: /(?:mobile|cell|phone) ?(?:number)?$|telephone/i, lookup: /^phone/i, from: 'Identity' },
+  { re: /^(?:street )?address|address line/i, lookup: /^street address/i, from: 'Identity' },
+  { re: /^city$|city and state|city, ?state|where do you (?:live|reside)|city.*reside/i,
+    lookup: /^current city$|^current city \(/i, from: 'Identity' },
   { re: /linkedin/i, lookup: /linkedin/i, from: 'Identity' },
-  { re: /\b(website|portfolio|personal site)\b/i, lookup: /website|portfolio/i, from: 'Identity' },
-  { re: /currently employed|current (employer|company)/i, answer: 'Independent (self-employed)', from: 'Logistics' },
+  { re: /\b(?:website|portfolio|personal site)\b/i, lookup: /website|portfolio/i, from: 'Identity' },
+
+  // ── education. application-defaults.md had NO education section until
+  //    2026-08-06, so every one of these came back as a gap VP had to fill by
+  //    hand while the answers sat in cv.md.
+  { re: /highest (?:level of )?education|education level|highest degree/i,
+    lookup: /^highest level of education/i, from: 'Education' },
+  { re: /field of study|major\b|concentration/i, lookup: /^field of study/i, from: 'Education' },
+  { re: /graduation year|year (?:of )?graduat|when did you graduate/i,
+    lookup: /^graduation year/i, from: 'Education' },
+  { re: /\bundergraduate\b[^?]*(?:school|university|college)/i,
+    lookup: /^undergraduate school/i, from: 'Education' },
+  { re: /\bdegree\b/i, lookup: /^degree:?$|^degree\b/i, from: 'Education' },
+  { re: /university|college|school attended|alma mater|educational background|school name/i,
+    lookup: /^university \/ school attended/i, from: 'Education' },
+
+  // ── logistics ────────────────────────────────────────────────────────────
+  // "Current or Most Recent Employer" — the old regex needed "current employer"
+  // adjacent, so this common phrasing missed and became a gap.
+  { re: /current(?:ly)?\s+(?:or\s+most\s+recent\s+)?(?:employer|company|employed)|most recent employer|present employer|who (?:is|was) your (?:current|most recent) employer/i,
+    lookup: /^current or most recent employer/i, from: 'Education' },
+  { re: /how did you hear about/i,
+    answer: 'Company website / job board', from: 'How did you hear about us?' },
+  { re: /consent[^?]*(?:process|privacy|personal (?:data|information))|privacy (?:policy|notice)|data protection/i,
+    answer: 'Yes', from: 'standard consent' },
+  { re: /relocat/i, answer: 'No - already NYC-based', from: 'Logistics' },
+  { re: /(?:available |earliest )?start date|when (?:can|could|would) you (?:start|begin)|availability to start/i,
+    answer: 'Two weeks notice from offer acceptance', from: 'Logistics' },
+  { re: /notice period/i, answer: 'None (independent consultant)', from: 'Logistics' },
+
+  // ── comp. Expectations are answerable; HISTORY is not. The old table
+  //    answered salary history with "Decline to answer", which contradicts VP's
+  //    recorded rule ("i dont usually like making the conscious choice of
+  //    'decline to answer'" — leave identity/comp history blank instead). There
+  //    is deliberately no entry for salary history: it falls through to a gap.
+  { re: /(?:desired|expected|target|requested)[^?]*(?:salary|compensation)|salary expectation|compensation expectation/i,
+    lookup: /^target base salary/i, from: 'Target base salary' },
 ];
 
 function canonMatch(label, defaults) {
+  // A conditional follow-up is never answered from defaults.
+  if (isConditional(label)) return null;
+  const opt = isOptionLabel(label);
   for (const c of CANON) {
+    if (opt && !c.optionSafe) continue;   // an option is not a question
     if (!c.re.test(label)) continue;
     if (!c.lookup) return c;
     const d = defaults.find((x) => c.lookup.test(x.label));
@@ -145,18 +230,81 @@ function canonMatch(label, defaults) {
   return null;
 }
 
+// Words whose PRESENCE in the question is discriminating: a default that does
+// not carry the same one cannot answer it, however much else overlaps. Without
+// this, "Preferred name" answered "Preferred LAST name" — which is how VP got a
+// legal name of "Vitor Vitor" on a live Ashby form.
+const DISCRIMINATING = [
+  ['first', 'given'],
+  ['last', 'family', 'surname'],
+  ['middle'],
+  ['country'],          // "Country Phone Code" is not "Phone"
+  ['current', 'present'],
+  ['expected', 'desired', 'target'],
+  ['undergraduate'],
+  ['graduate'],
+  ['previous', 'prior', 'former'],
+];
+
+function discriminatorMismatch(q, d) {
+  for (const group of DISCRIMINATING) {
+    const inQ = group.some((w) => q.has(w));
+    const inD = group.some((w) => d.has(w));
+    if (inQ && !inD) return true;
+  }
+  return false;
+}
+
+// Question shapes a lookup table cannot answer, whatever the token overlap.
+// "Do you have any experience with GitHub Actions?" shares every content word
+// with the "GitHub" default and is not asking for a URL.
+const NOT_A_LOOKUP = [
+  /\b(experience|familiar|proficien|comfortable|worked with|knowledge of)\b/i,
+  /^(how many|how much|how would you|why|describe|tell us|explain|what makes)/i,
+  /\?$/,   // only in combination with the above — see bestMatch
+];
+
 function bestMatch(label, defaults) {
   const t = tokenize(label);
   if (!t.size) return null;
+
+  // FAIL CLOSED. This scored `hit / Math.min(question, default)`, so any default
+  // whose tokens were a SUBSET of the question scored exactly 1.00 — the maximum
+  // — no matter how much of the question it ignored. Measured against VP's real
+  // defaults file, that produced, all at confidence 1.00:
+  //
+  //   "Preferred Last Name"                        -> his FIRST name
+  //   "How many years ... managing direct reports" -> 18 (his total PM tenure)
+  //   "experience with GitHub Actions?"            -> his GitHub profile URL
+  //   "Please select your Country Phone Code"      -> his phone number
+  //
+  // and every generated file closed with "a question with no confident match is
+  // left explicitly blank rather than guessed". No threshold reaches a defect
+  // that scores 1.00; the shape of the algorithm is wrong. Three guards now
+  // apply, and a question that survives none of them is an honest gap.
+  const asksAboutExperience = NOT_A_LOOKUP.slice(0, 2).some((re) => re.test(label));
+  if (asksAboutExperience) return null;
+
   let best = null;
   for (const d of defaults) {
     if (!d.tokens.size) continue;
+    if (discriminatorMismatch(t, d.tokens)) continue;
+
     let hit = 0;
     for (const x of t) if (d.tokens.has(x)) hit++;
-    // Jaccard-ish, biased toward covering the FORM's question rather than the
-    // default's label, since defaults are often phrased more fully.
-    const score = hit / Math.max(1, Math.min(t.size, d.tokens.size));
-    if (score > 0.6 && (!best || score > best.score)) best = { d, score };
+    if (!hit) continue;
+
+    // Coverage of the FORM's question, which is the thing being answered. A
+    // default that speaks to two of six words in the question does not know the
+    // answer, whatever fraction of ITSELF is matched.
+    const coverage = hit / t.size;
+    // And the default must not be wildly broader than what it matched, or a
+    // one-word default wins every question containing that word.
+    const specificity = hit / d.tokens.size;
+    if (coverage < 0.6 || specificity < 0.5) continue;
+
+    const score = Math.min(coverage, specificity);
+    if (!best || score > best.score) best = { d, score };
   }
   return best;
 }
@@ -322,38 +470,64 @@ async function readRendered(url) {
 
 // ── Rendering ─────────────────────────────────────────────────────────────
 function renderAnswers(card, fields, defaults, how) {
+  // ONE pass. requiredGaps used to be computed by re-running canonMatch and
+  // bestMatch over every field a second time, so the header count and the table
+  // could disagree whenever either function changed.
+  const decided = fields.map((f) => {
+    const label = f.label;
+    if (/resume|cv\b|cover letter/i.test(label)) {
+      return { f, kind: 'attach', text: '_attached from the pack_' };
+    }
+    if (isConditional(label)) {
+      return { f, kind: 'na', text: '_N/A — conditional on an option not selected_' };
+    }
+    const c = canonMatch(label, defaults);
+    if (c) return { f, kind: 'canon', text: c.answer, from: c.from };
+    const m = bestMatch(label, defaults);
+    if (m) return { f, kind: 'match', text: m.d.value || '', d: m.d };
+    return { f, kind: 'gap' };
+  });
+
+  // An affirmative checkbox states a claim; the answer is whether to TICK it.
+  // Printing "No" beside "Yes, I will require sponsorship" invites the opposite
+  // of the intended action.
+  const asCheckbox = (label, answer) => {
+    if (!/^(?:yes|no)[,;]?\s+i\b|^i\s+(?:am|will|have|acknowledge|confirm|agree)\b/i.test(label)) return null;
+    if (/^no\b/i.test(answer)) return '**Leave UNCHECKED** — the answer is No';
+    if (/^yes\b/i.test(answer)) return '**Tick this box** — the answer is Yes';
+    return null;
+  };
+
   const rows = [];
-  let mapped = 0, gaps = 0;
-  for (const f of fields) {
-    if (/resume|cv\b|cover letter/i.test(f.label)) {
-      rows.push(`| ${f.label} | ${f.required ? '**yes**' : 'no'} | _attached from the pack_ |`);
-      mapped++;
-      continue;
-    }
-    const c = canonMatch(f.label, defaults);
-    if (c) {
-      mapped++;
-      const opts = f.options && f.options.length ? ` <br/>_options: ${f.options.join(' · ').slice(0, 160)}_` : '';
-      rows.push(`| ${f.label} | ${f.required ? '**yes**' : 'no'} | ${c.answer}${opts} <br/>_via application-defaults.md → ${c.from}_ |`);
-      continue;
-    }
-    const m = bestMatch(f.label, defaults);
-    if (m) {
-      mapped++;
-      const rule = m.d.rules.length ? ` <br/>_${m.d.rules[0].replace(/\|/g, '/')}_` : '';
-      rows.push(`| ${f.label} | ${f.required ? '**yes**' : 'no'} | ${m.d.value || '_(blank by default)_'}${rule} |`);
-    } else {
+  let mapped = 0, gaps = 0, requiredGaps = 0;
+  for (const d of decided) {
+    const req = d.f.required ? '**yes**' : 'no';
+    if (d.kind === 'gap') {
       gaps++;
-      rows.push(`| ${f.label} | ${f.required ? '**yes**' : 'no'} | ⚠ **NO DEFAULT — VP to answer** |`);
+      if (d.f.required) requiredGaps++;
+      rows.push(`| ${d.f.label} | ${req} | ⚠ **NO DEFAULT — VP to answer** |`);
+      continue;
     }
+    mapped++;
+    let cell = d.text;
+    if (d.kind === 'canon') {
+      cell = asCheckbox(d.f.label, d.text) ?? d.text;
+      const opts = d.f.options?.length ? ` <br/>_options: ${d.f.options.join(' · ').slice(0, 160)}_` : '';
+      cell += `${opts} <br/>_via application-defaults.md → ${d.from}_`;
+    } else if (d.kind === 'match') {
+      const rule = d.d.rules.length ? ` <br/>_${d.d.rules[0].replace(/\|/g, '/')}_` : '';
+      cell = (d.text || '_(blank by default)_') + rule;
+    }
+    rows.push(`| ${d.f.label} | ${req} | ${cell} |`);
   }
-  const requiredGaps = fields.filter(f => f.required && !/resume|cv\b|cover letter/i.test(f.label) && !canonMatch(f.label, defaults) && !bestMatch(f.label, defaults)).length;
+
+  const na = decided.filter((d) => d.kind === 'na').length;
 
   return `# ${card.company} — ${card.role}
 
 **Apply:** ${card.applyUrl}
 **ATS:** ${card.ats || 'unknown'} · **Form inspected: ${today()}** — read via ${how}.
-**Fields:** ${fields.length} · mapped ${mapped} · gaps ${gaps} (${requiredGaps} of them required)
+**Fields:** ${fields.length} · answered ${mapped - na} · N/A ${na} · gaps ${gaps} (${requiredGaps} required)
 
 ${requiredGaps > 0
   ? `> ⚠ **${requiredGaps} required field${requiredGaps === 1 ? ' has' : 's have'} no default.** Answer ${requiredGaps === 1 ? 'it' : 'them'} before submitting; everything else is prefilled below.`
@@ -365,9 +539,17 @@ ${rows.join('\n')}
 
 ---
 
-_Generated by generate-answers.mjs. Answers come from application-defaults.md.
-A question with no confident match is left explicitly blank rather than guessed —
-VP submits this himself, and a wrong answer is worse than an empty one._
+_Generated by generate-answers.mjs from application-defaults.md._
+
+_The matcher fails CLOSED: a question is answered only by the hand-written CANON
+table or by a token match that covers the question and is specific to it. Anything
+else is written as a gap. It does not answer radio OPTION labels — self-identifying
+an option row is how a table came to instruct ticking every race box — and it does
+not answer "do you have experience with X" from a lookup table._
+
+_This is a matcher, not a reader. Check anything that matters before you submit;
+it has been wrong before, at maximum confidence, and the cases it got wrong are
+pinned in test-answers-matcher.mjs._
 `;
 }
 
