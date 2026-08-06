@@ -149,3 +149,4 @@ there is nothing to fill. Resolving the employer's own posting promotes it into 
 - [ ] [5] Ocrolus | Director of Product - Mortgage | 0d | https://www.indeed.com/viewjob?jk=48d002dc4f508e97
 - [ ] [4] SingleStore | Principal Product Manager Lead | 0d | https://www.indeed.com/viewjob?jk=6ee46b18ab5dcdce
 - [ ] [4] Amazon Web Services | Senior Product Manager - Technical, External Services, Elastic Container Registry | 6d | https://www.indeed.com/viewjob?jk=e4f82fb8b4a4335a
+- [ ] [5] OEConnection | Senior Product Manager - PartsTech Search Experience | 0d | https://www.indeed.com/viewjob?jk=982139933a86387c

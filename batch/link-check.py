@@ -77,8 +77,41 @@ for verdict, slug, name, code, size in sorted(rows, key=lambda r: (r[0] != "FAIL
     mark = {"ok": "✓", "FAIL": "✗", "skipped-by-design": "-", "missing": "?"}[verdict]
     print(f"{mark} {slug:<{w}}  {name:<17} {str(code):>6}  {verdict}")
 
+# ── the trap state ────────────────────────────────────────────────────────
+# A pack holding a cover-letter marker but NO cv.pdf is the signature of a
+# staging run that died between the two. stage-applications renders the CV last,
+# and its "already staged" test used to accept the marker alone - so the pack was
+# skipped by every later run and the CV was never rendered. Combined with the
+# rule that a card must have a CV, that made the role permanently invisible: 21
+# packs were in this state on 2026-08-06, including JPMorganChase, SambaNova and
+# three GitLab roles, and re-running staging could not recover them.
+#
+# The fix is in stage-applications. This is the alarm, because the run that
+# CAUGHT it was a heavy one and a cached run does not reproduce it - run 2 built
+# only 3 packs and made zero Gemini calls, so it proved nothing about this path.
+trapped = []
+for d in sorted(os.listdir(os.path.join(ROOT, "output"))):
+    pack = os.path.join(ROOT, "output", d)
+    if not os.path.isdir(pack):
+        continue
+    has_marker = os.path.exists(os.path.join(pack, "cover-letter.md")) or \
+                 os.path.exists(os.path.join(pack, "cover-letter-skipped.md"))
+    if has_marker and not os.path.exists(os.path.join(pack, "cv.pdf")):
+        trapped.append(d)
+
+if trapped:
+    print(f"\n⚠ {len(trapped)} pack(s) hold a cover-letter marker but no cv.pdf.")
+    print("  That is a staging run that died before rendering the CV. Re-run")
+    print("  stage-applications.mjs — it now restages these rather than skipping them.")
+    for d in trapped[:10]:
+        print(f"    {d}")
+
 print(f"\nCV links: {len(items) - hard_fail}/{len(items)} resolve.", end=" ")
 print(f"{soft_fail} cover letter(s) missing with no skip marker.")
+
+if trapped and not hard_fail:
+    print(f"\n🔴 {len(trapped)} pack(s) in the marker-without-CV trap state.\n")
+    sys.exit(1)
 
 if hard_fail:
     print(f"\n🔴 {hard_fail} pending card(s) have no reachable CV. "

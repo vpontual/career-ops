@@ -1,7 +1,7 @@
 {
   "batch": "2026-07-29 - first batch (PM + PMM)",
   "created": "2026-07-31",
-  "note": "Rebuilt after the scoring rubric was replaced. The model now reports facts and scoreFromFacts applies the policy in code, so tier 5 means AI-native, right level, workable geography - not just 'a PM job with one concern'. | 2026-08-04: dropped stale/dead cards, refreshed ageDays, rescored from live lead-scores.json. | auto-enqueued 18 on 2026-08-04 | auto-enqueued 2 on 2026-08-04 | auto-enqueued 6 on 2026-08-04 | auto-enqueued 1 on 2026-08-04 | auto-enqueued 4 on 2026-08-04 | auto-enqueued 33 on 2026-08-04 | auto-enqueued 6 on 2026-08-05 | auto-enqueued 13 on 2026-08-05 | auto-enqueued 5 on 2026-08-06 | auto-enqueued 6 on 2026-08-06 | auto-enqueued 15 on 2026-08-06 | auto-enqueued 9 on 2026-08-06 | auto-enqueued 5 on 2026-08-06",
+  "note": "Rebuilt after the scoring rubric was replaced. The model now reports facts and scoreFromFacts applies the policy in code, so tier 5 means AI-native, right level, workable geography - not just 'a PM job with one concern'. | 2026-08-04: dropped stale/dead cards, refreshed ageDays, rescored from live lead-scores.json. | auto-enqueued 18 on 2026-08-04 | auto-enqueued 2 on 2026-08-04 | auto-enqueued 6 on 2026-08-04 | auto-enqueued 1 on 2026-08-04 | auto-enqueued 4 on 2026-08-04 | auto-enqueued 33 on 2026-08-04 | auto-enqueued 6 on 2026-08-05 | auto-enqueued 13 on 2026-08-05 | auto-enqueued 5 on 2026-08-06 | auto-enqueued 6 on 2026-08-06 | auto-enqueued 15 on 2026-08-06 | auto-enqueued 9 on 2026-08-06 | auto-enqueued 5 on 2026-08-06 | auto-enqueued 2 on 2026-08-06",
   "items": [
     {
       "slug": "datadog-senior-product-manager-bits-agent-builder",
@@ -3679,6 +3679,48 @@
       "autoEnqueued": true,
       "enqueuedAt": "2026-08-06",
       "scoreSource": "gitlab-8658878002.md"
+    },
+    {
+      "slug": "nubank-fraud-operations-manager",
+      "company": "Nubank",
+      "role": "Fraud Operations Manager",
+      "sourceUrl": "https://jobs.ashbyhq.com/nubank/4b4247b9-144f-4d03-9a87-18759244cdbf",
+      "applyUrl": "https://jobs.ashbyhq.com/nubank/4b4247b9-144f-4d03-9a87-18759244cdbf",
+      "ats": "ashby",
+      "score": 4,
+      "ageDays": 0,
+      "geo": "unclear",
+      "coverLetter": "unknown",
+      "cvVariant": "ai-infra",
+      "notes": "INTERVIEW PROCESS — NOT STATED: The posting says nothing about interview format. That is normal and not a red flag, but it is unresolved - ask at first recruiter contact, before investing in rounds. || SCORER: The role is a strong operational leadership position but is geographically ineligible as it requires on-site presence in Mexico City, which is outside the candidate's reachable NYC metro area.. RED FLAGS: Location: On-site role in Mexico City is unreachable from Manhattan.",
+      "decision": null,
+      "decidedAt": null,
+      "track": "now",
+      "glassdoor": null,
+      "autoEnqueued": true,
+      "enqueuedAt": "2026-08-06",
+      "scoreSource": "nubank-4b4247b9-144f-4d.md"
+    },
+    {
+      "slug": "nubank-lead-business-control-officer-global-credit-card",
+      "company": "Nubank",
+      "role": "Lead Business Control Officer - Global Credit Card",
+      "sourceUrl": "https://jobs.ashbyhq.com/nubank/c6a08b89-8455-4a2d-b736-a35a6f9ae4d9",
+      "applyUrl": "https://jobs.ashbyhq.com/nubank/c6a08b89-8455-4a2d-b736-a35a6f9ae4d9",
+      "ats": "ashby",
+      "score": 4,
+      "ageDays": 0,
+      "geo": "unclear",
+      "coverLetter": "unknown",
+      "cvVariant": "ai-enterprise",
+      "notes": "INTERVIEW PROCESS — NOT STATED: The posting says nothing about interview format. That is normal and not a red flag, but it is unresolved - ask at first recruiter contact, before investing in rounds. || SCORER: This is a senior risk management role focused on operational controls and governance for a fintech credit card product, which is a strong functional match for a candidate with risk or compliance experience.. RED FLAGS: Location is Virginia (DC Metro), requiring hybrid work 2-3 times a week, which is outside the NYC metro area and may require relocation. Comp floor seen: $129,600.",
+      "decision": null,
+      "decidedAt": null,
+      "track": "now",
+      "glassdoor": null,
+      "autoEnqueued": true,
+      "enqueuedAt": "2026-08-06",
+      "scoreSource": "nubank-c6a08b89-8455-4a.md"
     }
   ],
   "tracks": {
