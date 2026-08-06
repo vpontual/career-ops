@@ -1,3 +1,10 @@
+<!-- UPSTREAM DOC -->
+> ⚠ **Upstream documentation. It does not describe this deployment.** An audit on
+> 2026-08-06 found 26 of 55 checkable doc claims across this repo false and 13
+> stale. For what is actually true — the nightly chain, the gates, the tests, the
+> deploy model, and VP's standing rules — read the READ THIS FIRST section at
+> the top of `CLAUDE.md`.
+
 # Batch Processing
 
 Process multiple job offers in parallel via `claude -p` workers. Each worker runs the full evaluation pipeline (A-F report + PDF + tracker line) autonomously.

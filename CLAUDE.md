@@ -1,4 +1,90 @@
-# Career-Ops -- AI Job Search Pipeline
+# CLAUDE.md
+
+> ## ⚠ READ THIS FIRST — THIS DEPLOYMENT
+>
+> **Everything below the `## Origin` heading is UPSTREAM documentation
+> (santifer/career-ops). It describes a system this fork no longer is.** An audit
+> on 2026-08-06 checked 55 concrete claims across the docs and found **26 false
+> and 13 stale**, with every claim about how the system actually runs — the
+> architecture, the run model, the cron chain, the scoring, the batch subsystem —
+> in the false column. `CLAUDE.md` had not been touched in 96 commits.
+>
+> It is kept rather than deleted because the onboarding, ethics and offer-
+> verification sections are still good, and because deleting a file agents read
+> first is its own hazard. But treat anything below as upstream's system, not
+> this one, and verify before acting on it.
+>
+> ### What is actually true here
+>
+> **Run model.** A host crontab runs `nightly.sh` at 04:00, appending to
+> `logs/scanner.log`. It is not a service. Nothing else is scheduled except a
+> weekly log truncation.
+>
+> **The chain**, in order, as it exists in `nightly.sh` today:
+>
+> ```
+> discovery   scan · scan-teach · scan-np · scan-now · gmail · resolve
+>             fetch-jds · prune · indeed · amazon · olas · resolve-apply
+> scoring     lifespan · rank-leads · recompute
+> packaging   stage · enqueue · answers · research
+> GATES       cv-links · ready · pack-match · tests
+> closing     nightly-report
+> ```
+>
+> Every step records its exit code; the run exits non-zero if any step or gate
+> failed. It deliberately does NOT use `set -e` — half these steps are network
+> scrapers, and aborting the night on the first flaky portal loses the other
+> fifteen steps' work. The defect that mattered was that failures were invisible.
+>
+> **The gates are real and they block.** `batch/link-check.py` asks the RUNNING
+> app whether every pending card's files resolve; `batch/ready-check.py` checks
+> pack completeness and rejects diligence that found nothing; `repair-split-packs.mjs`
+> (dry run) reports card/pack mismatches; `test-all.mjs` runs the suite. Before
+> 2026-08-06 none of them ran at all.
+>
+> **Tests.** `node test-all.mjs` is the entry point and wraps the rest:
+> `test-answers-matcher` · `test-screen-evidence` · `test-normalizers` ·
+> `test-slug-identity` · `test-fact-check` · `test-jd-findings` ·
+> `test-gmail-leads` · `test-track`. **A property is asserted in a test or not at
+> all** — do not write a comment claiming code is correct.
+>
+> **Deploy.** `scanner` and `applier` bind-mount the repo, so editing a `.mjs`
+> takes effect on the next `docker compose run` — no rebuild. The **`ui` service
+> is a baked production build**: any change under `ui/` needs
+> `docker compose build ui && docker compose up -d ui`. ⚠ A long-running
+> container holds the module it loaded at startup, so editing a file mid-run does
+> not affect that run.
+>
+> **`dashboard/` is upstream's and is NOT what VP looks at.** The review surface
+> is the Next.js app in `ui/` on port 3340.
+>
+> **Never run `update-system.mjs`** — see the section below.
+>
+> ### Rules that are VP's, not suggestions
+>
+> - A role reaching the Review Queue **must** have a completed, reachable CV.
+>   `enqueue-review.mjs` refuses to write a card without one and holds it in
+>   `data/held-no-pack.md`.
+> - **Cover letters only when required.** Optional means none — "not a short one,
+>   not a good one. None." An undetermined requirement is not permission.
+> - **No unpaid take-homes.** A stated live-coding screen is a hard 1; an
+>   *inferred* one is a flag, per the mission's "flag the risk where it is not
+>   knowable".
+> - **Never auto-submit.** Filling a form and stopping at Submit is fine.
+> - EEO: ethnicity → Hispanic or Latino; a separate race question → White; never
+>   "decline to answer".
+> - If a recorded rule of VP's looks wrong, **surface it and stop** — do not ship
+>   an override with a rationale in the source.
+>
+> ### Verify against the running system
+>
+> Existence on disk and reachability through the UI are different claims. On
+> 2026-08-06 every CV existed and 34 of 36 links still 404'd. Paste command
+> output; do not reason from the code.
+>
+> The mission itself lives at `~/Dev/plans/MISSION-nyc-job.md` **on VP's laptop,
+> not on this VM** — the policy and its enforcement are on different hosts.
+
 
 ## Origin
 
@@ -16,9 +102,15 @@ There are two layers. Read `DATA_CONTRACT.md` for the full list.
 - `cv.md`, `config/profile.yml`, `modes/_profile.md`, `article-digest.md`, `portals.yml`
 - `data/*`, `reports/*`, `output/*`, `interview-prep/*`
 
-**System Layer (auto-updatable, DON'T put user data here):**
+**System Layer — ⚠ NOT AUTO-UPDATABLE IN THIS FORK:**
 - `modes/_shared.md`, `modes/oferta.md`, all other modes
 - `CLAUDE.md`, `*.mjs` scripts, `dashboard/*`, `templates/*`, `batch/*`
+
+> ⚠ Upstream calls this layer auto-updatable. **Here it is where essentially all
+> of the work lives** — the scoring rewrite, Track D, the review queue, the
+> Next.js UI in `ui/`, the four gate scripts in `batch/`, and every `lib/`
+> module. Nothing in it may be overwritten from upstream. See the update-check
+> section below.
 
 **THE RULE: When the user asks to customize anything (archetypes, narrative, negotiation scripts, proof points, location policy, comp targets), ALWAYS write to `modes/_profile.md` or `config/profile.yml`. NEVER edit `modes/_shared.md` for user-specific content.** This ensures system updates don't overwrite their customizations.
 

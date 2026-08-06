@@ -1,4 +1,12 @@
-# Career-Ops — AI Job Search Pipeline (Gemini CLI)
+# GEMINI.md
+
+> ⚠ **This file is upstream documentation and describes a system this fork no
+> longer is.** An audit on 2026-08-06 found 26 of 55 checkable doc claims false
+> and 13 stale, with every claim about how the system actually runs in the false
+> column. **Read the READ THIS FIRST — THIS DEPLOYMENT section at the top of
+> `CLAUDE.md` instead**; it is the accurate one and is kept current with
+> `nightly.sh`. Never run `update-system.mjs` — see below.
+
 
 > This file is auto-loaded by the Gemini CLI as persistent context.
 > It is the Gemini equivalent of CLAUDE.md.

@@ -1,3 +1,10 @@
+<!-- UPSTREAM DOC -->
+> ⚠ **Upstream documentation. It does not describe this deployment.** An audit on
+> 2026-08-06 found 26 of 55 checkable doc claims across this repo false and 13
+> stale. For what is actually true — the nightly chain, the gates, the tests, the
+> deploy model, and VP's standing rules — read the READ THIS FIRST section at
+> the top of `CLAUDE.md`.
+
 # Career-Ops
 
 [English](README.md) | [Español](README.es.md) | [Português (Brasil)](README.pt-BR.md) | [한국어](README.ko-KR.md) | [日本語](README.ja.md) | [Русский](README.ru.md) | [简体中文](README.cn.md) | [繁體中文](README.zh-TW.md)
