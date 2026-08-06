@@ -20,18 +20,26 @@ AI-powered job search automation: pipeline tracking, offer evaluation, CV genera
 
 **THE RULE:** When the user asks to customize anything (archetypes, narrative, negotiation scripts, proof points, location policy, comp targets), ALWAYS write to `modes/_profile.md` or `config/profile.yml`. NEVER edit `modes/_shared.md` for user-specific content.
 
-## Update Check
+## Update Check — DO NOT RUN. Removed 2026-08-06.
 
-On the first message of each session, run the update checker silently:
+**Never run `update-system.mjs` in any form — not `check`, not `apply`.** Do not
+offer it, do not act on a user request to "check for updates", and do not restore
+the instructions that used to live here. The same applies to the `npm run update`,
+`npm run update:check` and `npm run rollback` aliases in `package.json`.
 
-```bash
-node update-system.mjs check
-```
+This section previously told every session to run the update checker on its first
+message. It was inherited from upstream and is a standing hazard here: `apply` pulls
+`santifer/career-ops` over the system layer, and this fork has diverged by hundreds
+of commits. Everything that makes this deployment work — the scoring rewrite, Track
+D, the review queue, the Next.js UI, the gate scripts — lives in that "system
+layer". Upstream has since done a ground-up `.mjs → TypeScript` rewrite, so a merge
+does not conflict cleanly; it clobbers.
 
-Parse the JSON output:
-- `{"status": "update-available", ...}` → tell the user an update is available and ask if they want to apply it (`node update-system.mjs apply`)
-- `{"status": "up-to-date"}` → say nothing
-- `{"status": "dismissed"}` or `{"status": "offline"}` → say nothing
+Cherry-pick anything worth having by hand, and record it in `docs/FORK-CHANGES.md`.
+Sync is one-way and manual: pull only, never push or PR to `santifer/career-ops`.
+`origin` is `vpontual/career-ops` and is the only remote ever pushed to.
+
+See `CLAUDE.md` for the same notice.
 
 ## Gemini CLI Commands
 

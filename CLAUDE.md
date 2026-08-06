@@ -22,24 +22,29 @@ There are two layers. Read `DATA_CONTRACT.md` for the full list.
 
 **THE RULE: When the user asks to customize anything (archetypes, narrative, negotiation scripts, proof points, location policy, comp targets), ALWAYS write to `modes/_profile.md` or `config/profile.yml`. NEVER edit `modes/_shared.md` for user-specific content.** This ensures system updates don't overwrite their customizations.
 
-## Update Check
+## Update Check — DO NOT RUN. Removed 2026-08-06.
 
-On the first message of each session, run the update checker silently:
+**Never run `update-system.mjs` in any form — not `check`, not `apply`.** Do not
+offer it, do not act on a user request to "check for updates", and do not restore
+the instructions that used to live here.
 
-```bash
-node update-system.mjs check
-```
+This section previously told every session to run `node update-system.mjs check` on
+its first message and to offer `apply` if an update existed. That was inherited from
+upstream and was a standing hazard: `apply` pulls `santifer/career-ops` over the
+system layer, and **this fork has diverged from upstream by hundreds of commits**.
+The "System Layer" listed in the Data Contract above — `*.mjs`, `batch/*`,
+`templates/*`, this file — is NOT auto-updatable here. It is where essentially all
+of the local work lives: the scoring rewrite, Track D, the review queue, the Next.js
+UI, the four gate scripts. Upstream has since done a ground-up `.mjs → TypeScript`
+rewrite, so a merge does not conflict cleanly — it clobbers.
 
-Parse the JSON output:
-- `{"status": "update-available", "local": "1.0.0", "remote": "1.1.0", "changelog": "..."}` → tell the user:
-  > "career-ops update available (v{local} → v{remote}). Your data (CV, profile, tracker, reports) will NOT be touched. Want me to update?"
-  If yes → run `node update-system.mjs apply`. If no → run `node update-system.mjs dismiss`.
-- `{"status": "up-to-date"}` → say nothing
-- `{"status": "dismissed"}` → say nothing
-- `{"status": "offline"}` → say nothing
+The instruction sat here unnoticed from April to August 2026 while 20 unpushed local
+commits accumulated. It was never triggered; that was luck, not design.
 
-The user can also say "check for updates" or "update career-ops" at any time to force a check.
-To rollback: `node update-system.mjs rollback`
+**If upstream has something worth having, cherry-pick it by hand** and record it in
+`docs/FORK-CHANGES.md`. Sync direction is one-way and manual: pull only, never push
+or PR to `santifer/career-ops`. `origin` is `vpontual/career-ops` and is the only
+remote that is ever pushed to.
 
 ## What is career-ops
 
