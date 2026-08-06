@@ -30,6 +30,7 @@ import { existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { canonKey } from './lib/canonical.mjs';
+import { loadReposts, repostNote } from './lib/repost.mjs';
 import { updateQueue } from './lib/queue-file.mjs';
 import { detectTrack } from './lib/track.mjs';
 import { classifyArchetype } from './tailor-cv.mjs';
@@ -192,6 +193,7 @@ const main = async () => {
   // Employers whose requisitions demonstrably do not close. Read live so a
   // re-measurement takes effect without a deploy; absent file means nobody is
   // treated as evergreen, which fails open rather than hiding roles.
+  const reposts = loadReposts(path.join(ROOT, 'data', 'scan-history.tsv'));
   let closure = {};
   try {
     closure = JSON.parse(await readFile(path.join(ROOT, 'data', 'employer-closure.json'), 'utf-8')).employers || {};
@@ -259,7 +261,25 @@ const main = async () => {
     groups.get(key).push({
       key, file, company,
       score: Number(rec.score),
-      days: jd.posted_days,
+      // RECENCY = the employer's most recent activity on this requisition, not
+      // merely when it appeared. Greenhouse publishes updated_at alongside
+      // first_published, fetch-jds has always written it into the JD, and
+      // nothing parsed it until 2026-08-06 — so the best available signal of
+      // "is anyone still working this" sat unread next to the one every gate
+      // used instead. 607 of 684 reqs carrying it were touched MORE RECENTLY
+      // than they were posted.
+      //
+      // VP's framing: "freshness should be at whatever means the role is
+      // actually open and being considered, not just sitting there." A 20-day-old
+      // req the employer edited yesterday is being worked. A 2-day-old repost on
+      // an evergreen board is not.
+      days: Math.min(
+        jd.posted_days ?? Number.POSITIVE_INFINITY,
+        jd.updated_days ?? Number.POSITIVE_INFINITY,
+      ) === Number.POSITIVE_INFINITY ? jd.posted_days
+        : Math.min(jd.posted_days ?? Infinity, jd.updated_days ?? Infinity),
+      postedDays: jd.posted_days,
+      updatedDays: jd.updated_days,
       role: jd.title || '',
       url: jd.url || '',
       applyable: isApplyable(jd.url),
@@ -457,7 +477,12 @@ const main = async () => {
 
     claimedByCard.add(slug);
     outputDirs.add(slug);
+    // A relisted role is an unfilled req the employer is still spending on —
+    // the strongest positive signal of hiring intent available, and one every
+    // layer above was discarding as a duplicate.
+    const relisted = repostNote(reposts, c.company, c.role);
     const notes = [
+      relisted,
       c.verdict ? `SCORER: ${c.verdict}.` : '',
       c.redFlags ? `RED FLAGS: ${c.redFlags}` : '',
       c.compLow ? `Comp floor seen: $${c.compLow.toLocaleString()}.` : '',

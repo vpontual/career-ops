@@ -18,6 +18,7 @@
 import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync } from 'fs';
 import yaml from 'js-yaml';
 import { canonicalizeUrl } from './lib/url-canonical.mjs';
+import { stampLastSeen } from './lib/scan-history.mjs';
 const parseYaml = yaml.load;
 
 // ── Config ──────────────────────────────────────────────────────────
@@ -346,6 +347,7 @@ async function main() {
 
   // 3. Load dedup sets
   const seenUrls = loadSeenUrls();
+  const observedUrls = new Set();   // every URL live on a board this run
   const seenCompanyRoles = loadSeenCompanyRoles();
 
   // 4. Fetch all APIs
@@ -375,6 +377,10 @@ async function main() {
           totalFiltered++;
           continue;
         }
+        // OBSERVED = we saw this posting live on the board just now, whether or
+        // not it is new to us. That is the signal last_seen needs: when a URL
+        // stops appearing, the date it last appeared IS its closure date.
+        observedUrls.add(canonicalizeUrl(job.url));
         if (seenUrls.has(job.url)) {
           totalDupes++;
           continue;
@@ -430,6 +436,19 @@ async function main() {
     } else {
       console.log(`\nResults saved to ${PIPELINE_PATH} and ${SCAN_HISTORY_PATH}`);
     }
+  }
+
+  // Record that everything seen this run is STILL ON THE BOARD. Deliberately
+  // outside the `newOffers.length > 0` branch: a sweep that finds nothing new
+  // still observed hundreds of live postings, and that observation is the whole
+  // point — when a URL stops appearing, the date it last appeared IS its closure
+  // date. Nesting this under "we found something new" made it never run on a
+  // quiet night, which is most nights.
+  if (!dryRun && observedUrls.size) {
+    const today = new Date().toISOString().slice(0, 10);
+    const { updated, added } = stampLastSeen(SCAN_HISTORY_PATH, observedUrls, canonicalizeUrl, today);
+    console.log(`\nlast_seen: ${updated} row(s) stamped ${today}` +
+                (added ? ' (column added)' : '') + ` from ${observedUrls.size} live posting(s)`);
   }
 
   console.log(`\n→ Run /career-ops pipeline to evaluate new offers.`);

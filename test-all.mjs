@@ -652,6 +652,23 @@ if (!fileExists('test-liveness-verdict.mjs')) {
   else pass(`liveness-verdict ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
 }
 
+// ── 19. RECENCY (employer activity, not shelf age) ──────────────
+//
+// fetch-jds has always written **Updated:** into the JD and lib/jd-parse.mjs
+// never parsed it, so the best signal of active hiring intent sat unread while
+// every gate used posting age. 607 of 684 reqs were touched more recently than
+// they were posted.
+
+console.log('\n19. Recency signal');
+
+if (!fileExists('test-recency.mjs')) {
+  fail('test-recency.mjs missing — the recency signal has no specification');
+} else {
+  const out = run('node', ['test-recency.mjs']);
+  if (out === null) fail('recency tests failing — run: node test-recency.mjs');
+  else pass(`recency ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
+}
+
 // ── SUMMARY ─────────────────────────────────────────────────────
 
 console.log('\n' + '='.repeat(50));
