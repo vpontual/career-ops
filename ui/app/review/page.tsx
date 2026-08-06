@@ -1,4 +1,4 @@
-import { readFile } from "fs/promises";
+import { readFile, stat } from "fs/promises";
 import path from "path";
 import Link from "next/link";
 import ReviewControls from "@/components/ReviewControls";
@@ -56,6 +56,7 @@ interface Queue {
 interface Loaded extends QueueItem {
   answers?: string;
   coverBody?: string;
+  hasCv?: boolean;
 }
 
 async function loadQueue(): Promise<Queue | null> {
@@ -68,6 +69,12 @@ async function loadQueue(): Promise<Queue | null> {
 
 async function hydrate(item: QueueItem): Promise<Loaded> {
   const dir = path.join(DATA_ROOT, "output", item.slug);
+  // Whether a CV EXISTS, asked of the filesystem. The cv.pdf link used to be
+  // gated on item.cvVariant, which enqueue-review writes from the JD text at
+  // enqueue time - a statement of intent, never of fact. On 2026-08-06 the badge
+  // read "cv: ai-infra" on eight cards whose cv.pdf 404'd.
+  let hasCv = false;
+  try { await stat(path.join(dir, "cv.pdf")); hasCv = true; } catch {}
   let answers: string | undefined;
   let coverBody: string | undefined;
   try {
@@ -77,7 +84,7 @@ async function hydrate(item: QueueItem): Promise<Loaded> {
     const md = await readFile(path.join(dir, "cover-letter.md"), "utf-8");
     coverBody = md.split(/^---\s*$/m).slice(1).join("---").trim();
   } catch {}
-  return { ...item, answers, coverBody };
+  return { ...item, answers, coverBody, hasCv };
 }
 
 // Tabs need short labels; the long description belongs under the tab bar, once.
@@ -367,7 +374,10 @@ export default async function ReviewPage({
                   (pending > 0 ? "bg-blue-400/20 text-blue-100" : "bg-slate-800 text-slate-500")
                 }
               >
-                {grouped[t].length}
+                {/* pending, not the all-time total. This rendered grouped[t].length
+                    - which includes 91 rejected roles - so the PM tab advertised
+                    61 while the page header correctly said "9 awaiting you". */}
+                {pending}
               </span>
             </Link>
           );
@@ -455,7 +465,7 @@ export default async function ReviewPage({
               {item.notes && <NoteBlocks notes={item.notes} />}
 
               <div className="mt-4 flex flex-wrap gap-2">
-                {item.cvVariant && item.cvVariant !== "none yet" && (
+                {item.hasCv ? (
                   <a
                     href={`/api/files/${item.slug}/cv.pdf`}
                     target="_blank"
@@ -464,6 +474,13 @@ export default async function ReviewPage({
                   >
                     cv.pdf
                   </a>
+                ) : (
+                  <span
+                    title="No cv.pdf on disk for this card"
+                    className="cursor-not-allowed rounded-md border border-red-500/40 bg-slate-950 px-3 py-1.5 text-xs text-red-300/80"
+                  >
+                    ⚠ no cv.pdf
+                  </span>
                 )}
                 <Link
                   href={`/pack/${item.slug}`}

@@ -16,6 +16,16 @@ interface PackData {
   defaults?: string;
   autofillReport?: string;
   hasAutofillScreenshot?: boolean;
+  // Confirmed presence of each pack file, checked on the filesystem at render
+  // time. Nothing here is inferred from queue metadata: cvVariant said a CV
+  // existed on eight cards whose cv.pdf 404'd.
+  files: {
+    cv: boolean;
+    coverPdf: boolean;
+    coverMd: boolean;
+    coverSkipped: boolean;
+    coverQuarantined: boolean;
+  };
 }
 
 async function loadPack(slug: string): Promise<PackData | null> {
@@ -68,10 +78,32 @@ async function loadPack(slug: string): Promise<PackData | null> {
     hasAutofillScreenshot = true;
   } catch {}
 
+  // Never advertise a file we have not confirmed. This page used to render the
+  // cv.pdf, cover-letter.pdf and cover-letter.md buttons unconditionally, so on
+  // 2026-08-06 VP clicked a CV that had been generated correctly and got a page
+  // reading "Not found" - 34 of 36 file links on the live queue were dead. The
+  // screenshot above was the ONLY asset on this page that was checked first.
+  //
+  // A missing cover letter is usually not a fault: 87 of 362 packs legitimately
+  // have none because the ATS does not ask for one, and staging records that in
+  // cover-letter-skipped.md. A quarantine note means the letter exists but is
+  // not sendable. Those three states must not all render as one dead button.
+  const fsp = await import("fs/promises");
+  const has = async (name: string) => {
+    try { await fsp.stat(path.join(dir, name)); return true; } catch { return false; }
+  };
+  const files = {
+    cv: await has("cv.pdf"),
+    coverPdf: await has("cover-letter.pdf"),
+    coverMd: await has("cover-letter.md"),
+    coverSkipped: await has("cover-letter-skipped.md"),
+    coverQuarantined: await has("cover-letter-QUARANTINE.md"),
+  };
+
   // Strip the markdown header and metadata, keep just the body.
   const body = coverMd.split(/^---\s*$/m).slice(1).join("---").trim();
 
-  return { slug, url, company, role, coverLetterMd: body, answers, defaults, autofillReport, hasAutofillScreenshot };
+  return { slug, url, company, role, coverLetterMd: body, answers, defaults, autofillReport, hasAutofillScreenshot, files };
 }
 
 export default async function PackPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -100,30 +132,66 @@ export default async function PackPage({ params }: { params: Promise<{ slug: str
       <section className="mb-8">
         <h3 className="text-xs uppercase tracking-wider text-slate-500 font-mono mb-3">Materials</h3>
         <div className="flex flex-wrap gap-3">
-          <a
-            href={`/api/files/${pack.slug}/cv.pdf`}
-            target="_blank"
-            rel="noopener"
-            className="px-4 py-2 bg-slate-900 border border-slate-700 rounded-md hover:border-blue-400/60 hover:bg-slate-900/60 transition text-sm"
-          >
-            📄 cv.pdf
-          </a>
-          <a
-            href={`/api/files/${pack.slug}/cover-letter.pdf`}
-            target="_blank"
-            rel="noopener"
-            className="px-4 py-2 bg-slate-900 border border-slate-700 rounded-md hover:border-blue-400/60 hover:bg-slate-900/60 transition text-sm"
-          >
-            📄 cover-letter.pdf
-          </a>
-          <a
-            href={`/api/files/${pack.slug}/cover-letter.md`}
-            target="_blank"
-            rel="noopener"
-            className="px-4 py-2 bg-slate-900 border border-slate-700 rounded-md hover:border-blue-400/60 hover:bg-slate-900/60 transition text-sm"
-          >
-            📝 cover-letter.md
-          </a>
+          {pack.files.cv ? (
+            <a
+              href={`/api/files/${pack.slug}/cv.pdf`}
+              target="_blank"
+              rel="noopener"
+              className="px-4 py-2 bg-slate-900 border border-slate-700 rounded-md hover:border-blue-400/60 hover:bg-slate-900/60 transition text-sm"
+            >
+              📄 cv.pdf
+            </a>
+          ) : (
+            <span
+              title="No CV has been rendered for this role"
+              className="px-4 py-2 bg-slate-950 border border-red-500/40 text-red-300/80 rounded-md text-sm cursor-not-allowed"
+            >
+              ⚠ cv.pdf not generated
+            </span>
+          )}
+
+          {pack.files.coverPdf ? (
+            <a
+              href={`/api/files/${pack.slug}/cover-letter.pdf`}
+              target="_blank"
+              rel="noopener"
+              className="px-4 py-2 bg-slate-900 border border-slate-700 rounded-md hover:border-blue-400/60 hover:bg-slate-900/60 transition text-sm"
+            >
+              📄 cover-letter.pdf
+            </a>
+          ) : pack.files.coverQuarantined ? (
+            <span
+              title="A letter exists but is not sendable — see cover-letter-QUARANTINE.md in the pack"
+              className="px-4 py-2 bg-slate-950 border border-amber-500/40 text-amber-300/80 rounded-md text-sm cursor-not-allowed"
+            >
+              ⚠ cover letter withheld
+            </span>
+          ) : pack.files.coverSkipped ? (
+            <span
+              title="This ATS does not require a cover letter, so none was written"
+              className="px-4 py-2 bg-slate-950 border border-slate-800 text-slate-500 rounded-md text-sm cursor-not-allowed"
+            >
+              no cover letter needed
+            </span>
+          ) : (
+            <span
+              title="No cover letter on disk and no record of why"
+              className="px-4 py-2 bg-slate-950 border border-red-500/40 text-red-300/80 rounded-md text-sm cursor-not-allowed"
+            >
+              ⚠ cover letter missing
+            </span>
+          )}
+
+          {pack.files.coverMd && (
+            <a
+              href={`/api/files/${pack.slug}/cover-letter.md`}
+              target="_blank"
+              rel="noopener"
+              className="px-4 py-2 bg-slate-900 border border-slate-700 rounded-md hover:border-blue-400/60 hover:bg-slate-900/60 transition text-sm"
+            >
+              📝 cover-letter.md
+            </a>
+          )}
           <a
             href={pack.url}
             target="_blank"
