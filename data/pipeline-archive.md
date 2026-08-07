@@ -782,3 +782,16 @@ Rows removed from the board by prune-stale.mjs. Kept so a bad prune is recoverab
 - 2026-08-06 | age 157d | https://www.amazon.jobs/en/jobs/3193640/senior-product-manager-commerce | Twitch Interactive | Senior Product Manager, Commerce
 - 2026-08-06 | page: insufficient content — likely nav/footer only | https://www.mongodb.com/careers/job/?gh_jid=7428476 | MongoDB | Senior Data Product Manager, Product Telemetry
 - 2026-08-06 | page: insufficient content — likely nav/footer only | https://www.mongodb.com/careers/job/?gh_jid=7851080 | MongoDB | Senior Product Manager
+- 2026-08-06 | page: insufficient content — likely nav/footer only | https://www.mongodb.com/careers/job/?gh_jid=8079816 | MongoDB | Director, Business Product Manager - PRM
+- 2026-08-06 | age 65d | https://www.amazon.jobs/en/jobs/10436860/product-manager-technical | Audible | Product Manager - Technical
+- 2026-08-06 | age 77d | https://www.amazon.jobs/en/jobs/10426678/principal-product-manager-tech-fauna | Amazon.com Services | Principal Product Manager - Tech, Fauna
+- 2026-08-06 | age 77d | https://www.amazon.jobs/en/jobs/10426437/senior-product-manager-technical | Audible | Senior Product Manager - Technical,
+- 2026-08-06 | age 157d | https://www.amazon.jobs/en/jobs/3193640/senior-product-manager-commerce | Twitch Interactive | Senior Product Manager, Commerce
+- 2026-08-07 | no JD after 8d | https://www.fivetran.com/careers/job?gh_jid=6648548003 | Fivetran | Senior Product Manager, Observability & Monitoring
+- 2026-08-07 | no JD after 8d | https://bitso.com/jobs/7697203003?gh_jid=7697203003 | Bitso | Product Manager (Crypto Core)
+- 2026-08-07 | page: insufficient content — likely nav/footer only | https://careers.duolingo.com/jobs/8675670002?gh_jid=8675670002 | Duolingo | Senior Product Manager
+- 2026-08-07 | page: HTTP 404 | https://n26.com/en-eu/careers/positions/7921158?gh_jid=7921158 | N26 | Strategy & Operations Associate - Payments
+- 2026-08-07 | age 66d | https://www.amazon.jobs/en/jobs/10436860/product-manager-technical | Audible | Product Manager - Technical
+- 2026-08-07 | age 78d | https://www.amazon.jobs/en/jobs/10426678/principal-product-manager-tech-fauna | Amazon.com Services | Principal Product Manager - Tech, Fauna
+- 2026-08-07 | age 78d | https://www.amazon.jobs/en/jobs/10426437/senior-product-manager-technical | Audible | Senior Product Manager - Technical,
+- 2026-08-07 | age 158d | https://www.amazon.jobs/en/jobs/3193640/senior-product-manager-commerce | Twitch Interactive | Senior Product Manager, Commerce

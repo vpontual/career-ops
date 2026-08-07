@@ -1,42 +1,42 @@
 {
-  "measuredAt": "2026-08-06",
+  "measuredAt": "2026-08-07",
   "matureDays": 30,
   "note": "pctAlive = share of this employer's postings, watched MATURE+ days, that are STILL OPEN. High means the board is evergreen and an old posting there signals nothing about hiring intent.",
   "curve": [
     {
       "lo": 0,
       "hi": 3,
-      "n": 330,
-      "alive": 318,
-      "pct": 96.36363636363636
+      "n": 331,
+      "alive": 319,
+      "pct": 96.37462235649546
     },
     {
       "lo": 4,
       "hi": 7,
-      "n": 45,
-      "alive": 41,
-      "pct": 91.11111111111111
+      "n": 10,
+      "alive": 10,
+      "pct": 100
     },
     {
       "lo": 8,
       "hi": 14,
-      "n": 183,
-      "alive": 155,
-      "pct": 84.69945355191257
+      "n": 217,
+      "alive": 185,
+      "pct": 85.25345622119816
     },
     {
       "lo": 15,
       "hi": 21,
-      "n": 15,
-      "alive": 15,
+      "n": 12,
+      "alive": 12,
       "pct": 100
     },
     {
       "lo": 22,
       "hi": 30,
-      "n": 15,
-      "alive": 14,
-      "pct": 93.33333333333333
+      "n": 19,
+      "alive": 18,
+      "pct": 94.73684210526316
     },
     {
       "lo": 31,

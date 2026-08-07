@@ -45,8 +45,53 @@
 > **Tests.** `node test-all.mjs` is the entry point and wraps the rest:
 > `test-answers-matcher` · `test-screen-evidence` · `test-normalizers` ·
 > `test-slug-identity` · `test-fact-check` · `test-jd-findings` ·
-> `test-gmail-leads` · `test-track`. **A property is asserted in a test or not at
-> all** — do not write a comment claiming code is correct.
+> `test-gmail-leads` · `test-liveness-verdict` · `test-recency` · `test-track`.
+> 133 assertions, all green as of 2026-08-07. **A property is asserted in a test
+> or not at all** — do not write a comment claiming code is correct.
+>
+> ### Freshness is measured, not assumed
+>
+> "Fresh" means the employer is still WORKING the requisition, not that the ad is
+> new. Three signals, all derived from data rather than chosen:
+>
+> - **Survival curve** (`measure-req-lifespan.mjs`, ~740 postings via the
+>   Greenhouse/Ashby board APIs): a req stays open for WEEKS — 85% at 8-14 days,
+>   93% at 22-30 — and the cliff is at 45-60 days, not 3. The gate is 21 days,
+>   7 for evergreen employers, 30 for whales.
+> - **Employer closure behaviour** (`data/employer-closure.json`, refreshed
+>   nightly): of postings watched 30+ days, Intercom closes 91% of its reqs and
+>   Sierra closes 6%. An old posting on an evergreen board signals nothing.
+>   ⚠ Only count postings watched 30+ days — a board tracked for 8 days shows
+>   100% open because nothing has had TIME to close.
+> - **Employer activity** (`updated_at`, parsed by `lib/jd-parse.mjs`): 607 of
+>   684 reqs were touched more recently than they were posted. The gate uses the
+>   most recent activity, so a 20-day-old req edited yesterday counts as worked.
+>
+> `data/scan-history.tsv` carries **`last_seen`**, stamped by every `scan.mjs`
+> sweep. When a posting stops appearing, the date it last appeared is its closure
+> date — that is what makes lifespan measured rather than right-censored. It only
+> advances for boards `scan.mjs` sweeps; Indeed/Amazon/OLAS/gmail rows are never
+> re-observed and are excluded from lifespan stats rather than counted as
+> same-day closures.
+>
+> A **relist** (`lib/repost.mjs`) is the strongest positive signal there is —
+> posted, not filled, back to market. Surfaced as a card note, never a score
+> change. Requires a 14-day gap: the raw count of 122 is mostly the initial
+> backfill re-observing one board a day apart; only 19 are real.
+>
+> ### Two failure shapes that keep recurring here
+>
+> **A gate that cries wolf is a gate VP disables.** Three built on 2026-08-06
+> had to have their thresholds corrected against real data within hours: the
+> fact checker fired on 40% of letters, the first diligence bar failed 27 of 29
+> cards, and `ready` failed the nightly on postings that were merely thin. Always
+> measure a new gate's fire rate against the corpus before shipping it.
+>
+> **A gate that refuses bad output needs a producer that can retry.** The rule
+> "no card without a CV" was right, but staging's "already staged" check accepted
+> a cover-letter marker without a CV — so one Gemini quota trip left 21 packs
+> permanently unstageable and their roles permanently invisible. `link-check.py`
+> now fails on that state specifically.
 >
 > **Deploy.** `scanner` and `applier` bind-mount the repo, so editing a `.mjs`
 > takes effect on the next `docker compose run` — no rebuild. The **`ui` service
