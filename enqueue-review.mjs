@@ -36,8 +36,13 @@ import { detectTrack } from './lib/track.mjs';
 import { classifyArchetype } from './tailor-cv.mjs';
 import { parseBlacklist, blacklistEntry } from './blacklist.mjs';
 import { canonicalizeUrl } from './lib/url-canonical.mjs';
-import yaml from 'js-yaml';
 import { parseJd } from './lib/jd-parse.mjs';
+import {
+  loadFreshnessPolicy,
+  recencyDays,
+  FRESH_MAX_AGE_DAYS,
+  TEACHING_MAX_AGE_DAYS,
+} from './lib/freshness.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const JDS_DIR = path.join(ROOT, 'jds');
@@ -53,47 +58,12 @@ const argN = (flag, dflt) => {
 };
 const MIN_SCORE = argN('--min-score', Number(process.env.MIN_SCORE || 4));
 const MAX_AGE_DAYS = argN('--max-age', Number(process.env.MAX_AGE_DAYS || 30));
-// FRESHNESS — rewritten 2026-08-06 from measurement, superseding the flat 3-day
-// rule.
-//
-// The old rule came from VP on 2026-08-05, after he rejected 57 of 61 cards on
-// age: "if i saw 4 or more days i just rejected it." He then superseded it on
-// 2026-08-06: "freshness should be at whatever means the role is actually open
-// and being considered, not just sitting there... you are supposed to become an
-// expert on it and know."
-//
-// So it was measured. measure-req-lifespan.mjs asks the Greenhouse and Ashby
-// board APIs which of 711 tracked postings are still open, giving a survival
-// curve by age at first sighting:
-//
-//     0-3 d   97% still open        22-30 d   93%
-//     4-7 d   91%                   46-60 d   67%
-//     8-14 d  86%                   61-90 d   36%
-//
-// A posting stays open for WEEKS. The cliff is at 45-60 days, not at 3. The old
-// gate was discarding roles with an ~86-93% chance of still being live - it cost
-// 67 tier-4/5 roles including Brex, Vanta, Spotify, Airtable and Datadog.
-//
-// But being OPEN is not the same as being actively filled, which is the thing VP
-// actually asked for, so the second signal is the employer's own closure
-// behaviour: of their postings watched 30+ days, how many are still open?
-//
-//     Intercom 9%   Crusoe 20%   Harvey 24%   Ramp 25%   Anthropic 38%
-//     ... these close requisitions, which means they fill them
-//     Sierra 94%    Figma 75%    Decagon 64%
-//     ... these do not; an old posting on that board signals nothing
-//
-// So the window is wide by default, and stays tight for employers whose boards
-// are demonstrably evergreen. Measurements live in data/employer-closure.json
-// and are refreshed by re-running measure-req-lifespan.mjs.
-const FRESH_MAX_AGE_DAYS = Number(process.env.FRESH_MAX_AGE_DAYS || 21);
-// An evergreen board's old postings carry no hiring signal, so they must be
-// genuinely new to be worth a review slot.
-const EVERGREEN_MAX_AGE_DAYS = Number(process.env.EVERGREEN_MAX_AGE_DAYS || 7);
-const EVERGREEN_PCT = Number(process.env.EVERGREEN_PCT || 80);
-// Must agree with rank-leads' TEACHING_MAX_AGE_DAYS or the scorer admits a
-// school-year requisition and this immediately drops it again as stale.
-const TEACHING_MAX_AGE_DAYS = Number(process.env.TEACHING_MAX_AGE_DAYS || 150);
+// FRESHNESS lives in lib/freshness.mjs, with the survival-curve measurement
+// that produced it. It is shared, not copied, because this file and
+// stage-applications.mjs applied two different versions of it for four days:
+// this one carded a role at 21 days, staging built the pack it needs at 14, and
+// everything in between became a permanent resident of data/held-no-pack.md.
+// See the header of lib/freshness.mjs for the whole incident.
 
 // The three modes VP can actually work in. `unclear` is deliberately excluded:
 // the mission's standing rule is to flag an undetermined location rather than
@@ -184,29 +154,12 @@ const main = async () => {
   // gate that can stop a company already present in lead-scores.json, because
   // rank-leads filters blacklisted companies before scoring and never removes
   // entries scored before the company was blacklisted.
-  // Read live from config/whales.yml so VP can edit it without a deploy.
-  let whales = [];
-  try {
-    const wraw = await readFile(path.join(ROOT, 'config', 'whales.yml'), 'utf-8');
-    whales = (yaml.load(wraw)?.whales || []).map((w) => String(w).toLowerCase());
-  } catch { /* no list is fine, everything is then held to the fresh window */ }
-  // Employers whose requisitions demonstrably do not close. Read live so a
-  // re-measurement takes effect without a deploy; absent file means nobody is
-  // treated as evergreen, which fails open rather than hiding roles.
+  // config/whales.yml and data/employer-closure.json are read live inside the
+  // policy so VP can edit the first and re-measure the second without a deploy.
+  // --max-age overrides the WHALE window only, which is what it has always
+  // meant here; the ordinary window is FRESH_MAX_AGE_DAYS.
+  const freshness = await loadFreshnessPolicy(ROOT, { whaleMaxAgeDays: MAX_AGE_DAYS });
   const reposts = loadReposts(path.join(ROOT, 'data', 'scan-history.tsv'));
-  let closure = {};
-  try {
-    closure = JSON.parse(await readFile(path.join(ROOT, 'data', 'employer-closure.json'), 'utf-8')).employers || {};
-  } catch { /* not measured yet */ }
-  const isEvergreen = (company) => {
-    const e = closure[String(company || '').toLowerCase()];
-    return Boolean(e && e.n >= 4 && e.pctAlive >= EVERGREEN_PCT);
-  };
-
-  const isWhale = (company) => {
-    const c = String(company || '').toLowerCase();
-    return whales.some((w) => c.includes(w));
-  };
 
   const blacklist = existsSync(BLACKLIST)
     ? parseBlacklist(await readFile(BLACKLIST, 'utf-8'))
@@ -323,11 +276,7 @@ const main = async () => {
       // actually open and being considered, not just sitting there." A 20-day-old
       // req the employer edited yesterday is being worked. A 2-day-old repost on
       // an evergreen board is not.
-      days: Math.min(
-        jd.posted_days ?? Number.POSITIVE_INFINITY,
-        jd.updated_days ?? Number.POSITIVE_INFINITY,
-      ) === Number.POSITIVE_INFINITY ? jd.posted_days
-        : Math.min(jd.posted_days ?? Infinity, jd.updated_days ?? Infinity),
+      days: recencyDays(jd),
       postedDays: jd.posted_days,
       updatedDays: jd.updated_days,
       role: jd.title || '',
@@ -444,10 +393,7 @@ const main = async () => {
     // An unlocatable posting can still be scored and sit in inbox-leads; it just
     // does not earn a review card until someone can say where the job is.
     if (!GEO_OK.has(repGeo)) { stats.geo++; continue; }
-    const maxAge = rep.track === 'teaching' ? TEACHING_MAX_AGE_DAYS
-                 : isWhale(rep.company) ? MAX_AGE_DAYS
-                 : isEvergreen(rep.company) ? EVERGREEN_MAX_AGE_DAYS
-                 : FRESH_MAX_AGE_DAYS;
+    const maxAge = freshness.maxAgeDaysFor(rep);
     if (rep.days == null || rep.days > maxAge) { stats.stale++; continue; }
     // parseBlacklist returns a MAP. `.length` on a Map is undefined, so this gate
     // has never blocked anything. rank-leads.mjs:647 tests `.size` and works.

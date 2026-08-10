@@ -67,6 +67,14 @@
 >   684 reqs were touched more recently than they were posted. The gate uses the
 >   most recent activity, so a 20-day-old req edited yesterday counts as worked.
 >
+> ⚠ **One window, in `lib/freshness.mjs`, imported by BOTH `enqueue-review` and
+> `stage-applications`.** A card must have a CV, so if the step that mints cards
+> admits a role the step that builds packs will not touch, that role qualifies
+> forever and can never be shown: it lands in `data/held-no-pack.md` and ages
+> out unseen. That happened at 31-150 days (teaching) and again at 15-21 days,
+> where it caught nine tier-4/5 NYC civic roles on 2026-08-10. Never give either
+> script a local `MAX_AGE_DAYS`; `test-recency.mjs` asserts that neither has one.
+>
 > `data/scan-history.tsv` carries **`last_seen`**, stamped by every `scan.mjs`
 > sweep. When a posting stops appearing, the date it last appeared is its closure
 > date — that is what makes lifespan measured rather than right-censored. It only

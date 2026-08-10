@@ -114,7 +114,13 @@ run_step rank-leads /usr/bin/node rank-leads.mjs
 # JDs - 52 of 718 on the 08-06 run - and the other 666 keep yesterday's verdict.
 # Costs no LLM calls; that is the whole point of facts-in-code.
 run_step recompute  /usr/bin/node recompute-scores.mjs
-run_step stage      /usr/bin/docker compose run --rm -e MAX_AGE_DAYS=30 applier node stage-applications.mjs
+# No -e MAX_AGE_DAYS=30 any more. That override was load-bearing and nobody knew:
+# stage-applications defaulted to a flat 14 days, enqueue carded at 21, and the
+# only reason the nightly run did not strand every role in the 15-21 day band was
+# this one env var on this one line. Any hand-run of the script — including the
+# one data/held-no-pack.md tells VP to do — got the broken 14. Both steps now
+# read lib/freshness.mjs, so the window is the same whoever starts them.
+run_step stage      /usr/bin/docker compose run --rm applier node stage-applications.mjs
 run_step enqueue    /usr/bin/node enqueue-review.mjs
 # Fills the form and does the diligence for whatever enqueue just created.
 run_step answers    /usr/bin/docker compose run --rm applier node generate-answers.mjs

@@ -2,8 +2,9 @@
 /**
  * stage-applications.mjs — Level A automation.
  *
- * For every role scored >= MIN_SCORE posted within MAX_AGE_DAYS days,
- * generate:
+ * For every role scored >= MIN_SCORE that enqueue-review could still card
+ * (freshness window and recency both from lib/freshness.mjs — see there), it
+ * generates:
  *   1. A tailored cover letter (Gemini call against profile.yml + cv.md + JD)
  *   2. A CV PDF (uses career-ops' cv-template.html + cv.md, no per-JD tailoring in v1)
  *   3. A cover letter PDF
@@ -13,9 +14,12 @@
  *
  * Tunables (env overrides):
  *   MIN_SCORE=4.0
- *   MAX_AGE_DAYS=14
  *   MAX_CONCURRENT=2
  *   GEMINI_MODEL=gemini-2.5-flash
+ *   freshness windows: FRESH_MAX_AGE_DAYS / MAX_AGE_DAYS (whales) /
+ *   EVERGREEN_MAX_AGE_DAYS / TEACHING_MAX_AGE_DAYS — all in lib/freshness.mjs,
+ *   because they must be the same numbers enqueue-review uses. Do NOT
+ *   reintroduce a local one here; that is the bug lib/freshness.mjs exists for.
  */
 
 import { readFile, writeFile, mkdir, stat } from 'fs/promises';
@@ -29,6 +33,10 @@ import { classifyArchetype } from './tailor-cv.mjs';
 import { canonKey } from './lib/canonical.mjs';
 import { BRANDED_GREENHOUSE } from './lib/branded-boards.mjs';
 import { parseJd } from './lib/jd-parse.mjs';
+import {
+  loadFreshnessPolicy, recencyDays,
+  FRESH_MAX_AGE_DAYS, WHALE_MAX_AGE_DAYS, EVERGREEN_MAX_AGE_DAYS, TEACHING_MAX_AGE_DAYS,
+} from './lib/freshness.mjs';
 import { renderCvHtml, renderCoverLetterHtml } from './lib/render.mjs';
 
 try {
@@ -38,11 +46,17 @@ try {
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const MIN_SCORE = parseFloat(process.env.MIN_SCORE || '4.0');
-const MAX_AGE_DAYS = parseInt(process.env.MAX_AGE_DAYS || '14', 10);
-// Schools hire on a school year, so enqueue-review admits a teaching role for
-// 150 days. Staging used one flat window, which meant a teaching card 31-150
-// days old got a review card that could never get an application pack.
-const TEACHING_MAX_AGE_DAYS = parseInt(process.env.TEACHING_MAX_AGE_DAYS || '150', 10);
+// THE FRESHNESS WINDOW IS NOT DECLARED HERE ANY MORE, and must not be again.
+//
+// It was, twice, and both times it was a copy of a rule that had already moved
+// on. First a flat window against enqueue-review's 150-day teaching window: a
+// teaching card 31-150 days old got a review card that could never get an
+// application pack. That was patched with a second constant, which held until
+// the windows became per-employer as well as per-track — and then the same
+// trap-state reopened one band lower, at 15-21 days, where it caught nine
+// tier-4/5 City of New York roles (2026-08-10). Staging cannot promise less
+// than enqueue promises, so it no longer gets its own opinion: both import
+// lib/freshness.mjs, whose header carries the full incident.
 const MAX_CONCURRENT = parseInt(process.env.MAX_CONCURRENT || '1', 10);  // free tier = 5 RPM
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -107,9 +121,20 @@ async function pLimit(items, n, fn) {
 // Parse the front-matter that fetch-jds.mjs writes at the top of every jds/*.md.
 // Thin adapter over the shared lib/jd-parse.mjs — preserves this file's field
 // names (postedIso/postedDays) so downstream code is unchanged.
+//
+// `days` is recencyDays(), the same call enqueue makes, and it reads **Updated:**
+// as well as **Posted:**. This file used to derive age from posted_at alone,
+// which is a different question from the one the card gate asks: measured
+// 2026-08-10, 8 roles were 6-12 days old to enqueue and 31-34 days old here,
+// four of them GitLab reqs the employer had edited that week. Matching the
+// windows would not have reached any of them — only matching the measurement does.
 function parseJdMeta(jdContent) {
   const jd = parseJd(jdContent);
-  return { title: jd.title, url: jd.url, company: jd.company, postedIso: jd.posted_at, postedDays: jd.posted_days };
+  return {
+    title: jd.title, url: jd.url, company: jd.company,
+    postedIso: jd.posted_at, postedDays: jd.posted_days,
+    days: recencyDays(jd),
+  };
 }
 
 async function loadCandidates() {
@@ -134,12 +159,7 @@ async function loadCandidates() {
     catch { continue; }                           // JD pruned/gone → drop silently
     const meta = parseJdMeta(jdContent);
 
-    let days = null;
-    if (meta.postedIso) {
-      const t = Date.parse(meta.postedIso);
-      if (!Number.isNaN(t)) days = Math.floor((Date.now() - t) / 86400000);
-    }
-    if (days === null) days = meta.postedDays;
+    const days = meta.days;
 
     out.push({
       reportFile: filename,
@@ -151,9 +171,11 @@ async function loadCandidates() {
       score,
       days,
       verdict: rec?.verdict || '',
-      // Needed by the age filter below: teaching roles get a 150-day window
-      // because schools hire on a school year. Without carrying it here the
-      // filter silently fell back to the 30-day cap for every track.
+      // Needed by the age filter below: the window is per-track AND per-employer
+      // (teaching 150, whale 30, evergreen 7, everything else 21), so the filter
+      // needs both of these carried through. Without the track it silently fell
+      // back to the flat cap for every track, which is how the teaching band
+      // broke the first time.
       track: rec?.track || 'pm',
       slug: slugify(`${meta.company}-${meta.title}`),
     });
@@ -172,10 +194,12 @@ async function loadCandidates() {
       best.set(key, r);
     }
   }
-  return [...best.values()].filter(r => {
-    const cap = r.track === 'teaching' ? TEACHING_MAX_AGE_DAYS : MAX_AGE_DAYS;
-    return r.days != null && r.days <= cap;
-  });
+  // THE INVARIANT: anything enqueue-review can card, this step can build. Same
+  // policy object, same numbers, one definition — so a role can no longer pass
+  // the card gate and fail the pack gate, which is the state that puts it in
+  // data/held-no-pack.md with a remedy that cannot work.
+  const freshness = await loadFreshnessPolicy(ROOT);
+  return [...best.values()].filter(r => r.days != null && r.days <= freshness.maxAgeDaysFor(r));
 }
 
 async function callGeminiWithRetry(prompt, maxAttempts = 6) {
@@ -315,7 +339,9 @@ async function main() {
   try { profileOverrides = await readFile(PROFILE_OVERRIDES, 'utf-8'); } catch {}
 
   const candidates = await loadCandidates();
-  console.log(`\nstage-applications: score>=${MIN_SCORE}, age<=${MAX_AGE_DAYS}d → ${candidates.length} candidates\n`);
+  console.log(`\nstage-applications: score>=${MIN_SCORE}, freshness per lib/freshness.mjs `
+    + `(<=${FRESH_MAX_AGE_DAYS}d, whales <=${WHALE_MAX_AGE_DAYS}d, evergreen <=${EVERGREEN_MAX_AGE_DAYS}d, `
+    + `teaching <=${TEACHING_MAX_AGE_DAYS}d) → ${candidates.length} candidates\n`);
 
   // --list / --dry-run: show what WOULD be staged and exit (no Gemini, no PDFs).
   if (process.argv.includes('--list') || process.argv.includes('--dry-run')) {

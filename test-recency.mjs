@@ -15,6 +15,11 @@
  */
 
 import { parseJd } from './lib/jd-parse.mjs';
+import { readFileSync } from 'fs';
+import {
+  recencyDays, maxAgeDaysFor,
+  FRESH_MAX_AGE_DAYS, WHALE_MAX_AGE_DAYS, EVERGREEN_MAX_AGE_DAYS, TEACHING_MAX_AGE_DAYS,
+} from './lib/freshness.mjs';
 
 const T = [];
 const eq = (l, got, want) => T.push([l, got, want]);
@@ -53,13 +58,73 @@ const bare = jd(['**Updated:** 2026-08-04']);
 eq('bare updated date parses', bare.updated_at, '2026-08-04');
 
 // ── the policy the parser feeds ──────────────────────────────────────────
-// enqueue uses the most recent employer activity. A 27-day-old req edited
-// yesterday is being worked; a 2-day-old repost nobody has touched since is not.
-const recency = (p, u) => Math.min(p ?? Infinity, u ?? Infinity);
-eq('recency prefers the more recent activity', recency(27, 2), 2);
-eq('recency falls back to posted when updated is absent', recency(27, null), 27);
-eq('recency falls back to updated when posted is absent', recency(null, 5), 5);
-eq('recency keeps posted when it is the fresher of the two', recency(1, 30), 1);
+// The most recent employer activity. A 27-day-old req edited yesterday is being
+// worked; a 2-day-old repost nobody has touched since is not.
+//
+// These call the REAL lib/freshness.mjs. They used to call a two-line copy of it
+// written inside this file, which is the same mistake the code was making — a
+// test that re-implements the rule cannot catch the rule drifting.
+const iso = (days) => new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+
+eq('recency prefers the more recent activity',
+   recencyDays({ posted_at: iso(27), updated_at: iso(2) }), 2);
+eq('recency falls back to posted when updated is absent',
+   recencyDays({ posted_at: iso(27) }), 27);
+eq('recency falls back to updated when posted is absent',
+   recencyDays({ updated_at: iso(5) }), 5);
+eq('recency keeps posted when it is the fresher of the two',
+   recencyDays({ posted_at: iso(1), updated_at: iso(30) }), 1);
+eq('recency is null when the posting carries no date at all',
+   recencyDays({}), null);
+
+// The `(N days ago)` parenthetical is frozen at the moment fetch-jds wrote the
+// file. Recompute from the ISO date or a role gets a day younger every day it
+// sits on disk — 113 of 551 tier-4+ JDs were already adrift on 2026-08-10.
+eq('recency recomputes from the ISO date, not the frozen parenthetical',
+   recencyDays({ posted_at: iso(9), posted_days: 2 }), 9);
+eq('recency falls back to the parenthetical when there is no ISO date',
+   recencyDays({ posted_days: 4 }), 4);
+
+// ── ONE WINDOW, OR THE PIPELINE BUILDS A TRAP ────────────────────────────
+// enqueue-review mints the card; stage-applications builds the CV the card is
+// not allowed to exist without. When their windows disagree, the band between
+// them is a set of roles that qualify for a card forever and can never get one:
+// they land in data/held-no-pack.md and age out unseen. It happened at 31-150
+// days (teaching) and again at 15-21 days (nine tier-4/5 NYC civic roles,
+// 2026-08-10). Assert the invariant instead of trusting two constants to match.
+const source = (f) => readFileSync(new URL(f, import.meta.url), 'utf-8');
+const staging = source('./stage-applications.mjs');
+const enqueue = source('./enqueue-review.mjs');
+
+eq('staging imports the shared freshness policy',
+   /from '\.\/lib\/freshness\.mjs'/.test(staging), true);
+eq('enqueue imports the shared freshness policy',
+   /from '\.\/lib\/freshness\.mjs'/.test(enqueue), true);
+eq('staging declares no window of its own',
+   /^const\s+\w*MAX_AGE_DAYS\s*=/m.test(staging), false);
+eq('staging computes age with recencyDays, not posted_at alone',
+   /recencyDays\(/.test(staging), true);
+
+// Every shape of role, asked of the one function both steps call.
+const whales = { isWhale: (c) => /anthropic/i.test(String(c || '')),
+                 isEvergreen: (c) => /sierra/i.test(String(c || '')) };
+eq('teaching gets the school-year window',
+   maxAgeDaysFor({ track: 'teaching', company: 'Success Academy' }, whales), TEACHING_MAX_AGE_DAYS);
+eq('a whale gets the whale window',
+   maxAgeDaysFor({ track: 'pm', company: 'Anthropic' }, whales), WHALE_MAX_AGE_DAYS);
+eq('an evergreen board gets the tight window',
+   maxAgeDaysFor({ track: 'pm', company: 'Sierra' }, whales), EVERGREEN_MAX_AGE_DAYS);
+eq('everything else gets the measured 21-day window',
+   maxAgeDaysFor({ track: 'pm', company: 'Acme' }, whales), FRESH_MAX_AGE_DAYS);
+// A whale on an evergreen board is still a whale — order, not a set.
+eq('whale beats evergreen when both match',
+   maxAgeDaysFor({ track: 'pm', company: 'Anthropic' },
+                 { isWhale: () => true, isEvergreen: () => true }), WHALE_MAX_AGE_DAYS);
+// Track E is why this reopened: NYC publishes on its own cadence and a civic
+// posting is routinely a fortnight old the first time fetch-civic sees it, so it
+// is born inside any window narrower than the card gate's.
+eq('a 16-day-old civic role is inside the window that builds its pack',
+   16 <= maxAgeDaysFor({ track: 'civic', company: 'DEPARTMENT OF FINANCE' }, whales), true);
 
 let pass = 0;
 const fails = [];
@@ -70,5 +135,8 @@ for (const [l, got, want] of T) {
 console.log(`\nrecency — ${T.length} cases`);
 for (const f of fails) console.log(f);
 console.log(`${pass}/${T.length} passed`);
-if (fails.length) { console.log('\nShelf age is not hiring intent.\n'); process.exit(1); }
+if (fails.length) {
+  console.log('\nShelf age is not hiring intent, and one window means one window.\n');
+  process.exit(1);
+}
 console.log('');
