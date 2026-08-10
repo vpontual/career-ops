@@ -870,3 +870,16 @@ Rows removed from the board by prune-stale.mjs. Kept so a bad prune is recoverab
 - 2026-08-10 | age 81d | https://www.amazon.jobs/en/jobs/10426437/senior-product-manager-technical | Audible | Senior Product Manager - Technical,
 - 2026-08-10 | age 161d | https://www.amazon.jobs/en/jobs/3193640/senior-product-manager-commerce | Twitch Interactive | Senior Product Manager, Commerce
 - 2026-08-10 | age 47d | https://jobs.ashbyhq.com/ultralytics/d2fac891-1a8d-48e2-ac72-17ed578a6e93 | Ultralytics LLC | Product Marketing Manager
+- 2026-08-10 | age 46d | https://careers.datadoghq.com/detail/8028422/?gh_jid=8028422 | Datadog | Product Manager II - Application Performance Monitoring
+- 2026-08-10 | page: insufficient content — likely nav/footer only | https://www.mongodb.com/careers/job/?gh_jid=8028593 | MongoDB | Senior Staff Product Manager, Query
+- 2026-08-10 | ats: req gone | https://jobs.ashbyhq.com/nubank/6967b843-b0ed-4010-9056-205b30b4b682 | Nubank | Quantitative Specialist — Portfolio Solutions, Nu Asset
+- 2026-08-10 | ats: req gone | https://jobs.ashbyhq.com/nubank/1417de01-f9ae-438e-9386-496cd2fdad39 | Nubank | Procurement Analyst
+- 2026-08-10 | ats: req gone | https://job-boards.greenhouse.io/gympass/jobs/8631107002 | Wellhub | Business Development Representative
+- 2026-08-10 | page: HTTP 404 | https://n26.com/en-eu/careers/positions/8054977?gh_jid=8054977 | N26 | Project Manager - Change Management and Control
+- 2026-08-10 | page: HTTP 404 | https://n26.com/en-eu/careers/positions/8105087?gh_jid=8105087 | N26 | Planning Analyst
+- 2026-08-10 | age 47d | https://www.amazon.jobs/en/jobs/10458249/senior-product-manager-community | Twitch Interactive | Senior Product Manager, Community
+- 2026-08-10 | age 69d | https://www.amazon.jobs/en/jobs/10436860/product-manager-technical | Audible | Product Manager - Technical
+- 2026-08-10 | age 81d | https://www.amazon.jobs/en/jobs/10426678/principal-product-manager-tech-fauna | Amazon.com Services | Principal Product Manager - Tech, Fauna
+- 2026-08-10 | age 81d | https://www.amazon.jobs/en/jobs/10426437/senior-product-manager-technical | Audible | Senior Product Manager - Technical,
+- 2026-08-10 | age 161d | https://www.amazon.jobs/en/jobs/3193640/senior-product-manager-commerce | Twitch Interactive | Senior Product Manager, Commerce
+- 2026-08-10 | age 48d | https://jobs.ashbyhq.com/ultralytics/d2fac891-1a8d-48e2-ac72-17ed578a6e93 | Ultralytics LLC | Product Marketing Manager

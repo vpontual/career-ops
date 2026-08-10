@@ -58,6 +58,22 @@ eq('geo: multi-region incl US stays eligible', normalizeGeo('Remote, Canada; Rem
 eq('geo: onsite elsewhere', normalizeGeo('San Francisco, CA'), 'onsite-elsewhere');
 eq('geo: hybrid NYC', normalizeGeo('New York, NY (hybrid, 3 days a week)'), 'hybrid-nyc');
 
+// REGRESSION 2026-08-10: two vocabularies did one job. NON_US (comprehensive,
+// foreign) gated only the REMOTE branch; ELSEWHERE (US-city-focused, no Brazil,
+// no Mexico, no Colombia) gated the on-site branch. So "Brazil (Remote)" was
+// caught and a bare "Sao Paulo" fell through to 'unclear' - which the 'now'
+// track tolerates. Nubank's Sao Paulo and Ciudad de Mexico roles reached VP's
+// board twice, including after a fix that only closed the remote half.
+eq('geo: a bare foreign city is not unclear', normalizeGeo('São Paulo'), 'onsite-elsewhere');
+eq('geo: accents must not defeat the match', normalizeGeo('Ciudad de México'), 'onsite-elsewhere');
+eq('geo: Bogotá with an accent', normalizeGeo('Bogotá, Colombia'), 'onsite-elsewhere');
+eq('geo: Buenos Aires', normalizeGeo('Buenos Aires'), 'onsite-elsewhere');
+eq('geo: a bare country name', normalizeGeo('Brazil'), 'onsite-elsewhere');
+// The US signal must still win over a foreign mention, or multi-region postings
+// that include the US get wrongly excluded.
+eq('geo: US signal still beats a foreign mention',
+   normalizeGeo('Remote — US, Brazil, Mexico'), 'remote-us');
+
 // ── functionArea ─────────────────────────────────────────────────────────
 // REGRESSION: matched /financ/ before /product manager/ and classified as
 // `finance`, which Track D's CANNOT_DO hard-rejected to 1 — on a role VP had

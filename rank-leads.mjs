@@ -284,7 +284,7 @@ const ELSEWHERE = /\b(san francisco|sf\b|bay area|palo alto|mountain view|san ma
 // Countries and non-US metros. ELSEWHERE above is a mix of US cities and foreign
 // ones, which is fine for the onsite test but useless for the question "is this
 // remote role inside the US". This list is only consulted for remote postings.
-const NON_US = /\b(france|paris|brazil|brasil|s[aã]o paulo|netherlands|amsterdam|singapore|india|bangalore|bengaluru|hyderabad|pune|philippines|manila|romania|bucharest|turkey|istanbul|mexico|argentina|colombia|bogota|chile|peru|poland|warsaw|krakow|japan|tokyo|china|shanghai|korea|seoul|vietnam|thailand|indonesia|nigeria|kenya|egypt|south africa|australia|sydney|melbourne|new zealand|berlin|munich|hamburg|barcelona|madrid|spain|lisbon|portugal|greece|athens|london|manchester|dublin|ireland|u\.?k\.?|united kingdom|england|scotland|germany|austria|vienna|switzerland|zurich|sweden|stockholm|norway|denmark|copenhagen|finland|helsinki|belgium|brussels|czech|prague|hungary|budapest|ukraine|israel|tel aviv|dubai|u\.?a\.?e\.?|saudi|qatar|canada|toronto|vancouver|montreal|ottawa|europe|emea|latam|apac|anz)\b/i;
+const NON_US = /\b(france|paris|brazil|brasil|s[aã]o paulo|rio de janeiro|belo horizonte|porto alegre|curitiba|recife|bras[ií]lia|campinas|florian[oó]polis|buenos aires|montevideo|guadalajara|monterrey|medell[ií]n|ciudad de m[eé]xico|cdmx|netherlands|amsterdam|singapore|india|bangalore|bengaluru|hyderabad|pune|philippines|manila|romania|bucharest|turkey|istanbul|mexico|argentina|colombia|bogota|chile|peru|poland|warsaw|krakow|japan|tokyo|china|shanghai|korea|seoul|vietnam|thailand|indonesia|nigeria|kenya|egypt|south africa|australia|sydney|melbourne|new zealand|berlin|munich|hamburg|barcelona|madrid|spain|lisbon|portugal|greece|athens|london|manchester|dublin|ireland|u\.?k\.?|united kingdom|england|scotland|germany|austria|vienna|switzerland|zurich|sweden|stockholm|norway|denmark|copenhagen|finland|helsinki|belgium|brussels|czech|prague|hungary|budapest|ukraine|israel|tel aviv|dubai|u\.?a\.?e\.?|saudi|qatar|canada|toronto|vancouver|montreal|ottawa|europe|emea|latam|apac|anz)\b/i;
 
 // An explicit US signal beats a foreign mention, so multi-region postings that
 // include the US stay eligible.
@@ -318,7 +318,10 @@ export function normalizeLevel(raw) {
 }
 
 function normalizeGeo(raw) {
-  const t = String(raw ?? '').trim();
+  // Diacritics are stripped before ANY matching. "Ciudad de Mexico" is in the
+  // vocabulary; "Ciudad de México" - which is what Nubank's ATS actually
+  // sends - is not, and matched nothing.
+  const t = String(raw ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
   if (!t) return 'unclear';
 
   // Replies that did use the enum pass straight through.
@@ -329,7 +332,17 @@ function normalizeGeo(raw) {
   const nyc = NYC_METRO.test(t);
   const remote = REMOTE.test(t);
   const hybrid = HYBRID.test(t);
-  const elsewhere = ELSEWHERE.test(t);
+  // ⚠ BOTH vocabularies, not just ELSEWHERE. This is the bug that put Nubank's
+  // Sao Paulo and Ciudad de Mexico roles on VP's board on 2026-08-10.
+  //
+  // There were two lists doing one job. NON_US is the comprehensive foreign
+  // vocabulary but was consulted ONLY on the remote branch below, while
+  // ELSEWHERE - which gates the on-site branch - is US-city-focused and has no
+  // Brazil, no Mexico, no Colombia. So "Brazil (Remote)" resolved correctly to
+  // onsite-elsewhere while a bare "Sao Paulo" fell through to 'unclear', and
+  // 'unclear' is tolerated on the 'now' track. Same posting, same country, two
+  // different answers depending on whether the word "remote" appeared.
+  const elsewhere = ELSEWHERE.test(t) || (NON_US.test(t) && !US_SIGNAL.test(t));
 
   // A listing naming both NYC and a far office ("San Francisco, CA | New York")
   // is workable - he takes the New York one.

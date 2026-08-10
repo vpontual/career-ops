@@ -414,9 +414,19 @@ const main = async () => {
     // restriction: Brazil only. Candidate is in the US." - in front of VP at 5.0.
     const repGeo = String(rep.geo || 'unclear');
     if (repGeo === 'onsite-elsewhere' || repGeo === 'hybrid-elsewhere') { stats.geo++; continue; }
-    // 'unclear' is still tolerated on the 'now' track only, where a thin OLAS-style
-    // posting genuinely may not say - but a KNOWN elsewhere never reaches here.
-    if (rep.track !== 'now' && !GEO_OK.has(repGeo)) { stats.geo++; continue; }
+    // Every track needs a geography VP can actually work in - no 'now' exemption
+    // for 'unclear' either.
+    //
+    // The exemption existed for thin OLAS-style postings that genuinely do not
+    // state a location. In practice 'unclear' meant FOREIGN: Nubank's Ciudad de
+    // Mexico and Sao Paulo roles rode it onto VP's board twice. It also put the
+    // minting gate at odds with the re-gate above, which has no track exemption -
+    // so a card was retired on one run and re-minted on the next, for ever. Two
+    // gates disagreeing about the same card is a churn loop, not a policy.
+    //
+    // An unlocatable posting can still be scored and sit in inbox-leads; it just
+    // does not earn a review card until someone can say where the job is.
+    if (!GEO_OK.has(repGeo)) { stats.geo++; continue; }
     const maxAge = rep.track === 'teaching' ? TEACHING_MAX_AGE_DAYS
                  : isWhale(rep.company) ? MAX_AGE_DAYS
                  : isEvergreen(rep.company) ? EVERGREEN_MAX_AGE_DAYS
@@ -482,7 +492,24 @@ const main = async () => {
     console.log(`\nrecorded ${unresolved.length} unresolved roles in data/unresolved-apply-paths.md`);
   }
 
-  if (!fresh.length) { console.log('nothing new to enqueue'); return; }
+  // ⚠ THIRD exit that skipped the writer. There are three ways this function
+  // can decide it has no new cards - no candidates at all (here), everything
+  // held for a missing CV, and written===0 - and every one of them used to
+  // return before updateQueue(). Retirement is a WRITE: a night that adds
+  // nothing can still need to remove a role that stopped qualifying. Fixing
+  // only the first two left Nubank's Ciudad de Mexico and Wellhub's Sao Paulo
+  // roles on VP's board through two more "successful" runs, each of which
+  // printed "re-gated 4 pending cards" and persisted none of them.
+  if (!fresh.length && !retiredSlugs.size) { console.log('nothing new to enqueue'); return; }
+  if (!fresh.length) {
+    console.log('nothing new to enqueue, but there are retirements to persist');
+    await updateQueue(QUEUE, (q) => {
+      const before = q.items.length;
+      q.items = q.items.filter((i) => i.decision || !retiredSlugs.has(i.slug));
+      console.log(`retired ${before - q.items.length} pending card(s) that no longer qualify`);
+    });
+    return;
+  }
 
   await copyFile(QUEUE, `${QUEUE}.bak-enqueue-${new Date().toISOString().slice(0, 10)}`);
 

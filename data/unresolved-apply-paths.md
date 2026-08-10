@@ -190,9 +190,11 @@ there is nothing to fill. Resolving the employer's own posting promotes it into 
 - [ ] [4] Mastercard | Product Manager - B2B Payments | 4d | https://www.indeed.com/viewjob?jk=05a1e17e7caca00a
 - [ ] [5] Amazon.com | Principal, Product Manager-Tech , eShop | 13d | https://www.indeed.com/viewjob?jk=8502ed4ab23f5882
 - [ ] [4] Amazon.com | Principal, Product Manager-Tech , éShop, Premium Ads CX | 13d | https://www.indeed.com/viewjob?jk=185c8d5e19482cc8
-- [ ] [5] ChowNow | Senior Product Manager, Marketing Agent | 2d | https://www.indeed.com/viewjob?jk=64593c9743c7fb86
 - [ ] [4] Capital One | Manager, Product Manager - Fraud Tools | 3d | https://www.indeed.com/viewjob?jk=c0676be079ead52b
 - [ ] [4] JPMorganChase | Product Manager - Payments - Vice President | 3d | https://www.indeed.com/viewjob?jk=1809a4aba949698b
 - [ ] [4] Meta | Consumer Product Marketing Manager, WhatsApp Payments | 4d | https://www.indeed.com/viewjob?jk=bdabbe9b81342c0c
 - [ ] [5] PermitFlow | Product Lead, New Products | 1d | https://www.indeed.com/viewjob?jk=43650f9ab2bc4e69
 - [ ] [5] PermitFlow | Product Manager, Applied AI (Staff / Senior Staff) | 1d | https://www.indeed.com/viewjob?jk=bb4c30cbdc86ca50
+- [ ] [4] Citi | Head of Product Development Strategy, Senior Vice President | 0d | https://www.indeed.com/viewjob?jk=4c54c243afd47cc9
+- [ ] [4] Google | Product Manager I, Search Discover AI | 0d | https://www.indeed.com/viewjob?jk=9f7f604cfc7dad67
+- [ ] [4] Google | Technical Program Manager, Autonomous Operations Product Lead | 0d | https://www.indeed.com/viewjob?jk=16d6b14ee71b660d
