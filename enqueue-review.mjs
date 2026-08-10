@@ -238,6 +238,7 @@ const main = async () => {
   // rewritten - and the pull is deliberately one-directional: a card can be
   // retired when it no longer qualifies, but nothing here promotes or re-scores
   // upward, so this can only ever narrow what he is asked to read.
+  const retiredSlugs = new Set();
   const stale = [];
   for (const it of queue.items) {
     if (it.decision) continue;                       // decided = VP's record
@@ -255,6 +256,7 @@ const main = async () => {
   const retiredKeys = new Set();
   if (stale.length) {
     const drop = new Set(stale.map(x => x.it.slug));
+    for (const sl of drop) retiredSlugs.add(sl);
     // Remember what was retired. Without this, pass 2 stops seeing the card in
     // `known`, decides it is a brand-new role and re-mints it on the SAME run -
     // a drop/re-add loop that churns the queue every night and fixes nothing.
@@ -606,10 +608,16 @@ const main = async () => {
   }
 
   const written = fresh.length - held.length;
-  if (!written) {
+  if (!written && !retiredSlugs.size) {
     console.log('\nno cards written (every qualifying role was held for a missing CV)');
     return;
   }
+  // ⚠ Do NOT return early when there is nothing to add but something to REMOVE.
+  // A night can legitimately produce zero new cards while still needing to
+  // retire ones that stopped qualifying, and returning here skipped the writer
+  // entirely: the run printed "re-gated 11 cards", wrote nothing, and left 7
+  // non-US roles on VP's board. Retirement is a write like any other.
+  if (!written) console.log('\nno new cards, but there are retirements to persist');
 
   // Append the new cards to a FRESHLY read queue, under an exclusive lock. This
   // used to write the copy loaded at the top of the run, so a decision VP made
@@ -617,6 +625,20 @@ const main = async () => {
   // UI's write could drop a whole night's new cards.
   const appended = queue.items.slice(-written);
   await updateQueue(QUEUE, (fresh) => {
+    // ⚠ RETIREMENT MUST HAPPEN HERE, not on the snapshot loaded at the top of
+    // the run. `queue` is a read-only copy used to build the `known` index;
+    // updateQueue re-reads the file under lock and writes THIS object. The first
+    // version of the re-gate filtered the snapshot, printed "re-gated 11
+    // cards", and discarded every one of them - 7 non-US cards were still on
+    // VP's board afterwards. The surrounding comment already warned that
+    // writing the loaded copy loses the UI's concurrent decisions; the same
+    // reference trap runs in the other direction.
+    if (retiredSlugs.size) {
+      const before = fresh.items.length;
+      fresh.items = fresh.items.filter((i) => i.decision || !retiredSlugs.has(i.slug));
+      const removed = before - fresh.items.length;
+      if (removed) console.log(`retired ${removed} pending card(s) that no longer qualify`);
+    }
     const have = new Set(fresh.items.map((i) => i.slug));
     for (const card of appended) if (!have.has(card.slug)) fresh.items.push(card);
     fresh.note = `${fresh.note || ''} | auto-enqueued ${written} on ${new Date().toISOString().slice(0, 10)}`.replace(/^ \| /, '');
