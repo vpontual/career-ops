@@ -78,7 +78,10 @@ const main = async () => {
       id: j.job_id,
       title,
       agency: clean(j.agency) || 'City of New York',
-      url: `https://cityjobs.nyc.gov/job/?id=${j.job_id}`,
+      // ⚠ PATH form, not a query string. `/job/?id=<id>` does not resolve at all,
+      // and stage-applications' liveness probe pruned all 31 of these as expired
+      // on the first run. `/job/<id>` returns 200.
+      url: `https://cityjobs.nyc.gov/job/${j.job_id}`,
       // ⚠ Normalise the location, do not pass the raw address through.
       // The dataset gives street addresses like "42 Broadway, N.Y." and
       // "55 Water St Ny Ny", which normalizeGeo cannot read - bare "NY" is the
