@@ -106,7 +106,14 @@ function candidateSlugs(company) {
   // and cannot cost precision: the exact-title check below is what accepts, and
   // a wrong slug's board simply will not carry the role.
   const SUFFIXES = ['inc', 'hq', 'app', 'co', 'ai'];
-  const bases = [squashed, hyphened, first].filter(x => x && x.length > 2);
+  // ⚠ Some boards keep the company name VERBATIM - spaces, capitals and all.
+  // Flock Safety's Ashby board is literally "Flock Safety"
+  // (jobs.ashbyhq.com/Flock%20Safety), and all seven of its open PM roles sat in
+  // the unresolved backlog because every candidate here was lowercased and
+  // stripped of punctuation first. I had written those rows off as dead reqs;
+  // they were live the whole time. So the untouched name is a candidate too.
+  const verbatim = String(company || '').trim();
+  const bases = [squashed, hyphened, first, verbatim].filter(x => x && x.length > 2);
   const withSuffix = [];
   for (const b of bases) for (const suf of SUFFIXES) withSuffix.push(b + suf);
   return [...new Set([...bases, ...withSuffix])];
@@ -118,7 +125,8 @@ async function board(kind, slug) {
   if (boardCache.has(key)) return boardCache.get(key);
   let out = null;
   try {
-    const r = await fetch(BOARDS[kind](slug), { headers: UA, signal: AbortSignal.timeout(15000) });
+    // encodeURIComponent, or a verbatim slug with a space produces a broken URL.
+    const r = await fetch(BOARDS[kind](encodeURIComponent(slug)), { headers: UA, signal: AbortSignal.timeout(15000) });
     if (r.ok) {
       const d = await r.json();
       const jobs = kind === 'smartrecruiters' ? (d.content || [])

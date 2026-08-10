@@ -365,6 +365,23 @@ const main = async () => {
     const rep = pool.slice().sort((a, b) =>
       (b.score - a.score) || ((a.days ?? 999) - (b.days ?? 999)))[0];
 
+    // BLACKLIST FIRST, ahead of every other gate.
+    //
+    // It used to sit after the aggregator branch below, so a blacklisted company
+    // that was aggregator-only never reached it: the seven Information Technology
+    // Senior Management Forum rows were counted as "no apply path", written into
+    // data/unresolved-apply-paths.md, and re-listed every night while the gate
+    // reported "0 blacklisted". A gate that a row can be routed around is not a
+    // gate. Blacklisted means gone from EVERYWHERE - no card, no unresolved row,
+    // no nightly re-resolution attempt.
+    //
+    // ITSMF is the case that motivated this: it is a reposter shell, not an
+    // employer. Its rows are other companies' requisitions - seven Capital One
+    // Travel reqs carried under the ITSMF name - so they are unresolvable by
+    // construction, because the board that would prove a title match belongs to
+    // a company that is not doing the hiring.
+    if (blacklist.size && blacklistEntry(rep.company, blacklist)) { stats.blacklisted++; continue; }
+
     if (!applyable.length) {
       // Known only from an aggregator. Recorded, never enqueued - a card with no
       // form behind it cannot be filled, and 99 of those is a queue nobody reads.
@@ -439,7 +456,7 @@ const main = async () => {
     // comment above states this is "the only gate that can stop a company
     // already present in lead-scores.json", because rank-leads filters before
     // scoring and never removes an entry cached before the company was listed.
-    if (blacklist.size && blacklistEntry(rep.company, blacklist)) { stats.blacklisted++; continue; }
+
 
     const conflict = variants.find(v => v !== rep && v.score !== rep.score);
     cand.push({ ...rep, altScore: conflict ? conflict.score : null, altFile: conflict ? conflict.file : null });
