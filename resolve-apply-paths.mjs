@@ -53,7 +53,20 @@ function candidateSlugs(company) {
   const squashed = base.replace(/[^a-z0-9]+/g, '');
   const hyphened = base.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const first = base.split(/\s+/)[0] || '';
-  return [...new Set([squashed, hyphened, first].filter(x => x && x.length > 2))];
+  // Suffix variants. Measured 2026-08-10: Ocrolus's Greenhouse board is
+  // "ocrolusinc" and Ironclad's Ashby board is "ironcladhq" - both mechanical,
+  // both un-generated, both sitting in the unresolved backlog for weeks. The
+  // legal-entity suffix this function strips out of the NAME is often exactly
+  // what the employer kept in its SLUG.
+  //
+  // Adding candidates costs only board-API calls, which are free and unmetered,
+  // and cannot cost precision: the exact-title check below is what accepts, and
+  // a wrong slug's board simply will not carry the role.
+  const SUFFIXES = ['inc', 'hq', 'app', 'co', 'ai'];
+  const bases = [squashed, hyphened, first].filter(x => x && x.length > 2);
+  const withSuffix = [];
+  for (const b of bases) for (const suf of SUFFIXES) withSuffix.push(b + suf);
+  return [...new Set([...bases, ...withSuffix])];
 }
 
 const boardCache = new Map();
