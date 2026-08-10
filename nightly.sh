@@ -80,6 +80,11 @@ run_step prune      /usr/bin/docker compose run --rm applier node prune-stale.mj
 run_step indeed     /home/vp/career-ops/.venv-jobspy/bin/python /home/vp/career-ops/fetch-indeed.py
 run_step amazon     /usr/bin/node fetch-amazon.mjs
 run_step olas       /usr/bin/docker compose run --rm applier node fetch-olas.mjs
+# Track E source. The city publishes every posting as open data (Socrata dataset
+# kpav-sd4t), so this needs no browser and no credentials - unlike OLAS above.
+# Without it Track E scores nothing: NYC hires through its own system, never
+# through the ~155 tracked ATS boards.
+run_step civic      /usr/bin/node fetch-civic.mjs
 
 # Turn the Indeed/aggregator backlog into real apply URLs. This script was
 # written 2026-08-05 to fix exactly the problem it names in its own header -
