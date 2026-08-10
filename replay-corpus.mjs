@@ -35,7 +35,7 @@ import { canonKey } from './lib/canonical.mjs';
 import { parseJd } from './lib/jd-parse.mjs';
 import { scoreFromFacts, normalizeGeo, normalizeLevel, normalizeFunctionArea } from './rank-leads.mjs';
 import { screenVerdict } from './lib/screen-evidence.mjs';
-import { detectTrack, scoreTeaching, scoreNonprofit, scoreNow } from './lib/track.mjs';
+import { detectTrack, scoreTeaching, scoreCivic, scoreNonprofit, scoreNow } from './lib/track.mjs';
 
 const ROOT = process.env.CAREER_OPS_ROOT ?? process.cwd();
 const argv = process.argv.slice(2);
@@ -63,6 +63,7 @@ function replay(rec) {
   try {
     switch (rec.track) {
       case 'teaching': return { score: scoreTeaching(f), why: 'teaching' };
+      case 'civic': return { score: scoreCivic(f), why: 'civic' };
       case 'nonprofit': return { score: scoreNonprofit(f), why: 'nonprofit' };
       case 'now': return { score: scoreNow(f), why: 'now' };
       default: return { score: scoreFromFacts(f), why: 'pm' };

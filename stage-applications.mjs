@@ -481,7 +481,11 @@ async function main() {
     // the matching cv-variants/cv-{variant}.md into this packet instead of copying
     // the generic CV. Falls back to cv.md if the variant file is missing.
     const variant = classifyArchetype(c.jdContent || '');
+    // NEVER fall back to cv.md: it is the truth SUPERSET, runs 3 pages (failing
+    // batch/cv-pages.py) and carries internal guard comments. Fall back to the
+    // AI-product variant, which is a real submittable document.
     let cvMd = cv, variantUsed = 'cv.md';
+    try { cvMd = await readFile(path.join(VARIANTS_DIR, 'cv-ai-product.md'), 'utf-8'); variantUsed = 'ai-product'; } catch {}
     try { cvMd = await readFile(path.join(VARIANTS_DIR, `cv-${variant}.md`), 'utf-8'); variantUsed = variant; } catch {}
     await renderPdf(renderCvHtml(cvMd), path.join(dir, 'cv.pdf'), browser);
     await writeFile(path.join(dir, 'cv-variant.txt'), variantUsed + '\n');

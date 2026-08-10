@@ -21,7 +21,7 @@ import { readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { parseJd } from './lib/jd-parse.mjs';
-import { detectTrack, trackFacts, scoreTeaching, scoreNonprofit, scoreNow } from './lib/track.mjs';
+import { detectTrack, trackFacts, scoreTeaching, scoreCivic, scoreNonprofit, scoreNow } from './lib/track.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const SCORES = path.join(ROOT, 'data', 'lead-scores.json');
@@ -129,6 +129,7 @@ for (const [k, v] of Object.entries(scores)) {
   const archetype = mod.normalizeArchetype(v.archetypeRaw ?? v.archetype, jd ? jd.title : '');
   const facts = { ...v, ...extra, geo, archetype, track, functionArea };
   const score = track === 'teaching' ? scoreTeaching(facts)
+              : track === 'civic' ? scoreCivic(facts)
               : track === 'nonprofit' ? scoreNonprofit(facts)
               : track === 'now' ? scoreNow(facts)
               : mod.scoreFromFacts(facts);

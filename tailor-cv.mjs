@@ -63,9 +63,38 @@ const ARCHETYPES = [
       'consumer product', 'consumers', 'millions of people', 'consumer AI',
       'mass market', 'end user', 'engagement', 'retention', 'daily active'
     ]
+  },
+  {
+    // ⚠ ai-product WAS the fallback, reachable only when a JD scored ZERO against
+    // every other archetype. Measured 2026-08-10 over 467 staged packs: it shipped
+    // 23 times (5%) while ai-enterprise shipped 210 (45%) - because almost every
+    // AI PM posting contains "evaluation" or "retrieval" (ai-infra) or "enterprise"
+    // or "integration" (ai-enterprise). VP's stated #1 target was the variant that
+    // almost never shipped. It is now scored on its own product-sense vocabulary.
+    name: 'ai-product',
+    // DISTINGUISHING vocabulary only. The first attempt at this list included
+    // 'product manager', 'roadmap', 'cross-functional', 'stakeholder' and 'ship' -
+    // words in essentially every PM posting, enterprise and infra ones included -
+    // and ai-product jumped to 70% of all JDs. A keyword that appears everywhere
+    // classifies nothing. These are terms that separate a product-craft role from
+    // an infrastructure or enterprise-sales-adjacent one.
+    keywords: [
+      'product sense', 'user research', 'discovery', 'prioritization', 'prioritisation',
+      '0-to-1', 'zero to one', 'PRD', 'AI product', 'customer problems',
+      'user experience', 'product intuition', 'user needs', 'product craft'
+    ]
   }
-  // Default fallback handled below as 'ai-product'
 ];
+
+// Generic words that appear in nearly every technology JD. Counting them at full
+// weight let two archetypes win on vocabulary that carries no signal about the
+// ROLE. Scored at a quarter so they can break a tie but never decide one.
+const GENERIC = new Set([
+  'integration', 'enterprise', 'B2B', 'GTM', 'go-to-market', 'compliance',
+  'evaluation', 'eval', 'API', 'inference', 'engagement', 'retention',
+  'product manager', 'roadmap', 'cross-functional', 'stakeholder', 'ship',
+  'product strategy', 'product requirements'
+].map(k => k.toLowerCase()));
 
 export function classifyArchetype(jdContent) {
   const text = jdContent.toLowerCase();
@@ -77,10 +106,24 @@ export function classifyArchetype(jdContent) {
   // Same reasoning for teaching roles: a school posting is dense in program /
   // leadership vocabulary and would otherwise classify as a product variant.
   if (/\b(teacher|teaching|instructor|lecturer|adjunct|faculty|educator)\b/.test(text.slice(0, 300))) return 'teaching';
+  // Public-interest employers are decided by WHO THEY ARE, not by keyword mass.
+  // A city agency or a foundation posting is dense in program/management/
+  // stakeholder vocabulary and would otherwise out-score into a product variant,
+  // shipping a CV about GPU fleets to a housing nonprofit. VP named both as live
+  // paths on 2026-08-10 - and had already approved an NYC Office of Technology &
+  // Innovation PM role, so civic is a demonstrated interest, not a hypothetical.
+  const head = text.slice(0, 600);
+  if (/\b(city of new york|nyc\b|new york city|department of|public sector|civil service|municipal|county of|state of new york|government agency|mayor'?s office)\b/.test(head)
+      && !/\b(saas|startup|series [abc]\b)\b/.test(head)) return 'civic';
+  if (/\b(non-?profit|501\(c\)|ngo\b|foundation|mission-driven|philanthrop|charitable|social impact|advocacy organization)\b/.test(head)) return 'nonprofit';
+
   // Score each archetype by keyword hits, pick the highest non-zero score.
   const scores = ARCHETYPES.map(a => ({
     name: a.name,
-    score: a.keywords.reduce((n, k) => n + (text.includes(k.toLowerCase()) ? 1 : 0), 0)
+    score: a.keywords.reduce((n, k) => {
+      const kk = k.toLowerCase();
+      return text.includes(kk) ? n + (GENERIC.has(kk) ? 0.25 : 1) : n;
+    }, 0)
   }));
   scores.sort((a, b) => b.score - a.score);
   if (scores[0].score === 0) return DEFAULT_VARIANT;

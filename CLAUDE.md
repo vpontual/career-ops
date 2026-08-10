@@ -403,9 +403,87 @@ Default modes are in `modes/` (English). Additional language-specific modes are 
 
 ### CV Source of Truth
 
-- `cv.md` in project root is the canonical CV
+- `cv.md` in project root is the **TRUTH SUPERSET**, not a submittable document.
+  It runs ~3 pages on purpose and carries every claim any variant may use.
+- `cv-variants/cv-<variant>.md` are **SELECTIONS** from it, one per archetype, and
+  are what actually ship. **A variant may drop and rephrase; it may never contain a
+  fact absent from `cv.md`.** Rebuilt 2026-08-10 after variants were found carrying
+  claims VP denies (see below).
 - `article-digest.md` has detailed proof points (optional)
 - **NEVER hardcode metrics** -- read them from these files at evaluation time
+- ⚠ `cv.md` and `cv-variants/` are **GITIGNORED**. They exist only on this VM.
+  There is no git backup; copy them somewhere private after material edits.
+
+#### Claims VP has explicitly DENIED (verified 2026-08-10)
+
+These were live in `cv-ai-infra.md` and `cv-ai-product.md` and shipped with three
+approved applications before they were caught. Do not reintroduce them:
+
+- He was **NOT** a founding PM at Reco.
+- He did **NOT** define the technical roadmap or the API surface.
+- He did **NOT** do research on model behavior.
+- He spoke with CISOs **to define how they would use the product** — any framing
+  that suggests sales or "earning the meeting" overstates it.
+
+#### The two-page gate is real and easy to breach
+
+`batch/cv-pages.py` fails any staged `cv.pdf` over 2 pages. Word count is a poor
+proxy: page breaks depend on where section headings fall, because Chrome will not
+split a heading from its content. **Measure, do not estimate** — render through
+`lib/render.mjs` in the applier container (Playwright is not installed on the host):
+
+```
+docker compose run --rm applier node <script-using-renderCvHtml>
+```
+
+Measured 2026-08-10: ~1377px renders 2 pages, ~1399px can render 3.
+
+#### Variant routing
+
+`classifyArchetype()` in `tailor-cv.mjs` picks the variant. Two title-only gates run
+first (`product marketing` → pmm, teaching titles → teaching), then two
+employer-type gates (city/agency → civic, nonprofit markers → nonprofit), then
+keyword scoring. ⚠ `ai-product` **used to be the fallback**, reachable only when a
+JD scored zero everywhere else — it shipped on 5% of packs while VP's #1 target.
+It is now a scored archetype (~20%). Generic terms (`enterprise`, `integration`,
+`evaluation`, `roadmap`, `product manager`…) are weighted 0.25 in `GENERIC`,
+because a keyword present in every posting classifies nothing.
+
+⚠ **`lib/render.mjs` strips HTML comments before escaping.** Without that, `cv.md`'s
+internal guard comments render as visible body copy in a submitted PDF. Do not
+remove the strip, and never make `cv.md` a render target — `stage-applications.mjs`
+falls back to `cv-ai-product.md`, not the superset.
+
+---
+
+### Scoring tracks
+
+`lib/track.mjs` routes each posting to a rubric via `detectTrack()`:
+
+| Track | Rubric | Notes |
+|---|---|---|
+| pm | `scoreFromFacts` (rank-leads.mjs) | the default commercial search |
+| teaching | `scoreTeaching` | schools, OLAS |
+| nonprofit | `scoreNonprofit` | mission employers |
+| now | `scoreNow` | income-replacement / fractional |
+| **civic** | **`scoreCivic`** | **added 2026-08-10** |
+
+**Track E (civic)** deliberately drops two Track A rules that would bury it:
+`aiNative` is not required (a city agency is almost never AI-native, and scoring
+its absence would cap every civic role at 3), and **comp only ever ADDS, never
+subtracts** — public pay scales sit below the commercial floor by design and VP is
+"not so hard coded on a salary number" for work that helps people. A civil-service
+**exam or eligible-list route scores as a POSITIVE**, because VP named it as part of
+the appeal, not a barrier. Absolute gates are kept: live-coding screen, unworkable
+geography, and licensed trades (PE, bar admission, RN) are disqualifying.
+
+⚠ **Track E currently scores nothing: there is no civic SOURCE.** NYC hires through
+`jobs.nyc.gov` / NYC Careers, not Greenhouse/Ashby/Lever, and no scan step covers
+it. Needs a `portals-civic.yml` + `scan-civic` step following the teaching and
+nonprofit pattern.
+
+⚠ Any new rubric must be wired into **all three** dispatch sites — `rank-leads.mjs`,
+`recompute-scores.mjs` and `replay-corpus.mjs` — or the corpus never heals.
 
 ---
 
