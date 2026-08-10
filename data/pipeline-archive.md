@@ -795,3 +795,78 @@ Rows removed from the board by prune-stale.mjs. Kept so a bad prune is recoverab
 - 2026-08-07 | age 78d | https://www.amazon.jobs/en/jobs/10426678/principal-product-manager-tech-fauna | Amazon.com Services | Principal Product Manager - Tech, Fauna
 - 2026-08-07 | age 78d | https://www.amazon.jobs/en/jobs/10426437/senior-product-manager-technical | Audible | Senior Product Manager - Technical,
 - 2026-08-07 | age 158d | https://www.amazon.jobs/en/jobs/3193640/senior-product-manager-commerce | Twitch Interactive | Senior Product Manager, Commerce
+- 2026-08-08 | age 46d | https://job-boards.greenhouse.io/anthropic/jobs/5247407008 | Anthropic | Research Product Manager, Model Behaviors
+- 2026-08-08 | age 46d | https://job-boards.greenhouse.io/mercury/jobs/6098827004 | Mercury | Senior Product Manager - Business Lending
+- 2026-08-08 | age 46d | https://careers.datadoghq.com/detail/8021327/?gh_jid=8021327 | Datadog | Product Manager II - Application Performance Monitoring
+- 2026-08-08 | ats: req gone | https://job-boards.greenhouse.io/algolia/jobs/6112351004 | Algolia | Staff Product Manager, Agent Studio
+- 2026-08-08 | age 46d | https://jobs.ashbyhq.com/abridge/aef83f6a-0bc8-4d6a-b310-24415918ee3c | Abridge | Forward Deployed Product Manager
+- 2026-08-08 | age 46d | https://jobs.ashbyhq.com/abridge/9c7ba6c3-7744-48b8-a5b3-dab55c22e4b3 | Abridge | Product Lead, AI/ML (Evals)
+- 2026-08-08 | age 46d | https://jobs.ashbyhq.com/baseten/132295d6-eeb4-4655-9847-a7e9a586d273 | Baseten | Partnerships Product Marketing Manager
+- 2026-08-08 | page: HTTP 404 | https://www.mongodb.com/careers/job/?gh_jid=8014547 | MongoDB | Product Marketing Manager
+- 2026-08-08 | ats: req gone | https://jobs.ashbyhq.com/nubank/ec39aa8f-cf17-4034-a56b-1edc05624313 | Nubank | Staff Product Manager
+- 2026-08-08 | no JD after 8d | https://www.amazon.jobs/en/jobs/10480474/product-manager-iii-tech-reputation-marketing-insights | Amazon.com Services | Product Manager III - Tech, Reputation Marketing & Insights
+- 2026-08-08 | no JD after 8d | https://olasjobs.org/job-details/TIEN0381560-0000 | The Tiegerman School | Business and Retail Marketing Teacher
+- 2026-08-08 | no JD after 8d | https://olasjobs.org/job-details/NRON0379934-6021 | New Rochelle City School District | Business Education Teacher - Grades 6-8
+- 2026-08-08 | no JD after 8d | https://olasjobs.org/job-details/BABN0383808-0000 | Babylon CSD | Business Teacher (Part-Time, Grades 7-12)
+- 2026-08-08 | age 46d | https://job-boards.greenhouse.io/quintoandar/jobs/4059158009 | QuintoAndar | Grupo QuintoAndar
+- 2026-08-08 | ats: req gone | https://job-boards.greenhouse.io/quintoandar/jobs/4105026009 | QuintoAndar | Grupo QuintoAndar
+- 2026-08-08 | ats: req gone | https://job-boards.greenhouse.io/gympass/jobs/8578414002 | Wellhub | Client Success Senior Manager
+- 2026-08-08 | ats: req gone | https://job-boards.greenhouse.io/gitlab/jobs/8548105002 | GitLab | AI Transformation Owner, Marketing
+- 2026-08-08 | ats: req gone | https://job-boards.greenhouse.io/gitlab/jobs/8592768002 | GitLab | Director of Engineering, Growth & Monetization
+- 2026-08-08 | ats: req gone | https://job-boards.greenhouse.io/gitlab/jobs/8607642002 | GitLab | Senior Customer Success Architect, France
+- 2026-08-08 | ats: req gone | https://job-boards.greenhouse.io/gitlab/jobs/8597809002 | GitLab | Senior Manager, Professional Services Technical Architect
+- 2026-08-08 | ats: req gone | https://job-boards.greenhouse.io/gitlab/jobs/8453504002 | GitLab | Senior Regional Marketing Manager, EMEA
+- 2026-08-08 | ats: req gone | https://job-boards.greenhouse.io/gympass/jobs/8557934002 | Wellhub | Business Development Representative II (Setor Público)
+- 2026-08-08 | ats: req gone | https://job-boards.greenhouse.io/gitlab/jobs/8652410002 | GitLab | Senior Customer Success Manager, SEUR
+- 2026-08-08 | not a posting (search url) | https://zetaschools.org/careers?gh_jid=5367869003 | Zeta Charter Schools | Elementary School Science Teacher
+- 2026-08-09 | age 46d | https://jobs.ashbyhq.com/decagon/9109be1c-b6e3-430f-a964-887253ef891a | Decagon | Product Manager, Duet
+- 2026-08-09 | age 46d | https://jobs.ashbyhq.com/suno/b446cbad-7124-4c53-b417-ce49038609af | Suno | Senior / Staff Product Manager, Consumer Create (Mobile)
+- 2026-08-09 | age 46d | https://jobs.ashbyhq.com/suno/bae3aa2a-ba82-4015-9f62-2fd0aa35aaee | Suno | Senior / Staff Product Manager, Consumer Create (Web)
+- 2026-08-09 | age 46d | https://databricks.com/company/careers/open-positions/job?gh_jid=8203285002 | Databricks | Sr Product Manager, Employee Experience
+- 2026-08-09 | age 46d | https://databricks.com/company/careers/open-positions/job?gh_jid=8560772002 | Databricks | Staff Product Manager, Agentic AI Applications
+- 2026-08-09 | age 46d | https://careers.datadoghq.com/detail/8024863/?gh_jid=8024863 | Datadog | Group Product Manager - Bring Your Own Cloud
+- 2026-08-09 | age 46d | https://careers.datadoghq.com/detail/8023763/?gh_jid=8023763 | Datadog | Group Product Manager - Code Security
+- 2026-08-09 | age 46d | https://www.cockroachlabs.com/careers/job/?gh_jid=7918100 | Cockroach Labs | Director, Product Management
+- 2026-08-09 | age 46d | https://www.cockroachlabs.com/careers/job/?gh_jid=7852365 | Cockroach Labs | Staff Product Manager (Data Onboarding)
+- 2026-08-09 | page: insufficient content — likely nav/footer only | https://www.mongodb.com/careers/job/?gh_jid=8054250 | MongoDB | Staff Product Manager, Security and Compliance (Public Sector)
+- 2026-08-09 | age 46d | https://job-boards.greenhouse.io/coneyislandprep/jobs/7308195 | Coney Island Prep | 2026-2027 High School Math Teacher
+- 2026-08-09 | age 46d | https://job-boards.greenhouse.io/coneyislandprep/jobs/7308206 | Coney Island Prep | 2026-2027 High School Science Teacher
+- 2026-08-09 | age 46d | https://job-boards.greenhouse.io/coneyislandprep/jobs/7339584 | Coney Island Prep | 2026-2027 Lower Elementary School Teacher
+- 2026-08-09 | age 46d | https://job-boards.greenhouse.io/coneyislandprep/jobs/7339645 | Coney Island Prep | 2026-2027 Middle School ELA Teacher
+- 2026-08-09 | age 46d | https://job-boards.greenhouse.io/coneyislandprep/jobs/7339651 | Coney Island Prep | 2026-2027 Middle School Math Teacher
+- 2026-08-09 | age 46d | https://job-boards.greenhouse.io/coneyislandprep/jobs/7339655 | Coney Island Prep | 2026-2027 Middle School Science Teacher
+- 2026-08-09 | age 46d | https://job-boards.greenhouse.io/coneyislandprep/jobs/7339657 | Coney Island Prep | 2026-2027 Middle School Social Studies Teacher
+- 2026-08-09 | age 46d | https://job-boards.greenhouse.io/coneyislandprep/jobs/7326574 | Coney Island Prep | 2026-2027 Upper Elementary School STEM Teacher
+- 2026-08-09 | page: insufficient content — likely nav/footer only | https://www.mongodb.com/careers/job/?gh_jid=7993419 | MongoDB | Senior Staff Product Manager, Query
+- 2026-08-09 | age 46d | https://www.amazon.jobs/en/jobs/10458249/senior-product-manager-community | Twitch Interactive | Senior Product Manager, Community
+- 2026-08-09 | age 46d | https://job-boards.greenhouse.io/vtex/jobs/6094867004 | VTEX | Business and Engagement Development Specialist
+- 2026-08-09 | age 46d | https://job-boards.greenhouse.io/gympass/jobs/8547511002 | Wellhub | 7CARD: Client Sales Manager (SMB)
+- 2026-08-09 | age 46d | https://job-boards.greenhouse.io/gympass/jobs/8546456002 | Wellhub | Business Development Executive I
+- 2026-08-09 | age 46d | https://job-boards.greenhouse.io/gympass/jobs/8578368002 | Wellhub | Business Development Representative (ENT)
+- 2026-08-09 | age 46d | https://job-boards.greenhouse.io/gympass/jobs/8586416002 | Wellhub | Client Success Director - Public Sector
+- 2026-08-09 | age 46d | https://job-boards.greenhouse.io/gympass/jobs/8587354002 | Wellhub | Demand Generation Manager
+- 2026-08-09 | age 46d | https://job-boards.greenhouse.io/gympass/jobs/8108633002 | Wellhub | ENT Business Development Representative
+- 2026-08-09 | age 46d | https://job-boards.greenhouse.io/gympass/jobs/8593909002 | Wellhub | Regional Engagement Manager
+- 2026-08-09 | age 46d | https://job-boards.greenhouse.io/gympass/jobs/8592025002 | Wellhub | Sales Development Senior Manager
+- 2026-08-09 | age 46d | https://job-boards.greenhouse.io/gympass/jobs/8587386002 | Wellhub | Sales Development Senior Manager  (m/f/d)
+- 2026-08-09 | age 46d | https://job-boards.greenhouse.io/gympass/jobs/8580028002 | Wellhub | Sales Executive (Sviluppo Commerciale B2B Full-Cycle)
+- 2026-08-09 | age 46d | https://job-boards.greenhouse.io/gympass/jobs/8108591002 | Wellhub | SMB Business Development Representative
+- 2026-08-09 | ats: req gone | https://job-boards.greenhouse.io/gitlab/jobs/8593622002 | GitLab | Senior Solutions Architect, MEA
+- 2026-08-09 | age 46d | https://job-boards.greenhouse.io/gympass/jobs/8546388002 | Wellhub | Business Development Executive I
+- 2026-08-09 | age 46d | https://job-boards.greenhouse.io/gympass/jobs/8546601002 | Wellhub | Sales Development Senior Manager
+- 2026-08-09 | age 46d | https://job-boards.greenhouse.io/gympass/jobs/8576386002 | Wellhub | Sales Development Senior Manager  (m/f/d)
+- 2026-08-09 | ats: req gone | https://jobs.ashbyhq.com/clera/5c082804-6928-4438-aeea-71f706d26ad9 | CLERA | Product Manager, Banking
+- 2026-08-09 | age 46d | https://jobs.ashbyhq.com/ultralytics/d2fac891-1a8d-48e2-ac72-17ed578a6e93 | Ultralytics LLC | Product Marketing Manager
+- 2026-08-09 | age 89d | https://www.indeed.com/viewjob?jk=03a2c861bf272c19 | Cellebrite | Senior Product Marketing Manager
+- 2026-08-09 | age 69d | https://www.indeed.com/viewjob?jk=9f35a9f0c4b428f3 | Jonas Software | Product Manager
+- 2026-08-09 | age 68d | https://www.amazon.jobs/en/jobs/10436860/product-manager-technical | Audible | Product Manager - Technical
+- 2026-08-09 | age 80d | https://www.amazon.jobs/en/jobs/10426678/principal-product-manager-tech-fauna | Amazon.com Services | Principal Product Manager - Tech, Fauna
+- 2026-08-09 | age 80d | https://www.amazon.jobs/en/jobs/10426437/senior-product-manager-technical | Audible | Senior Product Manager - Technical,
+- 2026-08-09 | age 160d | https://www.amazon.jobs/en/jobs/3193640/senior-product-manager-commerce | Twitch Interactive | Senior Product Manager, Commerce
+- 2026-08-10 | age 46d | https://job-boards.greenhouse.io/togetherai/jobs/5172169007 | Together AI | Product Manager, AI Infrastructure
+- 2026-08-10 | age 47d | https://www.amazon.jobs/en/jobs/10458249/senior-product-manager-community | Twitch Interactive | Senior Product Manager, Community
+- 2026-08-10 | age 69d | https://www.amazon.jobs/en/jobs/10436860/product-manager-technical | Audible | Product Manager - Technical
+- 2026-08-10 | age 81d | https://www.amazon.jobs/en/jobs/10426678/principal-product-manager-tech-fauna | Amazon.com Services | Principal Product Manager - Tech, Fauna
+- 2026-08-10 | age 81d | https://www.amazon.jobs/en/jobs/10426437/senior-product-manager-technical | Audible | Senior Product Manager - Technical,
+- 2026-08-10 | age 161d | https://www.amazon.jobs/en/jobs/3193640/senior-product-manager-commerce | Twitch Interactive | Senior Product Manager, Commerce
+- 2026-08-10 | age 47d | https://jobs.ashbyhq.com/ultralytics/d2fac891-1a8d-48e2-ac72-17ed578a6e93 | Ultralytics LLC | Product Marketing Manager

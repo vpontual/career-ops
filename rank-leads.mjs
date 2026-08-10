@@ -27,6 +27,8 @@ import { canonKey } from './lib/canonical.mjs';
 import { parseJd } from './lib/jd-parse.mjs';
 import { detectTrack, titlePassesForTrack, trackFacts, scoreTeaching, scoreNonprofit, scoreNow } from './lib/track.mjs';
 import { screenVerdict, findReportableFormats } from './lib/screen-evidence.mjs';
+import { compBand } from './lib/comp-band.mjs';
+import { skillGate, defaultLacks } from './lib/skill-gate.mjs';
 
 dotenv.config();
 
@@ -73,14 +75,42 @@ const LIMIT = (() => {
 
 // ── Load filters and resume ───────────────────────────────────────────────
 
+// What a product role is CALLED, as a shape rather than a list of 24 exact
+// strings. This is the filter VP was actually complaining about on 2026-08-10 -
+// "why are we limiting based on the extra words in the title?" - and he was
+// right: it runs BEFORE the model is ever called (see the titleDropped branch in
+// main()), so scoreFromFacts cannot rescue a posting this drops. It is the only
+// title rule in the system that is a true gate rather than a score adjustment.
+//
+// portals.yml's `positive` list required an EXACT substring. It carried
+// "Director, Product Management" and "Director of Product Management" but not a
+// bare "Product Management", so this was silently discarded:
+//
+//     "Senior Manager, Product Management: Agentic Software Delivery"
+//
+// - agentic AI product management, dropped on word order. "Product Builder" went
+// the same way. Measured over the 1,904 JDs on disk: this regex admits exactly
+// those 2 and loses NOTHING the 24-string list admitted (verified 0 regressions).
+//
+// The NEGATIVE list is untouched and still wins. It encodes real _profile.md
+// exclusions - growth/demand-gen/sales/engineering - and those are judgements
+// about the work, not about title formatting.
+const PRODUCT_ROLE = /\b(?:head|director|vp|svp|gvp|chief)\s+(?:of\s+)?product\b|\bproduct\s+(?:manager|management|owner|lead|leader|director|marketing|strategy|builder)\b|\b(?:senior|staff|principal|group|lead|founding)\s+pm\b/i;
+
 function loadTitleFilter() {
   const portals = yaml.load(readFileSync(PORTALS_PATH, 'utf-8'));
   const tf = portals.title_filter || {};
   const positive = (tf.positive || []).map(s => s.toLowerCase());
   const negative = (tf.negative || []).map(s => s.toLowerCase());
   return (title) => {
-    const lower = (title || '').toLowerCase();
-    const hasPos = positive.length === 0 || positive.some(k => lower.includes(k));
+    // '_' and '/' are word characters to a regex, so "Product Manager_Product
+    // Studio" fails \bmanager\b. Normalising separators is the difference
+    // between 0 regressions and 1.
+    const norm = String(title || '').replace(/[_/|]+/g, ' ');
+    const lower = norm.toLowerCase();
+    // The list survives as a user-editable extension point; the regex is what
+    // actually does the work now.
+    const hasPos = PRODUCT_ROLE.test(norm) || positive.some(k => lower.includes(k));
     const hasNeg = negative.some(k => lower.includes(k));
     return { passes: hasPos && !hasNeg, hasPos, hasNeg };
   };
@@ -329,6 +359,22 @@ function normalizeGeo(raw) {
   return 'unclear';
 }
 
+// The model returns things like 1 and 124 for compLow. Treated as a real salary,
+// 1 is below every floor and silently caps a good role: it costs -1 for being
+// under $120k AND hard-caps the score at 3 for being under $150k. 32 such values
+// were live when this guard was written at EXTRACTION time - and 29 survived it,
+// because rank-leads cache-hits on an already-scored JD (877 hits to 9 LLM calls
+// on a typical night) and recompute-scores re-applies policy to the STORED facts.
+// A guard that only runs on new intake cannot heal the corpus, so this lives in
+// one exported place and BOTH paths call it.
+//
+// Anything under $10k is not a US base salary, so it reads as "not stated" rather
+// than as a number - and silence costs nothing, by design.
+export function sanitizeCompLow(raw) {
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 10000 ? n : null;
+}
+
 // Third field, same lesson. The model was given five archetype values and
 // returned twelve-plus of its own - "Product", "Staff PM", "Product Leader",
 // "Technical PM". So the Director/Founding bonus never fired, and the lead-gen
@@ -337,12 +383,21 @@ function normalizeGeo(raw) {
 //
 // Order matters here: "Senior Product Marketing Manager" contains both
 // "product marketing" and "senior", and it is a marketing role.
-function normalizeArchetype(raw) {
-  const t = String(raw ?? '').toLowerCase();
+function normalizeArchetype(raw, title = '') {
+  // The TITLE is authoritative for seniority, the same discipline geo already
+  // uses: the ATS record says what the role IS, the model says what it thought.
+  // Reading the model alone missed 'Head of Product Management - Intelligence
+  // Ventures' (Spectrum, NYC, AI-native, $263K-$394K stated) because the model
+  // answered the free text 'Platform PM', which falls through to Senior PM and
+  // forfeits the Director/Head +1. 73 records carried a Head/Director/VP title
+  // against a non-Director archetype.
+  const t = `${String(raw ?? '')} ${String(title ?? '')}`.trim().toLowerCase();
   if (!t) return 'Other';
   if (/product marketing|pmm\b/.test(t)) return 'Product Marketing';
   if (/founding|founder|first pm|early.stage pm/.test(t)) return 'Founding/Early PM';
-  if (/director|head of|vp\b|chief|leader|leadership|principal/.test(t)) return 'Director/Head of Product';
+  // \bdirector\b, not /director/: 'Sr Product Manager, Provider Directory
+  // Products' is not a director role, and the unbounded pattern read it as one.
+  if (/\bdirector\b|\bhead of\b|\b[gse]?vp\b|chief|leader|leadership|principal/.test(t)) return 'Director/Head of Product';
   if (/\bai\b|ml\b|machine learning|llm|genai/.test(t)) return 'AI Product PM';
   if (/senior|staff|lead\b|sr\.?\b|technical pm|platform pm|product manager|product management|\bproduct\b|\bpm\b/.test(t)) {
     return 'Senior PM';
@@ -431,7 +486,14 @@ function scoreFromFacts(f) {
   // functionArea is normalised in code from the title, so it says what the role
   // IS. leadGen is retained as a card flag, not a gate.
   if (f.functionArea === 'marketing-demand') return 1;
-  if (f.level === 'below') return 1;                          // not entry level
+  // `level === 'below'` used to `return 1` here. It is derived from TITLE WORDS
+  // (LEVEL_BELOW = associate|assistant|trainee|graduate), so it was a title word
+  // producing a hard reject - the exact thing VP ruled out on 2026-08-10: "i dont
+  // care if its senior, director, principla, co founding they all count, even
+  // regular pm counts because every company does titles differently." Live
+  // casualty: Ancestry's "Associate Technical Product Manager", aiNative and
+  // remote-US, scored a hard 1 on the word "Associate". It is now a -1 applied
+  // below, which a genuinely junior role cannot outrun but a mistitled senior one can.
   if (f.geo === 'onsite-elsewhere') return 1;                 // he is in NYC
   if (f.geo === 'hybrid-elsewhere') return 1;                 // weekly flights
 
@@ -440,22 +502,52 @@ function scoreFromFacts(f) {
   // The thesis: AI-native product work is what he is actually hunting.
   if (f.aiNative) score += 1;
 
-  // Seniority he has earned. Director/Head and Founding are the stretch he wants.
-  if (f.archetype === 'Director/Head of Product' || f.archetype === 'Founding/Early PM') score += 1;
+  // NO TITLE BONUS. This used to be:
+  //   if (archetype === 'Director/Head of Product' || 'Founding/Early PM') score += 1
+  // Removed 2026-08-10 on VP's instruction. `modes/_profile.md` has always opened
+  // with "Scoring axis: CLOSENESS TO PRODUCT, not title height - a Senior IC with
+  // direct product ownership beats a VP managing managers, even at higher comp",
+  // and this line was the opposite of that rule, written into the scorer.
+  //
+  // Measured before removal: it was the ONLY thing holding 36 roles at tier 4 -
+  // Mastercard, JPMorganChase x3, US Bank, CenterWell, Availity, Progyny - almost
+  // all non-AI-native BigCo director reqs with no stated comp, i.e. verbatim the
+  // "VP of Product at BigCo with no direct product surface" that _profile.md lists
+  // as explicitly NOT a match. A job title can no longer buy a tier.
+  //
+  // Closeness to product is the axis that SHOULD sit here, and it is not
+  // implemented. Three candidate signals were measured on 2026-08-10 and all three
+  // were rejected as noise: a `hands-on` regex fired on 50% of VP's approvals vs
+  // 33% of his rejections against a 29% base rate, matched "hands-on experience
+  // with AWS" and a school named "Founding", and disagreed with itself on 13% of
+  // requisitions scraped twice. Do not reintroduce it as a keyword test. It needs
+  // sentence-scoped extraction storing the verbatim quote it fired on, the way
+  // lib/screen-evidence.mjs does, validated against VP's own decisions.
+  if (f.level === 'below') score -= 1;
 
   // Comp: a stated band at or above his floor is real signal. An unstated band
   // is neutral — compLow is null there, never 0 — so silence costs nothing.
   if (f.compLow != null && f.compLow >= 150000) score += 1;
   if (f.compLow != null && f.compLow < 120000) score -= 1;
 
-  // $150K+ base is a FLOOR, not a bonus (mission: "below only with specific
-  // equity terms - a percentage, share count, or strike price"). As a mere +1 it
-  // let eight tier-4 roles through with stated bases from $124K to $142K -
-  // GitHub, Indeed, Bloomberg twice, Addepar - each of which VP had already
-  // ruled out. Silence still costs nothing; only a stated sub-floor band caps.
-  // No equity fact is extracted yet, so a genuinely equity-heavy offer will be
-  // held at 3 and has to be spotted by hand.
-  if (f.compLow != null && f.compLow < 150000) score = Math.min(score, 3);
+  // The `< 150000` CAP that used to sit here is GONE (2026-08-10, VP's call):
+  //   if (f.compLow < 150000) score = Math.min(score, 3)
+  // It was a BLOCK - no combination of other evidence could lift a below-floor
+  // role to tier 4 - and VP ruled that out: "if i want 150k why would we block
+  // 250k? 1M? thats dumb and we shouldnt block below 15[0]k automatically either
+  // because the other aspects of it can help prop up the role."
+  //
+  // The -1 above survives, because a -1 is not a block: it is one point another
+  // signal can outweigh, which is exactly what he asked for.
+  //
+  // KNOWN CONFLICT, surfaced to VP 2026-08-10 rather than resolved in code. This
+  // cap was originally added BECAUSE VP had rejected GitHub, Indeed, Bloomberg x2
+  // and Addepar at stated bases of $124K-$142K. Removing it re-admits 23 such
+  // roles (Bloomberg PM Enterprise AI $140K, Harvey $137.6K, Datadog $123K).
+  // His instruction is newer than those rejections, so the instruction wins - but
+  // if the queue fills with $130K roles he says no to, this is the line to revisit,
+  // and the right fix is probably to stop re-enqueueing what he already declined,
+  // not to reinstate a cap.
 
   // A coding screen makes the role unwinnable for him regardless of fit, and the
   // mission states it twice. That rule is unchanged. What changed (2026-08-06) is
@@ -481,6 +573,13 @@ function scoreFromFacts(f) {
   // through AI does not gate) which was previously listed as a known gap.
   // `technicalScreen` is retained as the model's raw claim and surfaces as a card
   // flag, so the risk is reported rather than silently priced in.
+  // A REQUIRED skill VP does not have is a hard no - he cannot do the job. This
+  // is evidence-gated the same way technicalScreenStated is: the skill must
+  // appear inside a requirements section (or a requirement-worded sentence),
+  // never merely somewhere in the body, and a degree-major list does not count.
+  // Nice-to-haves surface as a card warning instead and cost nothing.
+  if (Array.isArray(f.skillBlocked) && f.skillBlocked.length) return 1;
+
   if (f.technicalScreenStated) return 1;
 
   // Geography he can work is assumed, not rewarded; only ambiguity costs.
@@ -564,7 +663,7 @@ async function scoreOne(jd, resume, targets) {
       }
       const parsed = parseLLMJson(content);
       const facts = {
-        archetype: normalizeArchetype(parsed.archetype),
+        archetype: normalizeArchetype(parsed.archetype, jd.title),
         archetypeRaw: String(parsed.archetype || '').slice(0, 40),  // what it actually said
         aiNative: parsed.aiNative === true,
         // Location comes from the ATS record, NOT from the model. Brex posts the
@@ -594,13 +693,32 @@ async function scoreOne(jd, resume, targets) {
             interviewFormats: findReportableFormats(`${jd.title || ''}\n${jd.body || ''}`).join('; '),
           };
         })(),
-        // The model returns things like 1 and 124 for compLow. Treated as a real
-        // salary, 1 is below every floor and silently caps a good role; 32 such
-        // values were live. Anything under $10k is not a US base salary, so it is
-        // read as "not stated" rather than as a number.
-        compLow: Number.isFinite(Number(parsed.compLow)) && Number(parsed.compLow) >= 10000
-          ? Number(parsed.compLow)
-          : null,
+        // Comp comes from the POSTING, not the model - the fourth fact to learn
+        // that lesson after geo, level and functionArea. The model returned 1
+        // for a posting printing "$263,200.00 and $393,800.00". The model's
+        // answer is kept as a fallback for phrasings the parser misses, and as
+        // compLowRaw so the two can be compared.
+        ...(() => {
+          // A skill VP does not have, weighed by WHERE the posting asks for it.
+          // His rule, 2026-08-10: "IF its a requirement, block it. if its in the
+          // nice to haves section, show it with a warning."
+          const sg = skillGate(`${jd.title || ''}\n${jd.body || ''}`, defaultLacks());
+          return {
+            skillBlocked: sg.blocked.map(b => b.skill),
+            skillBlockedEvidence: sg.blocked.map(b => `${b.skill}: ${b.evidence}`).join(' | '),
+            skillWarnings: sg.warned.map(w => w.skill),
+          };
+        })(),
+        ...(() => {
+          const band = compBand(`${jd.title || ''}\n${jd.body || ''}`);
+          const modelSaid = sanitizeCompLow(parsed.compLow);
+          return {
+            compLow: band.compLow ?? modelSaid,
+            compLowRaw: modelSaid,
+            compSource: band.compLow != null ? 'posting' : (modelSaid != null ? 'model' : 'unstated'),
+            compEvidence: band.evidence || '',
+          };
+        })(),
       };
       // Which of the three searches this belongs to, and the extra facts that
       // rubric needs - both read off the posting in code, so neither costs
@@ -849,4 +967,4 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
 // corpus rather than re-derived. recompute-scores.mjs previously reached in and
 // sliced these out of this file's SOURCE TEXT to avoid drifting from them - which
 // works until a brace moves. Importing is the same guarantee without the fragility.
-export { normalizeGeo, normalizeArchetype, scoreFromFacts };
+export { normalizeGeo, normalizeArchetype, scoreFromFacts, PRODUCT_ROLE };

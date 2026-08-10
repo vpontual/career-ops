@@ -87,6 +87,16 @@ run_step olas       /usr/bin/docker compose run --rm applier node fetch-olas.mjs
 # nothing ever read or drained data/unresolved-apply-paths.md. It is the single
 # largest pool of qualifying roles in the system.
 run_step resolve-apply /usr/bin/docker compose run --rm applier node resolve-apply-paths.mjs
+# Second, narrower resolver for what the board APIs cannot reach (unguessable
+# slugs like Ashby's "affinity.co", Greenhouse's "localitymediallcdbafirstdue").
+# It writes ONLY to data/resolve-candidates.md - never to pipeline.md - because a
+# permissive version of its acceptance rule measured 18% precision, and a wrong
+# row in pipeline.md is close to irreversible (prune-stale archives on age or
+# ATS-death only, and its liveness check understands 3 ATS families).
+# It caps itself to ~25 searxng queries/night on a persisted cursor: searxng is
+# SHARED with marginalia, agentlens and veephone, and ~60 queries exhausts every
+# upstream engine. The backlog drains over a fortnight, which is fine.
+run_step resolve-search /usr/bin/docker compose run --rm applier node resolve-via-search.mjs
 
 # ── scoring and packaging ──────────────────────────────────────────────────
 # Refresh which employers actually CLOSE their requisitions. The freshness gate

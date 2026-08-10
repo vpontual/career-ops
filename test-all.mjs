@@ -671,6 +671,32 @@ if (!fileExists('test-recency.mjs')) {
 
 // ── SUMMARY ─────────────────────────────────────────────────────
 
+// ── 21. SKILLS VP DOES NOT HAVE ─────────────────────────────────
+// Blocks only where the posting REQUIRES the skill; nice-to-haves warn.
+// A wrong block is a silent loss of a qualified role.
+console.log('\n21. Skill gate');
+if (!fileExists('test-skill-gate.mjs')) {
+  fail('test-skill-gate.mjs missing — the skill gate has no specification');
+} else {
+  const out = run('node', ['test-skill-gate.mjs']);
+  if (out === null) fail('skill-gate tests failing — run: node test-skill-gate.mjs');
+  else pass(`skill gate ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
+}
+
+// ── 20. SEARCH-RESOLVED APPLY PATHS ─────────────────────────────
+// A wrong resolution is worse than a miss: the chain stages a tailored CV
+// against whatever it resolves and VP reviews the card as real. A permissive
+// version of this rule measured 18% precision over 51 real rows.
+console.log('\n20. Apply-path resolution rule');
+if (!fileExists('test-resolve-rule.mjs')) {
+  fail('test-resolve-rule.mjs missing — search resolution has no specification');
+} else {
+  const out = run('node', ['test-resolve-rule.mjs']);
+  if (out === null) fail('resolve-rule tests failing — run: node test-resolve-rule.mjs');
+  else pass(`resolve rule ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
+}
+
+
 console.log('\n' + '='.repeat(50));
 console.log(`📊 Results: ${passed} passed, ${failed} failed, ${warnings} warnings`);
 

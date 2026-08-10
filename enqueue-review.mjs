@@ -220,6 +220,54 @@ const main = async () => {
   // (Responsible AI)" whose JD canonicalises to "productmanagerii". A rejected
   // role reappearing is the failure that makes an auto-enqueued queue unreadable,
   // so the apply URL is indexed as well.
+  // ── Re-gate the cards already sitting in the queue ───────────────────────
+  // This file's header promises "scores are read live from lead-scores.json on
+  // every run, never copied and frozen", and records that the 07-31 batch froze
+  // its scores and by 08-04 six were wrong IN VP'S FAVOUR - "the worst direction
+  // for them to be wrong". That was fixed for cards being WRITTEN and never
+  // applied to cards already written: pass 2 below skips any known key outright,
+  // so a card minted before a scoring fix keeps its old number forever.
+  //
+  // Live proof, 2026-08-10: Wellhub "Staff Product Manager" sat in front of VP at
+  // 5.0 / geo remote-us. Its record reads geoRaw "Brazil (Remote)", which
+  // normalizeGeo resolves to onsite-elsewhere and scoreFromFacts hard-gates to 1.
+  // The model had even written redFlags "Location restriction: Brazil only.
+  // Candidate is in the US." Every part of the system knew except the card.
+  //
+  // Only PENDING cards are touched. A decided card is VP's record and is never
+  // rewritten - and the pull is deliberately one-directional: a card can be
+  // retired when it no longer qualifies, but nothing here promotes or re-scores
+  // upward, so this can only ever narrow what he is asked to read.
+  const stale = [];
+  for (const it of queue.items) {
+    if (it.decision) continue;                       // decided = VP's record
+    const live = it.scoreSource ? scores[it.scoreSource] : null;
+    if (!live || typeof live !== 'object' || !('aiNative' in live)) continue;
+    const liveScore = Number(live.score);
+    const geoBad = !GEO_OK.has(String(live.geo || 'unclear'));
+    const tierBad = Number.isFinite(liveScore) && liveScore < MIN_SCORE;
+    if (!geoBad && !tierBad) {
+      if (liveScore !== Number(it.score)) it.score = liveScore;   // keep it honest
+      continue;
+    }
+    stale.push({ it, why: geoBad ? `geo is now ${live.geo}` : `tier is now ${liveScore}` });
+  }
+  const retiredKeys = new Set();
+  if (stale.length) {
+    const drop = new Set(stale.map(x => x.it.slug));
+    // Remember what was retired. Without this, pass 2 stops seeing the card in
+    // `known`, decides it is a brand-new role and re-mints it on the SAME run -
+    // a drop/re-add loop that churns the queue every night and fixes nothing.
+    for (const { it } of stale) retiredKeys.add(canonKey(it.company || '', it.role || ''));
+    queue.items = queue.items.filter(i => !drop.has(i.slug) || i.decision);
+    console.log(`re-gated ${stale.length} pending card(s) that no longer qualify:`);
+    for (const { it, why } of stale.slice(0, 12)) {
+      console.log(`  - [${it.score}] ${it.company} | ${String(it.role).slice(0, 44)} — ${why}`);
+    }
+    if (stale.length > 12) console.log(`  ...and ${stale.length - 12} more`);
+    console.log('');
+  }
+
   const known = new Map();
   const knownUrls = new Set();
   for (const it of queue.items) {
@@ -301,6 +349,7 @@ const main = async () => {
   const unresolved = [];
 
   for (const [key, variants] of groups) {
+    if (retiredKeys.has(key)) { stats.already++; continue; }   // retired this run
     if (known.has(key)) { stats.already++; continue; }
     if (variants.some(v => v.url && knownUrls.has(canonicalizeUrl(String(v.url))))) {
       stats.already++; continue;
@@ -350,7 +399,22 @@ const main = async () => {
     // Track D has no geography gate by design. The brief was "few constraints,
     // the important thing is a good path to income" - another country and
     // another currency are the point, not a problem.
-    if (rep.track !== 'now' && !GEO_OK.has(String(rep.geo || 'unclear'))) { stats.geo++; continue; }
+    // A role that REQUIRES living somewhere else is out on every track, full
+    // stop. VP, 2026-08-10: "we shouldnt [be] having ... a job that requires the
+    // person to be living in another country."
+    //
+    // This used to be skipped entirely for track 'now', on the reasoning that
+    // "another country and another currency are the point, not a problem". That
+    // conflated two different things. Being PAID from elsewhere is fine; being
+    // REQUIRED TO RESIDE elsewhere is not, and it is not a trade-off any amount
+    // of tier-5 fit can buy back. It put Wellhub's "Staff Product Manager |
+    // Partners" - geoRaw "Brazil (Remote)", model redFlags "Location
+    // restriction: Brazil only. Candidate is in the US." - in front of VP at 5.0.
+    const repGeo = String(rep.geo || 'unclear');
+    if (repGeo === 'onsite-elsewhere' || repGeo === 'hybrid-elsewhere') { stats.geo++; continue; }
+    // 'unclear' is still tolerated on the 'now' track only, where a thin OLAS-style
+    // posting genuinely may not say - but a KNOWN elsewhere never reaches here.
+    if (rep.track !== 'now' && !GEO_OK.has(repGeo)) { stats.geo++; continue; }
     const maxAge = rep.track === 'teaching' ? TEACHING_MAX_AGE_DAYS
                  : isWhale(rep.company) ? MAX_AGE_DAYS
                  : isEvergreen(rep.company) ? EVERGREEN_MAX_AGE_DAYS
@@ -485,6 +549,9 @@ const main = async () => {
       relisted,
       c.verdict ? `SCORER: ${c.verdict}.` : '',
       c.redFlags ? `RED FLAGS: ${c.redFlags}` : '',
+      // Nice-to-have skills VP does not have. A normal warning, not a block -
+      // his words: "it doesnt have to be a loud warning, just a normal warning".
+      (c.skillWarnings || []).length ? `Listed as preferred, not required: ${(c.skillWarnings || []).join(', ')}` : '',
       c.compLow ? `Comp floor seen: $${c.compLow.toLocaleString()}.` : '',
       c.technicalScreen
         ? '⚠ SCORER FLAGGED A TECHNICAL SCREEN - confirm the format before VP engages. See the interview-format rule in MISSION-nyc-job.md.'

@@ -39,8 +39,11 @@ const DRY = process.argv.includes('--dry-run');
 // behind the argv check), so the same guarantee costs nothing and cannot break.
 import {
   normalizeGeo, normalizeArchetype, normalizeFunctionArea, normalizeLevel, scoreFromFacts,
+  sanitizeCompLow,
 } from './rank-leads.mjs';
 import { screenVerdict } from './lib/screen-evidence.mjs';
+import { compBand } from './lib/comp-band.mjs';
+import { skillGate, defaultLacks } from './lib/skill-gate.mjs';
 
 const mod = { normalizeGeo, normalizeArchetype, normalizeFunctionArea, scoreFromFacts };
 
@@ -60,7 +63,6 @@ for (const [k, v] of Object.entries(scores)) {
     if (m && m[1].trim()) raw = m[1].trim();
   } catch {}
   const geo = mod.normalizeGeo(raw);
-  const archetype = mod.normalizeArchetype(v.archetypeRaw ?? v.archetype);
 
   // Facts decided in CODE, which stored records predate. Recomputing them here
   // is the whole point of facts-in-code: a policy change reaches the entire
@@ -70,6 +72,35 @@ for (const [k, v] of Object.entries(scores)) {
   //                        model's inference (176 of 806 records carried an
   //                        inferred screen with nothing in the text to support it)
   v.level = normalizeLevel(v.levelRaw ?? v.level);
+  // A fact the model got wrong, healed in code. The $10k floor was added at
+  // extraction time only, and extraction never re-runs for a JD already in the
+  // cache - so 29 records still carried compLow: 1 against stated bands as high
+  // as $263,200, each one silently capped to tier 3 and never enqueued. The
+  // corpus is only healed if the guard runs HERE too.
+  v.compLow = sanitizeCompLow(v.compLow);
+  // Re-read the band from the posting. 116 of 315 records marked "no comp
+  // stated" have one printed in the body - Indeed escapes its markdown, so
+  // `\$263,200\.00` was invisible to everything that looked. Healing here is
+  // the whole point of facts-in-code: no LLM call, and it reaches every
+  // cached record rather than only newly-scored ones.
+  // Derived in code, so it reaches all 1,226 cached records without an LLM call.
+  try {
+    const sg = skillGate(readFileSync(path.join(ROOT, 'jds', k), 'utf8'), defaultLacks());
+    v.skillBlocked = sg.blocked.map(b => b.skill);
+    v.skillBlockedEvidence = sg.blocked.map(b => `${b.skill}: ${b.evidence}`).join(' | ');
+    v.skillWarnings = sg.warned.map(w => w.skill);
+  } catch { /* JD gone - leave whatever was stored */ }
+  try {
+    const band = compBand(readFileSync(path.join(ROOT, 'jds', k), 'utf8'));
+    if (band.compLow != null) {
+      v.compLowRaw = v.compLowRaw ?? v.compLow;
+      v.compLow = band.compLow;
+      v.compSource = 'posting';
+      v.compEvidence = band.evidence;
+    } else if (v.compLow != null) {
+      v.compSource = v.compSource || 'model';
+    }
+  } catch { /* JD gone - keep whatever was stored */ }
   try {
     const body = readFileSync(path.join(ROOT, 'jds', k), 'utf8');
     const sv = screenVerdict(body, v.technicalScreen === true);
@@ -92,6 +123,10 @@ for (const [k, v] of Object.entries(scores)) {
   // normalizer and the label stuck forever - widening the product pattern
   // moved 2 roles instead of 47 because of exactly this.
   const functionArea = mod.normalizeFunctionArea(v.functionAreaRaw, jd ? jd.title : '');
+  // Same reason as geo above: the posting's own title outranks the model's
+  // free-text guess at seniority. Computed here rather than at the top of the
+  // loop because it needs the parsed JD.
+  const archetype = mod.normalizeArchetype(v.archetypeRaw ?? v.archetype, jd ? jd.title : '');
   const facts = { ...v, ...extra, geo, archetype, track, functionArea };
   const score = track === 'teaching' ? scoreTeaching(facts)
               : track === 'nonprofit' ? scoreNonprofit(facts)

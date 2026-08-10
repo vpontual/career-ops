@@ -1,70 +1,70 @@
 {
-  "measuredAt": "2026-08-07",
+  "measuredAt": "2026-08-10",
   "matureDays": 30,
   "note": "pctAlive = share of this employer's postings, watched MATURE+ days, that are STILL OPEN. High means the board is evergreen and an old posting there signals nothing about hiring intent.",
   "curve": [
     {
       "lo": 0,
       "hi": 3,
-      "n": 331,
-      "alive": 319,
-      "pct": 96.37462235649546
+      "n": 2,
+      "alive": 2,
+      "pct": 100
     },
     {
       "lo": 4,
       "hi": 7,
-      "n": 10,
-      "alive": 10,
+      "n": 50,
+      "alive": 50,
       "pct": 100
     },
     {
       "lo": 8,
       "hi": 14,
-      "n": 217,
-      "alive": 185,
-      "pct": 85.25345622119816
+      "n": 87,
+      "alive": 76,
+      "pct": 87.35632183908046
     },
     {
       "lo": 15,
       "hi": 21,
-      "n": 12,
-      "alive": 12,
+      "n": 7,
+      "alive": 7,
       "pct": 100
     },
     {
       "lo": 22,
       "hi": 30,
-      "n": 19,
-      "alive": 18,
-      "pct": 94.73684210526316
+      "n": 15,
+      "alive": 15,
+      "pct": 100
     },
     {
       "lo": 31,
       "hi": 45,
-      "n": 8,
-      "alive": 8,
+      "n": 1,
+      "alive": 1,
       "pct": 100
     },
     {
       "lo": 46,
       "hi": 60,
-      "n": 15,
-      "alive": 11,
-      "pct": 73.33333333333333
+      "n": 12,
+      "alive": 10,
+      "pct": 83.33333333333333
     },
     {
       "lo": 61,
       "hi": 90,
-      "n": 25,
-      "alive": 9,
-      "pct": 36
+      "n": 14,
+      "alive": 3,
+      "pct": 21.428571428571427
     },
     {
       "lo": 91,
       "hi": 9999,
-      "n": 106,
-      "alive": 40,
-      "pct": 37.735849056603776
+      "n": 65,
+      "alive": 32,
+      "pct": 49.23076923076923
     }
   ],
   "employers": {
@@ -72,53 +72,29 @@
       "n": 18,
       "pctAlive": 94
     },
-    "figma": {
-      "n": 4,
-      "pctAlive": 75
-    },
     "decagon": {
       "n": 11,
       "pctAlive": 64
+    },
+    "suno": {
+      "n": 5,
+      "pctAlive": 60
     },
     "cohere": {
       "n": 6,
       "pctAlive": 50
     },
-    "suno": {
-      "n": 4,
-      "pctAlive": 50
-    },
-    "glean": {
-      "n": 17,
-      "pctAlive": 47
-    },
-    "anthropic": {
-      "n": 13,
-      "pctAlive": 46
-    },
-    "mercury": {
-      "n": 5,
-      "pctAlive": 40
-    },
-    "algolia": {
-      "n": 4,
-      "pctAlive": 25
+    "harvey": {
+      "n": 19,
+      "pctAlive": 32
     },
     "ramp": {
       "n": 4,
       "pctAlive": 25
     },
-    "harvey": {
-      "n": 17,
-      "pctAlive": 24
-    },
     "crusoe": {
       "n": 5,
       "pctAlive": 20
-    },
-    "intercom": {
-      "n": 11,
-      "pctAlive": 9
     }
   }
 }
