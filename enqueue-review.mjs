@@ -581,6 +581,14 @@ const main = async () => {
       // Nice-to-have skills VP does not have. A normal warning, not a block -
       // his words: "it doesnt have to be a loud warning, just a normal warning".
       (c.skillWarnings || []).length ? `Listed as preferred, not required: ${(c.skillWarnings || []).join(', ')}` : '',
+      // VP, 2026-08-10: "workday sucks because each company's version requires a
+      // different user account for that single application". Greenhouse, Ashby
+      // and Lever accept an upload; Workday makes you register with the employer
+      // before you can submit anything. That friction belongs on the card, not
+      // discovered at apply time after the pack is already built.
+      /myworkdayjobs\.com/i.test(String(c.applyUrl || c.url || ''))
+        ? 'WORKDAY: requires creating an account with this employer before you can apply.'
+        : '',
       c.compLow ? `Comp floor seen: $${c.compLow.toLocaleString()}.` : '',
       c.technicalScreen
         ? '⚠ SCORER FLAGGED A TECHNICAL SCREEN - confirm the format before VP engages. See the interview-format rule in MISSION-nyc-job.md.'

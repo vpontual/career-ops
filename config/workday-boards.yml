@@ -1,0 +1,14 @@
+# Workday board coordinates. tenant + pod + site, and the SITE ID is arbitrary -
+# Citi's is literally "2". None of it is derivable from a company name, so each
+# entry is found by hand once and verified by the exact-title rule thereafter.
+#
+# To add one: open the employer's careers site, find the myworkdayjobs.com URL,
+# and read tenant/pod from the host and site from the first path segment after
+# the locale. Verify with:
+#   curl -sS -X POST https://TENANT.POD.myworkdayjobs.com/wday/cxs/TENANT/SITE/jobs \
+#        -H "Content-Type: application/json" -d "{\"limit\":5,\"offset\":0,\"searchText\":\"product\"}"
+boards:
+  - company: Citi
+    tenant: citi
+    pod: wd5
+    site: "2"

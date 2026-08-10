@@ -22,6 +22,8 @@
  */
 
 import { readFile, appendFile, readdir } from 'fs/promises';
+import { readFileSync } from 'fs';
+import yaml from 'js-yaml';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { parseJd } from './lib/jd-parse.mjs';
@@ -35,6 +37,47 @@ const MIN_SCORE = 4;
 
 const AGG = /(indeed\.com|glassdoor\.com|linkedin\.com|ziprecruiter\.com|lensa\.com|jobot\.com|simplyhired)/i;
 const UA = { 'User-Agent': 'Mozilla/5.0 (compatible; career-ops/1.0)' };
+
+// Workday, which is a different shape from the four board APIs: it is a POST,
+// its coordinates are tenant + pod + SITE ID, and the site ID is arbitrary -
+// Citi's is literally "2". Nothing about it is guessable from a company name, so
+// the coordinates live in config/workday-boards.yml and are found by hand once.
+//
+// ⚠ Measured 2026-08-10 before building this: of the employers dominating the
+// unresolved backlog, only CITI is on Workday. Gartner, Humana, Mastercard,
+// Capital One, MSCI, Uber and Bloomberg are on Phenom, Avature or bespoke
+// career sites. Workday is not the enterprise skeleton key it looks like. It is
+// here because it is cheap and correct, not because it clears the backlog.
+//
+// It searches by title rather than paging: Citi alone has 2,000 open reqs.
+let WORKDAY = null;
+function workdayBoards() {
+  if (WORKDAY) return WORKDAY;
+  try {
+    WORKDAY = yaml.load(readFileSync(path.join(ROOT, 'config', 'workday-boards.yml'), 'utf-8'))?.boards || [];
+  } catch { WORKDAY = []; }
+  return WORKDAY;
+}
+
+async function workdaySearch(entry, title) {
+  const { tenant, pod, site } = entry;
+  const url = `https://${tenant}.${pod}.myworkdayjobs.com/wday/cxs/${tenant}/${site}/jobs`;
+  try {
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...UA },
+      body: JSON.stringify({ appliedFacets: {}, limit: 20, offset: 0, searchText: String(title || '').slice(0, 90) }),
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    return (d.jobPostings || []).map(j => ({
+      title: j.title || '',
+      url: j.externalPath ? `https://${tenant}.${pod}.myworkdayjobs.com/en-US/${site}${j.externalPath}` : '',
+      location: j.locationsText || '',
+    })).filter(x => x.title && x.url);
+  } catch { return null; }
+}
 
 const BOARDS = {
   greenhouse: (s) => `https://boards-api.greenhouse.io/v1/boards/${s}/jobs`,
@@ -122,6 +165,19 @@ const main = async () => {
   for (const [i, t] of work.entries()) {
     const wantTitle = normalizeTitle(t.jd.title || '');
     let found = null;
+
+    // Known Workday employers first: the coordinates are exact, so this is a
+    // single request with no guessing, and the same exact-title rule accepts it.
+    const wdEntry = workdayBoards().find(
+      (b) => normalizeCompany(b.company) === normalizeCompany(t.company));
+    if (wdEntry) {
+      const jobs = await workdaySearch(wdEntry, t.jd.title || '');
+      for (const j of jobs || []) {
+        if (normalizeTitle(j.title) === wantTitle) { found = { ...j, kind: 'workday', slug: wdEntry.tenant }; break; }
+      }
+    }
+
+    if (!found)
     outer:
     for (const slug of candidateSlugs(t.company)) {
       for (const kind of Object.keys(BOARDS)) {

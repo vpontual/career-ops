@@ -427,7 +427,20 @@ async function main() {
       }
       const postedDays = daysSince(jd.posted_at);
       const updatedDays = daysSince(jd.updated_at);
-      const resolvedCompany = jd.company || row.company || 'Unknown';
+      // The PIPELINE ROW's company wins over the page's own claim.
+      //
+      // JSON-LD hiringOrganization is a legal entity, not the name anyone uses:
+      // Citi's reqs return "00002 Citibank, N.A.", First Due's Greenhouse board
+      // is "Locality Media LLC dba First Due", Affinity's is "affinity.co". Every
+      // downstream identity is canonKey(company, title), so letting the page
+      // rename the employer forks the role: the aggregator row never drains from
+      // unresolved-apply-paths.md, the same req is re-resolved every night, and
+      // two spellings mean two output packs and two generated cover letters.
+      //
+      // The page still wins when the row has nothing, which is the case for rows
+      // that came from a scan rather than a resolver.
+      const pageCompany = String(jd.company || '').replace(/^[\s\d]+/, '').trim();
+      const resolvedCompany = row.company || pageCompany || 'Unknown';
       const md = [
         `# ${jd.title}`,
         ``,

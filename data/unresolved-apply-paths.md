@@ -96,9 +96,6 @@ there is nothing to fill. Resolving the employer's own posting promotes it into 
 - [ ] [5] Amazon.com | Senior Product Manager-Tech, Discovery Tech, US Prime & Marketing Technology | 22d | https://www.indeed.com/viewjob?jk=b2b372f4027dab38
 - [ ] [4] Best Buy | Senior Director, Product Management - AI Experience | 10d | https://www.indeed.com/viewjob?jk=9795dd830db825f7
 - [ ] [4] CallRevu | Product Director | 10d | https://www.indeed.com/viewjob?jk=e2e8c8b943045945
-- [ ] [4] Citi | Custody Product Manager | 10d | https://www.indeed.com/viewjob?jk=e130d5baea6e0d2c
-- [ ] [4] Citi | Product Manager for ERP Integration and Embedded Banking - SVP | 10d | https://www.indeed.com/viewjob?jk=4bf501a71113a890
-- [ ] [5] Citi | Senior AI Product Manager – Enterprise Platform | 10d | https://www.indeed.com/viewjob?jk=93c83936e83ae13b
 - [ ] [5] Crescendo.ai | AI Product Manager | 10d | https://www.indeed.com/viewjob?jk=a7d5ea60fd6db3cb
 - [ ] [4] CrowdStrike | Sr. Product Manager - Identity Protection (NYC, Hybrid) | 10d | https://www.indeed.com/viewjob?jk=006c3e60b0586b19
 - [ ] [4] Flock Safety | Senior Product Manager, Aviation | 10d | https://www.indeed.com/viewjob?jk=b550e431ed20539f
@@ -158,7 +155,6 @@ there is nothing to fill. Resolving the employer's own posting promotes it into 
 - [ ] [5] Adobe | Principal Product Manager | 5d | https://www.indeed.com/viewjob?jk=20552e6e29079bd3
 - [ ] [4] Amazon Web Services | Senior Product Manager - Technical, External Services, Elastic Container Registry | 10d | https://www.indeed.com/viewjob?jk=e4f82fb8b4a4335a
 - [ ] [5] OEConnection | Senior Product Manager - PartsTech Search Experience | 4d | https://www.indeed.com/viewjob?jk=982139933a86387c
-- [ ] [4] Citi | Services Senior Digital Product Lead, CitiManager Platform – SVP | 4d | https://www.indeed.com/viewjob?jk=f824c77193bfb85f
 - [ ] [5] JPMorganChase | Product Manager - Fraud AI/ML | 4d | https://www.indeed.com/viewjob?jk=0b5e7f7883f1a0e1
 - [ ] [4] Systems Planning and Analysis, Inc. (SPA) | Technical Product Manager | 4d | https://www.indeed.com/viewjob?jk=403267cd1f495873
 - [ ] [4] AllianceBernstein | Product Manager – Multi-Asset and Hedge Fund Solutions | 3d | https://www.indeed.com/viewjob?jk=0796eb2b38ed9f8b
@@ -184,6 +180,5 @@ there is nothing to fill. Resolving the employer's own posting promotes it into 
 - [ ] [4] Capital One | Manager, Product Manager - Fraud Tools | 3d | https://www.indeed.com/viewjob?jk=c0676be079ead52b
 - [ ] [4] JPMorganChase | Product Manager - Payments - Vice President | 3d | https://www.indeed.com/viewjob?jk=1809a4aba949698b
 - [ ] [4] Meta | Consumer Product Marketing Manager, WhatsApp Payments | 4d | https://www.indeed.com/viewjob?jk=bdabbe9b81342c0c
-- [ ] [4] Citi | Head of Product Development Strategy, Senior Vice President | 0d | https://www.indeed.com/viewjob?jk=4c54c243afd47cc9
 - [ ] [4] Google | Product Manager I, Search Discover AI | 0d | https://www.indeed.com/viewjob?jk=9f7f604cfc7dad67
 - [ ] [4] Google | Technical Program Manager, Autonomous Operations Product Lead | 0d | https://www.indeed.com/viewjob?jk=16d6b14ee71b660d
