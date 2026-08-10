@@ -275,6 +275,24 @@ Report what the JD says. If it does not say, use null or "unclear" rather than g
 // Metro-North" - plus Westchester, Nassau and Suffolk generally, because all 5
 // OLAS Business-teacher vacancies normalised to `unclear`, lost a point, and were
 // then dropped outright by the enqueue geo gate.
+// US locations VP cannot reach daily from Manhattan. Domestic half of the same
+// gap that let "Sao Paulo" read as 'unclear': the ELSEWHERE list held a handful
+// of US CITIES and no STATES at all, so "Virginia" and "Rhode Island" matched
+// nothing and fell through to 'unclear' - which now earns no review card, so a
+// real onsite-elsewhere role was being hidden for the wrong reason instead of
+// classified for the right one.
+//
+// NYC_METRO is tested FIRST, so anything it claims (Newark, Jersey City,
+// Hoboken, Stamford, Greenwich, Westchester, Long Island) never reaches here.
+//
+// ⚠ NEW JERSEY and CONNECTICUT are deliberately ABSENT. Their tri-state parts
+// are commutable and their far ends are not - Summit is a 45-minute train,
+// Princeton is not - and that boundary is VP's to draw, not the scorer's.
+// 14 'Connecticut' and ~13 NJ-town records stay 'unclear' until he says where
+// the line is. Guessing would either hide commutable roles or surface
+// uncommutable ones, and both are silent.
+const US_ELSEWHERE = /\b(alabama|alaska|arizona|arkansas|california|colorado|delaware|florida|georgia|hawaii|idaho|illinois|indiana|iowa|kansas|kentucky|louisiana|maine|maryland|massachusetts|michigan|minnesota|mississippi|missouri|montana|nebraska|nevada|new hampshire|new mexico|north carolina|north dakota|ohio|oklahoma|oregon|pennsylvania|rhode island|south carolina|south dakota|tennessee|texas|utah|vermont|west virginia|virginia|wisconsin|wyoming|washington d\.?c\.?|district of columbia|atlanta|culver city|san diego|san jose|sacramento|portland|phoenix|houston|dallas|philadelphia|pittsburgh|detroit|minneapolis|nashville|charlotte|raleigh|orlando|tampa|salt lake city|kansas city|st\.? louis|columbus|cincinnati|cleveland|milwaukee|las vegas|san antonio|indianapolis)\b/i;
+
 const NYC_METRO = /\b(nyc|new york|manhattan|brooklyn|queens|bronx|staten island|newark|jersey city|hoboken|stamford|greenwich, ct|white plains|port chester|yonkers|harrison|new rochelle|scarsdale|rye|mamaroneck|mount vernon|tarrytown|westchester|hempstead|garden city|mineola|nassau county|suffolk county|long island|patchogue|wyandanch|babylon|huntington|mastic|hicksville|valley stream)\b/i;
 const REMOTE = /\bremote|work from home|wfh|distributed\b/i;
 const HYBRID = /\bhybrid|days? (?:a|per) week|in[- ]office\b/i;
@@ -342,7 +360,7 @@ function normalizeGeo(raw) {
   // onsite-elsewhere while a bare "Sao Paulo" fell through to 'unclear', and
   // 'unclear' is tolerated on the 'now' track. Same posting, same country, two
   // different answers depending on whether the word "remote" appeared.
-  const elsewhere = ELSEWHERE.test(t) || (NON_US.test(t) && !US_SIGNAL.test(t));
+  const elsewhere = ELSEWHERE.test(t) || US_ELSEWHERE.test(t) || (NON_US.test(t) && !US_SIGNAL.test(t));
 
   // A listing naming both NYC and a far office ("San Francisco, CA | New York")
   // is workable - he takes the New York one.

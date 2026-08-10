@@ -74,6 +74,24 @@ eq('geo: a bare country name', normalizeGeo('Brazil'), 'onsite-elsewhere');
 eq('geo: US signal still beats a foreign mention',
    normalizeGeo('Remote — US, Brazil, Mexico'), 'remote-us');
 
+// The DOMESTIC half of the same gap. ELSEWHERE held a handful of US cities and
+// no STATES, so "Virginia" and "Rhode Island" matched nothing and fell through
+// to 'unclear' - which earns no review card, so a real onsite-elsewhere role was
+// hidden for the wrong reason rather than classified for the right one.
+eq('geo: a US state is not unclear', normalizeGeo('Virginia'), 'onsite-elsewhere');
+eq('geo: Rhode Island', normalizeGeo('Rhode Island'), 'onsite-elsewhere');
+eq('geo: a US city with its state', normalizeGeo('Culver City, California, USA'), 'onsite-elsewhere');
+eq('geo: hybrid elsewhere in the US', normalizeGeo('Atlanta - Hybrid'), 'hybrid-elsewhere');
+// NYC_METRO is tested FIRST and must keep winning. If a state list ever eats one
+// of these, VP stops seeing the roles he can actually take.
+eq('geo: Jersey City is still NYC metro', normalizeGeo('Jersey City, NJ'), 'nyc');
+eq('geo: Stamford is still NYC metro', normalizeGeo('Stamford'), 'nyc');
+eq('geo: Long Island is still NYC metro', normalizeGeo('Long Island, New York'), 'nyc');
+// DELIBERATELY unclear: the tri-state commute boundary is VP's to draw. Summit
+// is a 45-minute train, Princeton is not, and guessing either way is silent.
+eq('geo: bare Connecticut stays undecided', normalizeGeo('Connecticut'), 'unclear');
+eq('geo: a far NJ town stays undecided', normalizeGeo('Princeton, NJ, US'), 'unclear');
+
 // ── functionArea ─────────────────────────────────────────────────────────
 // REGRESSION: matched /financ/ before /product manager/ and classified as
 // `finance`, which Track D's CANNOT_DO hard-rejected to 1 — on a role VP had
