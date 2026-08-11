@@ -47,7 +47,15 @@ export default function SearchFilter({ initial = "" }: { initial?: string }) {
     else params.delete("q");
     const qs = params.toString();
     startTransition(() => {
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      // The header is shared now, so this box appears on /review, /now and the
+      // detail pages - none of which read ?q=. Staying on the current pathname
+      // would give VP a search box that silently does nothing. Anywhere but the
+      // pipeline page, search navigates to the list that can actually answer it.
+      const target = pathname === '/' ? pathname : '/';
+      const params = new URLSearchParams(qs);
+      if (target !== pathname && !params.get('tab')) params.set('tab', 'all');
+      const finalQs = params.toString();
+      router.replace(finalQs ? `${target}?${finalQs}` : target, { scroll: false });
     });
   }
 

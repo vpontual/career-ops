@@ -1,5 +1,5 @@
 import { readFile } from "fs/promises";
-import SiteNav from "@/components/SiteNav";
+import SiteHeader from "@/components/SiteHeader";
 import path from "path";
 import Link from "next/link";
 
@@ -145,26 +145,17 @@ export default async function GetHiredNow() {
 
   return (
     <div className="min-h-screen bg-slate-950">
-      <header className="sticky top-0 z-50 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-5xl items-center gap-4 px-6 py-4 md:px-10">
-          <Link href="/" className="flex shrink-0 items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 text-sm font-bold text-white shadow-lg shadow-emerald-500/20">$</span>
-            <span className="flex flex-col leading-none">
-              <span className="text-[15px] font-semibold tracking-tight text-slate-100">Get Hired Now</span>
-              <span className="mt-0.5 text-[10px] uppercase tracking-wider text-slate-500">income in weeks, few constraints</span>
-            </span>
-          </Link>
-          <div className="ml-auto flex items-center gap-2 text-xs">
-            {/* The page-local "Pipeline | Review queue" links used to live here.
-                Removed: this page renders the shared SiteNav below, so keeping
-                them meant /now displayed TWO different navigation bars, one of
-                them a two-item subset. */}
-          </div>
-        </div>
-      </header>
+
+      <SiteHeader active="now" />
 
       <main className="mx-auto max-w-5xl px-6 py-8 md:px-10">
-      <SiteNav active="now" />
+        {/* Page identity lives here now, as a heading in the page's own
+            content, rather than as a second brand bar with its own logo and
+            colour competing with the shared one. */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-100">Get Hired Now</h1>
+          <p className="mt-0.5 text-xs uppercase tracking-wider text-slate-500">income in weeks, few constraints</p>
+        </div>
         <section>
           <div className="flex items-baseline justify-between">
             <h2 className="text-lg font-semibold text-slate-100">Live roles on this track</h2>

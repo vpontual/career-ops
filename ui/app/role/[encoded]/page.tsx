@@ -1,5 +1,5 @@
 import { readFile } from "fs/promises";
-import SiteNav from "@/components/SiteNav";
+import SiteHeader from "@/components/SiteHeader";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadPipeline, PipelineRow } from "@/lib/pipeline";
@@ -92,7 +92,7 @@ export default async function RolePage({ params }: { params: Promise<{ encoded: 
 
   return (
     <main className="min-h-screen px-6 py-8 md:px-12 md:py-10 max-w-4xl mx-auto">
-      <SiteNav active="all" />
+      <SiteHeader active="all" />
       <header className="mb-6 border-b border-slate-800 pb-6">
         <Link href="/?tab=all" className="text-xs text-slate-500 hover:text-blue-300 font-mono">
           ← back to dashboard

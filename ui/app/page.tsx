@@ -4,6 +4,7 @@ import SearchFilter from "@/components/SearchFilter";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import SiteNav, { SiteNavId } from "@/components/SiteNav";
+import SiteHeader from "@/components/SiteHeader";
 import { readFile } from "fs/promises";
 import path from "path";
 
@@ -348,47 +349,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
       {/* ambient glow */}
       <div className="pointer-events-none fixed inset-x-0 top-0 h-64 bg-gradient-to-b from-indigo-500/10 to-transparent" />
 
-      <header className="sticky top-0 z-50 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl">
-        <div className="mx-auto max-w-6xl px-6 md:px-10">
-          {/* top bar */}
-          <div className="flex items-center gap-4 py-4">
-            <Link href="/" className="flex shrink-0 items-center gap-2.5">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-400 to-violet-500 text-sm font-bold text-white shadow-lg shadow-indigo-500/20">C</span>
-              <span className="flex flex-col leading-none">
-                <span className="text-[15px] font-semibold tracking-tight text-slate-100">CareerOps</span>
-                <span className="mt-0.5 text-[10px] uppercase tracking-wider text-slate-500">AI job pipeline</span>
-              </span>
-            </Link>
-            <div className="mx-auto w-full max-w-md">
-              <SearchFilter initial={q} />
-            </div>
-            <div className="hidden shrink-0 text-right text-[11px] text-slate-500 sm:block">
-              <div className="uppercase tracking-wider">Last scan</div>
-              <div className="tabular-nums text-slate-400">{data.lastScannedAt ? data.lastScannedAt.toLocaleString() : "never"}</div>
-            </div>
-          </div>
-
-          {/* views + controls */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-3">
-            {/* ONE nav, shared with /review, /now, /pack and /role via
-                ui/components/SiteNav.tsx. This page used to render its own,
-                which is why the bar looked different depending on where you
-                were standing. The status filters below are genuinely local to
-                this page - they filter THIS table - so they stay separate. */}
-            <div className="flex flex-col gap-1">
-              <SiteNav
-                active={activeView.id as SiteNavId}
-                params={{ sort: sortParam, q, fresh }}
-              />
-              {visibleStatusViews.length > 0 && (
-                <nav className="flex flex-wrap items-center gap-1">
-                  {visibleStatusViews.map(v => (
-                    <TabLink key={v.id} view={v} active={v.id === activeView.id} count={count(v)} sortParam={sortParam} q={q} fresh={fresh} />
-                  ))}
-                </nav>
-              )}
-            </div>
-
+      <SiteHeader active={activeView.id as SiteNavId} q={q} params={{ sort: sortParam, q, fresh }}>
             <div className="flex items-center gap-2">
               <FreshToggle active={fresh} tab={activeView.id} sortParam={sortParam} q={q} />
               <div className="flex items-center rounded-lg bg-slate-900/60 p-0.5 ring-1 ring-inset ring-slate-800">
@@ -411,9 +372,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
                 })}
               </div>
             </div>
-          </div>
-        </div>
-      </header>
+      </SiteHeader>
 
       <div className="mx-auto max-w-6xl px-6 py-8 md:px-10">
         {/* context line */}
