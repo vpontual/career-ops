@@ -32,6 +32,23 @@ export interface PipelineRow {
   archetype?: string;   // e.g. "Senior PM" / "AI Product PM"
   verdict?: string;     // one-sentence fit summary
   redFlags?: string;    // text after the "— ⚠" split, when present
+
+  // Which rubric produced `score`. NOT cosmetic: the tracks are scored on
+  // incompatible 1-5 scales, so a score is only comparable within a track. A
+  // 5 on "pm" means an excellent NYC product role; a 5 on "now" means the
+  // fastest path to income and, per lib/track.mjs, deliberately carries no
+  // geography gate at all - "another country and another currency are the
+  // point, not a problem". Ranking them against each other put a Staff PM role
+  // in Brazil at the top of the shortlist. Undefined on records scored before
+  // tracks existed.
+  track?: string;       // "pm" | "now" | "civic" | "teaching" | "nonprofit"
+
+  // Normalized geography from rank-leads.mjs. Needed here because the shortlist
+  // is the ONLY layer with no geography gate: enqueue-review.mjs already drops
+  // "requires living somewhere else" on every track, so those roles can never
+  // become cards - but they still rendered at 5.0 in this list, which is where
+  // VP saw them.
+  geo?: string;         // "remote-us" | "onsite-nyc" | "onsite-elsewhere" | ...
 }
 
 export interface PipelineData {
@@ -158,7 +175,7 @@ async function fileMtime(p: string): Promise<number> {
 // Cache JD lookups so we don't walk jds/ on every request. Day-keyed so
 // `posted`/`updated` (computed from Date.now()) advance at midnight even if
 // loadPipeline's per-request reset never fires (e.g. /ranked only call site).
-type JdMeta = { posted?: number; updated?: number; locations?: string[]; score?: number; verdict?: string; redFlags?: string };
+type JdMeta = { posted?: number; updated?: number; locations?: string[]; score?: number; verdict?: string; redFlags?: string; track?: string; geo?: string };
 let jdMetaCache: Map<string, JdMeta> | null = null;
 let jdMetaCacheDay: string | null = null;
 
@@ -184,7 +201,7 @@ function canonKey(company: string, title: string): string {
 // Score index keyed by canonKey, with a collision count so the join only falls
 // back to it when UNAMBIGUOUS (never mis-assigns a score across two distinct
 // same-titled roles at one company). Populated by loadJdMetaIndex.
-type CanonScore = { score?: number; verdict?: string; redFlags?: string; n: number };
+type CanonScore = { score?: number; verdict?: string; redFlags?: string; track?: string; geo?: string; n: number };
 let canonScoreCache: Map<string, CanonScore> | null = null;
 
 // Compute days between an ISO timestamp and now. Returns undefined if the
@@ -207,7 +224,7 @@ export async function loadJdMetaIndex(): Promise<Map<string, JdMeta>> {
   // rank-leads.mjs's score cache, keyed by JD filename. This is the single
   // scoring authority (score-all.mjs and its reports/ dir were retired); the
   // UI must read scores from here or every freshly-scored role shows "unscored".
-  let leadScores: Record<string, { score?: number; verdict?: string; redFlags?: string }> = {};
+  let leadScores: Record<string, { score?: number; verdict?: string; redFlags?: string; track?: string; geo?: string }> = {};
   try {
     leadScores = JSON.parse(await readFile(path.join(DATA_ROOT, "data", "lead-scores.json"), "utf-8"));
   } catch { /* no scores yet */ }
@@ -245,7 +262,9 @@ export async function loadJdMetaIndex(): Promise<Map<string, JdMeta>> {
         posted, updated, locations,
         score: typeof sc?.score === "number" ? sc.score : undefined,
         verdict: sc?.verdict,
-        redFlags: sc?.redFlags
+        redFlags: sc?.redFlags,
+        track: sc?.track,
+        geo: sc?.geo
       });
 
       // Canonical company+title index (for the URL-drift score-join fallback).
@@ -255,7 +274,7 @@ export async function loadJdMetaIndex(): Promise<Map<string, JdMeta>> {
         const key = canonKey(company, title);
         const prev = canon.get(key);
         if (prev) prev.n += 1; // collision → becomes ambiguous, join won't use it
-        else canon.set(key, { score: sc.score, verdict: sc.verdict, redFlags: sc.redFlags, n: 1 });
+        else canon.set(key, { score: sc.score, verdict: sc.verdict, redFlags: sc.redFlags, track: sc.track, geo: sc.geo, n: 1 });
       }
     }
   } catch {}
@@ -404,6 +423,8 @@ export async function loadPipeline(): Promise<PipelineData> {
         row.tier = jdMeta.score;
         if (jdMeta.verdict) row.verdict = jdMeta.verdict;
         if (jdMeta.redFlags) row.redFlags = jdMeta.redFlags;
+        if (jdMeta.track) row.track = jdMeta.track;
+        if (jdMeta.geo) row.geo = jdMeta.geo;
       }
     }
 

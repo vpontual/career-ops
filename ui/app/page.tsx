@@ -24,7 +24,15 @@ type View = { id: string; label: string; hint?: string; match: (r: PipelineRow) 
 // Primary workflow stages — always visible. Ordered by what matters most:
 // the roles worth applying to, the ones already packaged, then everything.
 const CORE_VIEWS: View[] = [
-  { id: "shortlist", label: "Shortlist", hint: "Scored 4+ — worth applying to", match: r => typeof r.score === "number" && r.score >= 4.0 },
+  // A role that REQUIRES living somewhere else is out on every track, full stop
+  // (VP, 2026-08-10). enqueue-review.mjs enforces exactly that, which is why the
+  // review queue has none - but this list had NO geography gate of any kind, so
+  // the same roles it refuses to card still rendered here at 5.0: a Staff PM in
+  // Brazil, Nubank in Bogota, Wellhub "Brazil only. Candidate is in the US."
+  // Being PAID from elsewhere is fine; being REQUIRED TO RESIDE elsewhere is not,
+  // and no amount of tier-5 fit buys that back. Same predicate as the enqueue
+  // gate, so the two layers cannot drift apart.
+  { id: "shortlist", label: "Shortlist", hint: "Scored 4+ — worth applying to", match: r => typeof r.score === "number" && r.score >= 4.0 && r.geo !== "onsite-elsewhere" && r.geo !== "hybrid-elsewhere" },
   { id: "staged", label: "Ready to apply", hint: "Application pack generated", match: r => Boolean(r.stagedSlug) },
   { id: "ranked", label: "Ranked", hint: "Every scored role, grouped by fit tier", match: r => typeof r.score === "number" },
   { id: "all", label: "All roles", hint: "Everything in the pipeline", match: () => true }
@@ -199,6 +207,17 @@ function RoleRow({ r }: { r: PipelineRow }) {
           {r.archetype && (
             <span className="rounded-md bg-slate-800/60 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-slate-400">
               {r.archetype}
+            </span>
+          )}
+          {/* Each track scores on its OWN 1-5 scale, so a score is comparable
+              only within a track: 5 on "now" means fastest time-to-income, 5 on
+              "pm" means best NYC product fit. Rendering both as a bare "5.0"
+              with nothing to tell them apart is what made a Get-Hired-Now role
+              read as a top NYC recommendation. "pm" is unlabelled because it is
+              the default search and labelling every card would be noise. */}
+          {r.track && r.track !== "pm" && (
+            <span className="rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-emerald-300/80">
+              {r.track === "now" ? "get hired now" : r.track}
             </span>
           )}
         </div>
