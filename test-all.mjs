@@ -740,6 +740,36 @@ if (!fileExists('test-caveat-cap.mjs')) {
   else pass(`caveat cap ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
 }
 
+// ── 21f. THE DISCIPLINE LABEL ───────────────────────────────────
+// functionArea is the only fact that can delete a role on its own - three
+// rubrics hard-score CANNOT_DO to 1, and a false block is silent. It also used
+// to short-circuit on the model's own enum, which made the model's label
+// unfalsifiable: Anthropic's "Web Product Manager" was hard-scored to 1 as
+// marketing-demand, and 17 Product Marketing roles with a dedicated CV variant
+// were blocked as work VP cannot do.
+console.log('\n21f. Function area');
+if (!fileExists('test-function-area.mjs')) {
+  fail('test-function-area.mjs missing — the discipline label has no specification');
+} else {
+  const out = run('node', ['test-function-area.mjs']);
+  if (out === null) fail('function-area tests failing — run: node test-function-area.mjs');
+  else pass(`function area ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
+}
+
+// ── 21g. PER-TRACK FRESHNESS WINDOWS ────────────────────────────
+// The windows are measured, and a measured number with no test is a number the
+// next measurement quietly disagrees with. Also pins the property that matters
+// more than any single number: the SAME window at every enforcement point, or a
+// role is scored and never staged (or staged and never carded).
+console.log('\n21g. Per-track freshness windows');
+if (!fileExists('test-track-freshness.mjs')) {
+  fail('test-track-freshness.mjs missing — the per-track windows have no specification');
+} else {
+  const out = run('node', ['test-track-freshness.mjs']);
+  if (out === null) fail('track-freshness tests failing — run: node test-track-freshness.mjs');
+  else pass(`track freshness ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
+}
+
 // ── 20. SEARCH-RESOLVED APPLY PATHS ─────────────────────────────
 // A wrong resolution is worse than a miss: the chain stages a tailored CV
 // against whatever it resolves and VP reviews the card as real. A permissive

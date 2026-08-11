@@ -41,8 +41,7 @@ import { readCoverLetterFinding } from './lib/cover-letter-requirement.mjs';
 import {
   loadFreshnessPolicy,
   recencyDays,
-  FRESH_MAX_AGE_DAYS,
-  TEACHING_MAX_AGE_DAYS,
+  describeWindows,
 } from './lib/freshness.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -335,7 +334,23 @@ const main = async () => {
     if (!applyable.length) {
       // Known only from an aggregator. Recorded, never enqueued - a card with no
       // form behind it cannot be filled, and 99 of those is a queue nobody reads.
-      const unresolvedMaxAge = rep.track === 'teaching' ? TEACHING_MAX_AGE_DAYS : MAX_AGE_DAYS;
+      // THE LAST HARDCODED PER-TRACK WINDOW IN THE PIPELINE, removed 2026-08-11.
+      // This read `rep.track === 'teaching' ? TEACHING_MAX_AGE_DAYS : MAX_AGE_DAYS`
+      // - a second, private copy of the per-track rule, sitting three hundred
+      // lines below the one that imports lib/freshness.mjs. It was already a
+      // straggler: when the windows became per-employer this branch stayed
+      // per-track-only, and when Track E and Track B got their own windows it
+      // would have kept applying 30 days to both while the gate below applied 60
+      // and 35. Copies are the defect, and this was the copy.
+      //
+      // Math.max, not a plain substitution, because this path is DELIBERATELY
+      // looser than the card gate and must stay that way. Recording an
+      // aggregator-only role in data/unresolved-apply-paths.md costs one
+      // resolution attempt, not a Gemini call and a tailored CV, so it has
+      // always run to the 30-day whale window rather than the 21-day ordinary
+      // one. Taking the wider of {this role's real window, 30} keeps that floor
+      // intact for pm and now, and lets civic/teaching/nonprofit open it further.
+      const unresolvedMaxAge = Math.max(freshness.maxAgeDaysFor(rep), MAX_AGE_DAYS);
       if (rep.score >= MIN_SCORE && GEO_OK.has(String(rep.geo || 'unclear')) &&
           rep.days != null && rep.days <= unresolvedMaxAge) {
         unresolved.push(rep);
@@ -411,7 +426,10 @@ const main = async () => {
 
   const fresh = cand.sort((a, b) => b.score - a.score || a.days - b.days);
 
-  console.log(`enqueue-review: tier >= ${MIN_SCORE}, geo in {${[...GEO_OK].join(', ')}}, <= ${FRESH_MAX_AGE_DAYS}d (whales <= ${MAX_AGE_DAYS}d, teaching <= ${TEACHING_MAX_AGE_DAYS}d)`);
+  // The banner names EVERY window, from the same table the gate reads. It used
+  // to name two of the five by hand, so a role dropped under a window the
+  // operator could not see was indistinguishable from a role dropped for cause.
+  console.log(`enqueue-review: tier >= ${MIN_SCORE}, geo in {${[...GEO_OK].join(', ')}}, freshness per lib/freshness.mjs (${describeWindows({ whaleMaxAgeDays: MAX_AGE_DAYS })})`);
   console.log(`scanned ${stats.scanned} scored JDs → ${groups.size} distinct roles`);
   console.log(`  dropped: ${stats.lowScore} below tier, ${stats.geo} geo, ${stats.stale} stale, ` +
               `${stats.blacklisted} blacklisted, ${stats.already} already in queue,`);

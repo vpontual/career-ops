@@ -24,8 +24,9 @@ import yaml from 'js-yaml';
 import dotenv from 'dotenv';
 import { loadBlacklist, blacklistEntry } from './blacklist.mjs';
 import { canonKey } from './lib/canonical.mjs';
+import { maxAgeDaysFor } from './lib/freshness.mjs';
 import { parseJd } from './lib/jd-parse.mjs';
-import { detectTrack, titlePassesForTrack, trackFacts, scoreTeaching, scoreCivic, scoreNonprofit, scoreNow } from './lib/track.mjs';
+import { detectTrack, titlePassesForTrack, trackFacts, scoreTeaching, scoreCivic, scoreNonprofit, scoreNow, CANNOT_DO } from './lib/track.mjs';
 import { screenVerdict, findReportableFormats } from './lib/screen-evidence.mjs';
 import { compBand } from './lib/comp-band.mjs';
 import { skillGate, defaultLacks } from './lib/skill-gate.mjs';
@@ -447,7 +448,13 @@ const FUNCTION_AREA = [
   ['engineering', /engineer|developer|programmer|devops|\bsre\b|machine learning|data scien|architect/i],
   ['teaching', /teacher|teaching|instructor|lecturer|adjunct|faculty|curriculum|instructional/i],
   ['design', /\bdesign(er)?\b|\bux\b|\bui\b|visual|creative|art director/i],
-  ['sales', /\bsales\b|account executive|account manager|quota|business development rep|deal desk|renewals|pipeline/i],
+  // `pipeline` was bare and matched the PRODUCT NAME in Datadog's "Senior
+  // Product Marketing Manager - Observability Pipelines", classifying a product
+  // marketing role as `sales`. A pipeline is a sales noun only when it is
+  // qualified as one; everywhere else in this corpus it is data infrastructure
+  // (observability pipelines, ETL pipelines, CI pipelines, ML pipelines).
+  // GitLab's real "Director, Pipeline Excellence" still matches.
+  ['sales', /\bsales\b|account executive|account manager|quota|business development rep|deal desk|renewals|sales pipeline|pipeline (excellence|generation|growth|coverage)|\bpipegen\b/i],
   // Widened 2026-08-06. 'Paid Media Manager (B2B)' normalised to 'other', so the
   // lead-gen gate - which already lists marketing-demand - never saw it, and a
   // demand-generation role reached tier 5 and a review card. Paid media, paid
@@ -469,7 +476,12 @@ const FUNCTION_AREA = [
   // Security Platform", a domain PM role, because the product-title test above
   // only rescues titles that spell out "product manager" - "Senior PM, X" does
   // not match it.
-  ['security', /information security|security engineer|\bsoc\b|\bgrc\b|infosec|cyber|\bisso\b|information system security officer|security\s*\/\s*compliance|\bsecurity officer\b/i],
+  // `product security`, `application security` and `security governance` added
+  // 2026-08-11 from two live records the narrow list missed: Harvey's "Head of
+  // Product Security" (an appsec leadership role that the product-title rescue
+  // below would otherwise claim, because "head of product" matches inside it)
+  // and GitLab's "Senior Manager, Customer Trust & Security Governance".
+  ['security', /information security|security engineer|\bsoc\b|\bgrc\b|infosec|cyber|\bisso\b|information system security officer|security\s*\/\s*compliance|\bsecurity officer\b|product security|application security|security governance/i],
   ['clinical', /clinical|medical|nurse|physician|patient care/i],
   ['support', /technical support|help ?desk|support engineer|tier [123]|director,? support|head of support/i],
   ['customer-success', /customer success|client success|customer experience|onboarding manager/i],
@@ -489,24 +501,146 @@ const FUNCTION_AREA = [
   ['product', /product manage(r|ment)|product marketing|product lead|head of product|product owner|product director|(director|vp|vice president|chief)[, ]+(of )?product|chief product officer/i],
 ];
 
+// An unambiguous product-management title. "Staff Product Manager, RevOps &
+// Finance Systems" matched /financ/ and classified as `finance`, which Track D's
+// CANNOT_DO then hard-rejected to 1 - a role VP had personally APPROVED. A PM
+// who owns finance systems is a PM, not an accountant.
+const TITLE_PRODUCT = /\bproduct (manager|management|lead|owner|director)\b|\bhead of product\b|\bchief product officer\b|\b(director|vp|vice president|chief)[, ]+(of )?product\b/i;
+// ...except where the next word names a DIFFERENT discipline that happens to
+// contain the phrase. "Head of Product Security" (Harvey) is an appsec role;
+// "Director of Product Design" is a design role. Product MARKETING is held out
+// here too - see the note in normalizeFunctionArea about why.
+// `product control` is in the list because of Clear Street's "Head of Product
+// Control & IPV" - independent price verification, a finance function in a
+// brokerage, which "head of product" matches word for word.
+const TITLE_PRODUCT_NOT = /\bproduct (marketing|security|design|engineering|counsel|control)\b/i;
+
+// Titles that settle the discipline on their own, whatever the model answered.
+// These are NOUN titles that never mean product work: nobody is a "Data
+// Scientist" who is really a PM. Deliberately checked AFTER TITLE_PRODUCT, so
+// "Product Manager, Developer Experience" is a PM, not a developer.
+//
+// The live symptom this fixes: DCWP's "Senior Data Scientist" appears twice in
+// the corpus, once with the model's functionAreaRaw "Research & Analytics" and
+// once with "research". The first normalised to `engineering`, the second to
+// `research` - the same posting landing on two different disciplines, one of
+// them gated and one of them not, purely on the model's mood.
+const TITLE_DECISIVE = [
+  ['engineering', /\bengineers?\b|\bengineering\b|\bdevelopers?\b|\bprogrammer\b|\bdata scientist\b|\barchitect\b|\bdevops\b|\bsre\b/i],
+  // General Assembly's "Lead Instructor: AI-Enabled Product Marketing Manager"
+  // is a teaching job about product marketing, not a product marketing job.
+  ['teaching', /\b(teachers?|instructors?|lecturers?|adjunct|professor|faculty)\b/i],
+  ['legal', /\battorneys?\b|\bcounsel\b|\blawyer\b|\bparalegal\b/i],
+  ['clinical', /\b(registered nurse|nurse practitioner|physician|clinician|psychiatrist|psychologist)\b/i],
+  ['finance', /\baccountant\b|\bcontroller\b|\bbookkeeper\b|\bauditor\b/i],
+  ['hr', /\brecruiter\b|\btalent acquisition\b/i],
+  // Only phrases that name the security PROFESSION. A bare /security/ would
+  // claim "Senior PM, Security Platform", which is a domain PM role. Harvey's
+  // "Head of Product Security" is in the corpus TWICE with two different model
+  // answers ("engineering" and "security"), and without this it stayed split.
+  ['security', /\b(information security|infosec|isso|product security|application security|security governance|security engineer|security officer)\b/i],
+];
+
+// The five labels the title is allowed to use to OVERTURN a CANNOT_DO answer
+// from the model - see normalizeFunctionArea. Deliberately short: these are the
+// disciplines VP has actually practised, and they are the ones the nonprofit and
+// civic sectors use for work a technology company would call product.
+// `partnerships` is NOT here on purpose - GitLab's "Manager, Business
+// Development" matches it and is a sales role.
+const TITLE_MAY_OVERRULE = new Set(['product', 'program', 'strategy', 'operations', 'general-management']);
+
+function disciplineFromTitle(title) {
+  const t = String(title || '');
+  if (!t.trim()) return null;
+  for (const [name, re] of FUNCTION_AREA) if (re.test(t)) return name;
+  return null;
+}
+
 export function normalizeFunctionArea(raw, title = '') {
   const t = String(raw ?? '').trim().toLowerCase();
   const known = new Set(FUNCTION_AREA.map((x) => x[0]).concat(['other']));
-  if (known.has(t)) return t;
-  // The model answered in prose, or not at all. Fall back to the title, which is
-  // the same authority the rest of this file trusts over the model's wording.
-  const hay = `${t} ${title}`;
+  const ttl = String(title || '');
 
-  // An unambiguous product-management title wins over any DOMAIN word in the
-  // rest of the title, because FUNCTION_AREA is first-match-wins and the domain
-  // categories are listed first. "Staff Product Manager, RevOps & Finance
-  // Systems" matched /financ/ and classified as `finance`, which Track D's
-  // CANNOT_DO then hard-rejected to 1 - a role VP had personally APPROVED. A PM
-  // who owns finance systems is a PM, not an accountant. Same for "Product
-  // Manager, Security", "PM, Support Platform" and every other domain PM role.
+  // ── 1. The title, where the title is decisive ──────────────────────────
+  // Ahead of the model's answer, not behind it. This is the same rule the rest
+  // of this file already applies to geo ("location comes from the ATS record,
+  // never the model") and to archetype. Until 2026-08-11 a known enum value from
+  // the model short-circuited everything below, which made the model's label
+  // unfalsifiable - and that is exactly how the ACLU's "Associate Director, Web
+  // Strategy" was hard-scored to 1: the model said "marketing-demand", so no
+  // title test ever ran.
+  if (TITLE_PRODUCT.test(ttl) && !TITLE_PRODUCT_NOT.test(ttl)) return 'product';
+  for (const [name, re] of TITLE_DECISIVE) if (re.test(ttl)) return name;
+
+  if (known.has(t)) {
+    // ── 2. A CANNOT_DO answer gets one check; a benign one does not ──────
+    // Asymmetric on purpose. A wrong benign label costs a point somewhere in the
+    // arithmetic; a wrong CANNOT_DO label hard-scores the role to 1 and VP never
+    // sees it. So the expensive direction is the one that has to justify itself.
+    //
+    // The title only overturns the model when it POSITIVELY names one of the
+    // disciplines VP practises (TITLE_MAY_OVERRULE). Silence is not a rescue:
+    // GitLab's "Senior Manager, Customer Trust & Security Governance" must stay
+    // `security`, and it would be un-gated by any rule that read "no contrary
+    // title signal" as permission.
+    //
+    // ⚠ Product MARKETING is held out of the rescue. A `marketing-demand` answer
+    // on a Product Marketing title is left standing, because whether PMM is in
+    // scope is a Track A policy question with its own history (see the Mercury
+    // note on the lead-gen gate below) and not something a nonprofit-gate fix
+    // should decide silently.
+    if (CANNOT_DO.has(t)) {
+      // PRODUCT MARKETING IS IN SCOPE. Decided 2026-08-11 on the evidence, after
+      // the discipline audit deliberately held it as a separate Track A call:
+      //   - VP maintains a dedicated cv-pmm.md CV variant for these roles;
+      //   - "Product Marketing" is one of the archetypes THIS FILE asks the
+      //     model to report, so hard-scoring it to 1 contradicted the prompt;
+      //   - 12 PMM roles were sitting in his review queue awaiting decision
+      //     (Ramp x2, Deepgram x2, CoreWeave, Datadog, Pinecone, Abnormal,
+      //     Oscar Health, Talkiatry, Numa), i.e. the pipeline was already
+      //     surfacing them while the label said he cannot do the work;
+      //   - the lead-gen comment below records VP APPROVING Mercury's Senior
+      //     PMM after it was gated to 1.
+      // 17 roles were blocked by a label that every other signal contradicts.
+      //
+      // The lead-gen trap stays shut: a PMM title whose OWN WORDS name demand
+      // generation is still marketing-demand. Tested against the TITLE only,
+      // never `hay` - on this branch `t` IS the string "marketing-demand", so
+      // testing the haystack would match itself and the rescue would never fire.
+      if (/\bproduct marketing\b/i.test(ttl)) {
+        const md = FUNCTION_AREA.find((x) => x[0] === 'marketing-demand');
+        return (md && md[1].test(ttl)) ? 'marketing-demand' : 'product';
+      }
+      const fromTitle = disciplineFromTitle(ttl);
+      if (fromTitle && TITLE_MAY_OVERRULE.has(fromTitle)) return fromTitle;
+    }
+    return t;
+  }
+
+  // ── 3. The model answered in prose, or not at all ──────────────────────
+  const hay = `${t} ${ttl}`;
+
+  // A product MARKETING title, rescued from the domain words the earlier
+  // categories match on. "Product Marketing Lead, Billing" (Stripe) normalised
+  // to `finance` on the word Billing; "Senior Product Marketing Manager -
+  // Observability Pipelines" (Datadog) normalised to `sales` on the word
+  // Pipelines. Neither is remotely true. The demand-generation test still gets
+  // first refusal, which is the lead-gen trap the original fall-through was for.
   //
-  // Product MARKETING is deliberately excluded here and left to fall through, so
-  // the marketing-demand test above keeps its say on the lead-gen trap.
+  // ⚠ TITLE ONLY, never the raw. `functionAreaRaw` is not trustworthy enough to
+  // set a label on its own: Achievement First's "RI Founding Envision Middle
+  // School-Math Teacher" carries functionAreaRaw "Product Marketing", and an
+  // HRA posting titled "PROJECT MANAGER" carries "Product Marketing Manager".
+  // Reading those turned six teaching roles into product roles.
+  if (/\bproduct marketing\b/i.test(ttl)) {
+    const md = FUNCTION_AREA.find((x) => x[0] === 'marketing-demand');
+    return md && md[1].test(hay) ? 'marketing-demand' : 'product';
+  }
+
+  // The original raw-inclusive product rescue, unchanged. Where the model's own
+  // words say product management ("Product Management" against the Mayor's
+  // Office "Senior Advisor, Digital Strategy") that is real evidence and the
+  // title fallback below would bury it under /advisor/ → consulting.
   if (/\bproduct (manager|management|lead|owner|director)\b|\bhead of product\b|\bchief product officer\b/i.test(hay)
       && !/product marketing/i.test(hay)) {
     return 'product';
@@ -1046,7 +1180,18 @@ async function main() {
     // and 27 of 28 Success Academy reqs - open SY2026-27 postings - were dropped
     // as stale, which is why Track C's dominant employer was invisible. The 30-day
     // "assume filled" rule is a tech-req rule and does not transfer.
-    const maxAge = track === 'teaching' ? TEACHING_MAX_AGE_DAYS : MAX_AGE_DAYS;
+    // Per-track windows, from the SAME table stage-applications and
+    // enqueue-review read (lib/freshness.mjs). This gate runs BEFORE scoring and
+    // nothing downstream can rescue a JD the scorer refused to score, so a hard
+    // `teaching ? 150 : 30` here silently capped Track E at 30 days while the
+    // gates below it had already moved to 60 - a civic requisition first seen at
+    // 45 days would never reach lead-scores.json at all.
+    //
+    // Math.max keeps this path's deliberate 30-day floor, which is looser than
+    // staging's 21, rather than tightening pm to the staging window as a bare
+    // maxAgeDaysFor() would. pm/now/teaching unchanged; civic gains 60,
+    // nonprofit 35.
+    const maxAge = Math.max(maxAgeDaysFor({ track }), MAX_AGE_DAYS);
     if (days != null && days > maxAge) { staleDropped++; continue; }
     if (days == null) unparsedDate++;
     candidates.push({ ...jd, posted_days: days, track });

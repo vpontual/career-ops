@@ -21,9 +21,13 @@
  *   MAX_CONCURRENT=2
  *   GEMINI_MODEL=gemini-2.5-flash
  *   freshness windows: FRESH_MAX_AGE_DAYS / MAX_AGE_DAYS (whales) /
- *   EVERGREEN_MAX_AGE_DAYS / TEACHING_MAX_AGE_DAYS — all in lib/freshness.mjs,
- *   because they must be the same numbers enqueue-review uses. Do NOT
- *   reintroduce a local one here; that is the bug lib/freshness.mjs exists for.
+ *   EVERGREEN_MAX_AGE_DAYS / and the per-track table TRACK_MAX_AGE_DAYS
+ *   (TEACHING_MAX_AGE_DAYS 150, CIVIC_MAX_AGE_DAYS 60, NONPROFIT_MAX_AGE_DAYS
+ *   35) — all in lib/freshness.mjs, because they must be the same numbers
+ *   enqueue-review uses. Do NOT reintroduce a local one here; that is the bug
+ *   lib/freshness.mjs exists for. This file no longer imports the individual
+ *   constants at all — it prints describeWindows() and asks maxAgeDaysFor(),
+ *   so a new track needs no edit here.
  */
 
 import { readFile, writeFile, mkdir, stat, unlink } from 'fs/promises';
@@ -42,8 +46,7 @@ import {
 } from './lib/cover-letter-requirement.mjs';
 import { parseJd } from './lib/jd-parse.mjs';
 import {
-  loadFreshnessPolicy, recencyDays,
-  FRESH_MAX_AGE_DAYS, WHALE_MAX_AGE_DAYS, EVERGREEN_MAX_AGE_DAYS, TEACHING_MAX_AGE_DAYS,
+  loadFreshnessPolicy, recencyDays, describeWindows,
 } from './lib/freshness.mjs';
 import { renderCvHtml, renderCoverLetterHtml } from './lib/render.mjs';
 
@@ -374,9 +377,12 @@ async function main() {
     console.log(`--slug: ${candidates.length} of ${before} candidate(s) selected`);
     for (const s of want) if (!candidates.some(c => c.slug === s)) console.log(`  ⚠ not a current candidate: ${s}`);
   }
+  // Rendered from TRACK_MAX_AGE_DAYS rather than hand-listed. This line named
+  // four windows and enqueue's named two, so the pair could disagree about what
+  // the policy even WAS while both correctly applied it - and a fifth window
+  // (civic, 2026-08-11) would have appeared in neither.
   console.log(`\nstage-applications: score>=${MIN_SCORE}, freshness per lib/freshness.mjs `
-    + `(<=${FRESH_MAX_AGE_DAYS}d, whales <=${WHALE_MAX_AGE_DAYS}d, evergreen <=${EVERGREEN_MAX_AGE_DAYS}d, `
-    + `teaching <=${TEACHING_MAX_AGE_DAYS}d) → ${candidates.length} candidates\n`);
+    + `(${describeWindows()}) → ${candidates.length} candidates\n`);
 
   // --list / --dry-run: show what WOULD be staged and exit (no Gemini, no PDFs).
   if (process.argv.includes('--list') || process.argv.includes('--dry-run')) {
