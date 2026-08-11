@@ -49,6 +49,19 @@ export interface PipelineRow {
   // become cards - but they still rendered at 5.0 in this list, which is where
   // VP saw them.
   geo?: string;         // "remote-us" | "onsite-nyc" | "onsite-elsewhere" | ...
+
+  // Facts derived in CODE from the posting text, with the matched sentence kept
+  // as evidence - lib/credential-gate.mjs and lib/skill-gate.mjs. These are NOT
+  // the same kind of thing as `verdict`/`redFlags`, which are the model's prose,
+  // and the difference is not academic: for KlearNow the model wrote "Requires
+  // specific domain knowledge (US broker license/field equivalent)" where the
+  // posting says "A US broker license (or the field-earned equivalent) is a
+  // strong plus". VP read the card, believed it was disqualifying, and asked why
+  // a disqualified role was in his shortlist. The verified fact was already on
+  // the record and said "(preferred)". The card just never showed it.
+  credentialWarnings?: string;   // named, not required - e.g. "customs broker licence (preferred)"
+  credentialName?: string;       // set only when genuinely blocking
+  skillWarnings?: string[];
 }
 
 export interface PipelineData {
@@ -175,7 +188,7 @@ async function fileMtime(p: string): Promise<number> {
 // Cache JD lookups so we don't walk jds/ on every request. Day-keyed so
 // `posted`/`updated` (computed from Date.now()) advance at midnight even if
 // loadPipeline's per-request reset never fires (e.g. /ranked only call site).
-type JdMeta = { posted?: number; updated?: number; locations?: string[]; score?: number; verdict?: string; redFlags?: string; track?: string; geo?: string };
+type JdMeta = { posted?: number; updated?: number; locations?: string[]; score?: number; verdict?: string; redFlags?: string; track?: string; geo?: string; credentialWarnings?: string; credentialName?: string; skillWarnings?: string[] };
 let jdMetaCache: Map<string, JdMeta> | null = null;
 let jdMetaCacheDay: string | null = null;
 
@@ -201,7 +214,7 @@ function canonKey(company: string, title: string): string {
 // Score index keyed by canonKey, with a collision count so the join only falls
 // back to it when UNAMBIGUOUS (never mis-assigns a score across two distinct
 // same-titled roles at one company). Populated by loadJdMetaIndex.
-type CanonScore = { score?: number; verdict?: string; redFlags?: string; track?: string; geo?: string; n: number };
+type CanonScore = { score?: number; verdict?: string; redFlags?: string; track?: string; geo?: string; credentialWarnings?: string; credentialName?: string; skillWarnings?: string[]; n: number };
 let canonScoreCache: Map<string, CanonScore> | null = null;
 
 // Compute days between an ISO timestamp and now. Returns undefined if the
@@ -224,7 +237,7 @@ export async function loadJdMetaIndex(): Promise<Map<string, JdMeta>> {
   // rank-leads.mjs's score cache, keyed by JD filename. This is the single
   // scoring authority (score-all.mjs and its reports/ dir were retired); the
   // UI must read scores from here or every freshly-scored role shows "unscored".
-  let leadScores: Record<string, { score?: number; verdict?: string; redFlags?: string; track?: string; geo?: string }> = {};
+  let leadScores: Record<string, { score?: number; verdict?: string; redFlags?: string; track?: string; geo?: string; credentialWarnings?: string; credentialName?: string; skillWarnings?: string[] }> = {};
   try {
     leadScores = JSON.parse(await readFile(path.join(DATA_ROOT, "data", "lead-scores.json"), "utf-8"));
   } catch { /* no scores yet */ }
@@ -264,7 +277,10 @@ export async function loadJdMetaIndex(): Promise<Map<string, JdMeta>> {
         verdict: sc?.verdict,
         redFlags: sc?.redFlags,
         track: sc?.track,
-        geo: sc?.geo
+        geo: sc?.geo,
+        credentialWarnings: sc?.credentialWarnings,
+        credentialName: sc?.credentialName,
+        skillWarnings: sc?.skillWarnings
       });
 
       // Canonical company+title index (for the URL-drift score-join fallback).
@@ -425,6 +441,9 @@ export async function loadPipeline(): Promise<PipelineData> {
         if (jdMeta.redFlags) row.redFlags = jdMeta.redFlags;
         if (jdMeta.track) row.track = jdMeta.track;
         if (jdMeta.geo) row.geo = jdMeta.geo;
+        if (jdMeta.credentialWarnings) row.credentialWarnings = jdMeta.credentialWarnings;
+        if (jdMeta.credentialName) row.credentialName = jdMeta.credentialName;
+        if (jdMeta.skillWarnings?.length) row.skillWarnings = jdMeta.skillWarnings;
       }
     }
 

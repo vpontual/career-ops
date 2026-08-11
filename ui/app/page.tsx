@@ -222,7 +222,19 @@ function RoleRow({ r }: { r: PipelineRow }) {
           )}
         </div>
         {r.verdict && <p className="mt-1.5 text-sm leading-relaxed text-slate-400">{r.verdict}</p>}
-        {r.redFlags && <p className="mt-1 text-xs leading-relaxed text-amber-300/80">⚠ {r.redFlags}</p>}
+        {/* The model's prose, LABELLED as such. It overstates: for KlearNow it
+            wrote "Requires ... US broker license" where the posting says the
+            licence "is a strong plus", and VP reasonably read that as an
+            immediate disqualifier. Unlabelled amber text reads as verified
+            fact; this is a summary, and it is allowed to be wrong. */}
+        {r.redFlags && <p className="mt-1 text-xs leading-relaxed text-amber-300/80">⚠ model read: {r.redFlags}</p>}
+        {/* Facts derived in code from the posting, with the matched sentence as
+            evidence. Where these disagree with the line above, THESE are right. */}
+        {(r.credentialWarnings || r.credentialName || r.skillWarnings?.length) && (
+          <p className="mt-1 text-xs leading-relaxed text-sky-300/80">
+            ✓ from the posting: {[r.credentialName, r.credentialWarnings, ...(r.skillWarnings ?? [])].filter(Boolean).join(" · ")}
+          </p>
+        )}
         {r.locations.length > 0 && (
           <div className="mt-1.5 truncate text-xs text-slate-500">{r.locations.join(" · ")}</div>
         )}
