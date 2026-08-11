@@ -226,6 +226,29 @@ eq('evidence: the matched sentence comes back verbatim',
 eq('evidence: empty when nothing blocks',
    detectHardCredential('Requirements\n- 8+ years of product management.').evidence, '');
 
+// ── Government-contractor boilerplate ────────────────────────────────
+// Found LIVE on 2026-08-11, after this gate had already shipped: two Nava PBC
+// roles were hard-gated to 1 by "May be subject to a government background
+// check or security clearance, depending on the contract". That is a clearance
+// the employer may initiate later, not one VP already holds, and the paragraph
+// is boilerplate across civic-tech vendors (Nava, Ad Hoc) - precisely the
+// employers Tracks B and E exist to surface. The corpus scan that reported
+// "zero false positives" predated those postings, which is exactly why a live
+// re-check after shipping still mattered.
+eq('contractor boilerplate: "may be subject to ... depending on the contract" does not block',
+   blocks('**Requirements**\nMay be subject to a government background check or security clearance, depending on the contract.'), false);
+eq('"a security clearance may be required depending on the contract" does not block',
+   blocks('**Requirements**\nA security clearance may be required depending on the contract.'), false);
+eq('"subject to a government background check" alone does not block',
+   blocks('**Requirements**\nEmployment is subject to a government background check.'), false);
+eq('"depending on the project" does not block',
+   blocks('**Requirements**\nA clearance may be needed depending on the project.'), false);
+// ...and the genuine article must still block, or the above is a hole.
+eq('an ACTIVE clearance requirement still blocks',
+   blocks('**Requirements**\n- Active Secret security clearance'), true);
+eq('"must hold an active TS/SCI clearance" still blocks',
+   blocks('**Requirements**\nMust hold an active TS/SCI clearance.'), true);
+
 let pass = 0; const fails = [];
 for (const [l, g, w] of T) { if (g === w) pass++; else fails.push(`  ❌ ${l}\n     expected ${JSON.stringify(w)}, got ${JSON.stringify(g)}`); }
 console.log(`\ncredential gate — ${T.length} cases`);
