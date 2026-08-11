@@ -49,17 +49,107 @@ import { skillGate, defaultLacks } from './lib/skill-gate.mjs';
 const mod = { normalizeGeo, normalizeArchetype, normalizeFunctionArea, scoreFromFacts };
 
 const scores = JSON.parse(await readFile(SCORES, 'utf8'));
-let changed = 0, gated = 0, skipped = 0;
+let changed = 0, gated = 0, skipped = 0, quarantined = 0;
 const moves = [];
+const quarantine = [];
 
 for (const [k, v] of Object.entries(scores)) {
-  if (!('aiNative' in v)) { skipped++; continue; }   // pre-facts entry, leave alone
+  // ── Pre-facts entries: QUARANTINED, not rescored and no longer trusted ────
+  //
+  // 207 records (58 of them at tier 4+) predate the facts-in-code rewrite. They
+  // carry exactly five keys - score, archetype, verdict, redFlags, scored_at -
+  // and NOTHING else. No geo, no functionArea, no aiNative, no compLow, no
+  // level, no *Raw fields. They are the same 207 that `enqueue-review.mjs`
+  // isolates as `repIsLegacy` and that `triage-candidates.mjs` drops on
+  // `s.geo === undefined`.
+  //
+  // This branch used to be `{ skipped++; continue; }` - "leave alone" - and
+  // leaving them alone was the bug. Their stored 4s and 5s were earned under a
+  // 2026-05 rubric that had no geography gate, no skill gate and no credential
+  // gate, but `ui/app/page.tsx`'s shortlist is
+  //   typeof r.score === "number" && r.score >= 4.0
+  //     && r.geo !== "onsite-elsewhere" && r.geo !== "hybrid-elsewhere"
+  // and on these records `r.geo` is UNDEFINED, so both geo tests pass by
+  // vacuity. Every gate the last three months of work added is bypassed by a
+  // record simply not having the field the gate reads. Two scripts had already
+  // learned to distrust them one at a time; the UI never did.
+  //
+  // WHY QUARANTINE AND NOT RESCORE. `scoreFromFacts` is not a pure function of
+  // the posting - it takes `aiNative`, and aiNative is a MODEL judgement with
+  // no code-derivable substitute. It is worth +1 and it is the sole gate on
+  // tier 5 (`if (!f.aiNative) score = Math.min(score, 4)`). Feeding these
+  // records through with aiNative absent does not "re-derive" anything: it
+  // silently asserts aiNative=false, compLow=null and level='at' for all 207,
+  // and hands back a number that looks exactly like a scored one. Measured on
+  // the 58 at tier 4+: the code-derived hard gates (geo from the ATS Location
+  // header, skill-gate, credential-gate, screen-evidence) fire on only FOUR.
+  // The other 54 would receive a manufactured tier resting on three invented
+  // facts. That is a worse failure than the one being fixed - it converts
+  // "unknown" into "measured", and nothing downstream could tell the
+  // difference afterwards.
+  //
+  // So the honest state is recorded instead: score = null. "We do not know"
+  // and "we know it is a 1" are different answers and this keeps them
+  // different. Every consumer already reads score defensively - the UI's
+  // `typeof sc?.score === "number"`, stage-applications' `Number(rec?.score)
+  // || 0`, resolve-apply-paths' `Number(rec.score) >= MIN_SCORE` - so a null
+  // drops out of the shortlist, the staging tier gate and the canonical
+  // score-join with no further change. The old number is preserved in
+  // `legacyScore` so this is auditable and reversible.
+  //
+  // NO TRACK IS ASSIGNED, deliberately. `detectTrack` would label all 58 'pm',
+  // which reads as "scored under the pm rubric" - the exact false claim this
+  // block exists to stop. The "None 58" bucket in the tier-4+ breakdown is
+  // meant to disappear because these records LEAVE the tier-4+ population, not
+  // because they were handed a label they never earned.
+  //
+  // AND NO DERIVED FACTS, for a second reason: `enqueue-review.mjs` identifies
+  // this population with `geo === undefined && functionArea === undefined`.
+  // Writing even a code-derived geo here would flip that test to false and
+  // these records would be miscounted under `stats.lowScore` instead of
+  // `stats.legacyNoFacts`, in a file whose header is about counting honestly.
+  // Leave the shape alone; add only the quarantine keys.
+  //
+  // These 207 are not recoverable by any policy change and re-scoring them by
+  // model is not worth buying: all 58 tier-4+ postings are 42-140 days old
+  // (none within rank-leads' 30-day freshness window), 40 of the 58 are already
+  // in pipeline-archive.md, and at ~34s per role a full pass costs ~33 minutes
+  // of DGX time to re-score requisitions that are almost certainly closed. If a
+  // legacy req is ever REPOSTED it becomes fresh, and rank-leads.mjs now
+  // re-scores any cache entry whose score is null - so the heal happens exactly
+  // when the role is worth healing, and never otherwise.
+  if (!('aiNative' in v)) {
+    skipped++;
+    if (v.score != null) {
+      quarantine.push({ k, was: v.score });
+      v.legacyScore = v.score;
+      v.score = null;
+      v.legacyNoFacts = true;
+      v.legacyReason = 'scored pre-2026-07-31 under a rubric with no geo/skill/credential gate; '
+                     + 'no stored facts to re-derive from (no aiNative/geo/functionArea/compLow/level). '
+                     + 'Not trusted by the shortlist. Rescore requires an LLM pass.';
+      quarantined++;
+    }
+    continue;
+  }
   // Prefer the JD's own Location header over anything cached from the model.
   // That header is what the ATS reported and it is the only trustworthy source
   // when a company posts one role per city.
+  //
+  // ⚠ The window was 600 characters and that was too small, because the header
+  // it reads sits BELOW the `**URL:**` line and some URLs are enormous. A
+  // welcometothejungle link carries a ~430-character JWT in its query string,
+  // which pushes `**Location:**` past 600 - and the `m` flag lets `$` match end
+  // of INPUT as well as end of line, so the regex still matched and returned a
+  // value chopped mid-string. Silent corruption, not a miss. Measured over the
+  // corpus: 6 records truncated, 4 of them landing on a different geo, and 2 of
+  // those in the dangerous direction - Meltwater's "Miami, US / Austin, US /
+  // Chicago, US / New York, US" was cut to "...Chicago, US /" and normalised to
+  // onsite-elsewhere, hard-gating a role VP can take in New York to 1.
+  // 4000 clears every header on disk (largest observed ~900).
   let raw = v.geoRaw ?? v.geo;
   try {
-    const head = readFileSync(path.join(ROOT, 'jds', k), 'utf8').slice(0, 600);
+    const head = readFileSync(path.join(ROOT, 'jds', k), 'utf8').slice(0, 4000);
     const m = /^\*\*Location:\*\* (.+)$/m.exec(head);
     if (m && m[1].trim()) raw = m[1].trim();
   } catch {}
@@ -163,6 +253,8 @@ for (const [k, v] of Object.entries(scores)) {
 
 console.log(`entries: ${Object.keys(scores).length}  recomputed: ${Object.keys(scores).length - skipped}  skipped (no facts): ${skipped}`);
 console.log(`changed: ${changed}   newly gated to 1 on geography: ${gated}`);
+console.log(`quarantined (pre-facts, score → null): ${quarantined}` +
+            `   of which were sitting at tier 4+: ${quarantine.filter(q => q.was >= 4).length}`);
 
 const tiers = {};
 for (const v of Object.values(scores)) if ('aiNative' in v) tiers[v.score] = (tiers[v.score] || 0) + 1;
@@ -170,6 +262,15 @@ console.log('new tiers 5/4/3/2/1:', [5, 4, 3, 2, 1].map(t => tiers[t] || 0).join
 const byTrack = {};
 for (const v of Object.values(scores)) if ('aiNative' in v) byTrack[v.track || 'pm'] = (byTrack[v.track || 'pm'] || 0) + 1;
 console.log('by track:', JSON.stringify(byTrack));
+
+// The number VP actually looks at. `ui/app/page.tsx` calls tier 4+ the
+// shortlist, so a track showing up here is a claim that those roles cleared
+// that track's gates - which is why the untracked bucket had to stop appearing.
+const shortlist = {};
+for (const v of Object.values(scores)) if (typeof v.score === 'number' && v.score >= 4) {
+  shortlist[v.track ?? 'NONE (untracked)'] = (shortlist[v.track ?? 'NONE (untracked)'] || 0) + 1;
+}
+console.log('shortlist (score >= 4) by track:', JSON.stringify(shortlist));
 
 console.log('\nsample of what moved:');
 for (const m of moves.slice(0, 12)) {

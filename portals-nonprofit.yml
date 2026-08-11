@@ -1,54 +1,302 @@
-# portals-nonprofit.yml - generated 2026-07-29
-# Track B. Nonprofits and civic-tech orgs where product skills apply.
-# Titles run wider than "Product Manager"; comp floor is ~$60K, not the PM floor.
+# portals-nonprofit.yml - Track B. "Bring product skills somewhere with community impact."
+#
+# Comp floor is ~$60K, not Track A's $150K. VP said explicitly not to apply the
+# PM rubric's floor here (2026-07-29). Do not add one.
+#
+# ── Why this file was rewritten on 2026-08-11 ──────────────────────────────
+# Track B was wired end to end - scan.mjs sweeps it nightly, lib/track.mjs routes
+# on its board slugs, rank-leads and recompute score it - and still produced 2
+# roles at tier 4 against Track A's 434 and Track E's 53, with ZERO cards in the
+# review queue. The cause was not the rubric and not detection. It was SOURCING:
+# this file listed 13 boards against portals.yml's 158, and a live sweep of all
+# 13 returned 189 postings of which 180 died on the title filter and the
+# remaining 6 were already known. The track could not produce a role because
+# there were almost no roles to produce.
+#
+# Two things changed:
+#   1. 24 more boards, every one PROBED LIVE on 2026-08-11 and confirmed to be
+#      the organisation it claims to be by reading its actual postings.
+#   2. A title filter that admits the titles nonprofits actually use. The old
+#      positive list was 16 exact PM-shaped phrases, so iMentor's "NYC Program
+#      Manager", Wikimedia's "Lead Program Manager" and Code for America's
+#      "Emerging Technology & AI Governance & Enablement Lead" were all dropped
+#      before they were ever fetched.
+#
+# ⚠ A SLUG THAT ANSWERS 200 IS NOT THE ORGANISATION YOU MEANT. Six candidates
+# were rejected on 2026-08-11 for exactly this, after reading their postings:
+#   robinhood      -> Robinhood Markets, the brokerage. 136 postings, "Crypto AML
+#                     Program Manager", "Senior Underwriting Associate". Adding it
+#                     would have routed a fintech to the nonprofit rubric and let
+#                     it bypass Track A's $150K floor - the identical bug the
+#                     header of lib/track.mjs records for Northern Trust.
+#   sesame         -> Sesame AI, an SF voice-hardware startup ("Eyewear Designer").
+#   sesamestreet   -> Greenhouse's DEMO board. Its postings are "Lawn mower 1 @
+#                     Sesame Street" and "Your Dream Job @ Anywhere".
+#   psi            -> an AI lab in Boston ("Member of Technical Staff, Physics
+#                     Research"), not Population Services International.
+#   candid         -> Candid the dental-aligner company, not Candid/GuideStar.
+#   air            -> a defense contractor ("Vice President of Defense Sales",
+#                     "Implementation Engineer - Strategic Munitions"), not the
+#                     American Institutes for Research.
+#   brookings      -> an unrelated SF company, not the Brookings Institution.
+# Read the postings before trusting a slug. Same rule the venture config learned
+# after eight wrong-company collisions and the smartrecruiters parser records for
+# KIPP.
 
+# ── Title filter ───────────────────────────────────────────────────────────
+# This is a CHEAP PREFILTER, not the policy. The authoritative gate is
+# titlePassesForTrack('nonprofit', ...) in lib/track.mjs, which requires a topic
+# word AND a seniority word and runs before the ~34s scoring call. So this list
+# can afford to be topic-led and let that AND do the narrowing; what it must NOT
+# do is what the old one did, which is drop real roles before a JD ever exists.
 title_filter:
   positive:
-  - Product Manager
-  - Senior Product Manager
-  - Principal Product Manager
-  - Lead Product Manager
-  - Director of Product
-  - Director, Product
-  - Head of Product
-  - Chief Product Officer
-  - Product Lead
-  - Director of Technology
-  - Director of Digital
-  - Director of Innovation
-  - Director of Programs
-  - Program Director
-  - Senior Program Manager
-  - Director of Product Management
+  # Topic words. Seniority is applied downstream, in code.
+  - Product
+  - Program
+  - Technology
+  - Technical
+  - Innovation
+  - Digital
+  - Data
+  - Impact
+  - Operations
+  - Strategy
+  - Strategic
+  - Platform
+  - Chief of Staff
+  - Transformation
+  - Service Design
+  - Initiative
   negative:
+  # FUNDRAISING. VP's brief is product skills for community impact, not development.
   - Fundraising
   - Development Officer
+  - Development Associate
   - Major Gifts
+  - Midlevel Gifts
+  - Individual Giving
+  - Planned Giving
   - Grant Writer
   - Grants Manager
+  - Grants Officer
   - Donor
+  - Philanthropy
+  - Corporate Partnerships
+  - Foundation Partnerships
+  - Membership Development
+  # NOT A JOB HE WOULD TAKE, or not a job at all.
   - Volunteer
   - Intern
-  - Junior
-  - Associate Product Manager
-  - APM
+  - Internship
+  - Fellowship
+  - Fellow
+  - Ambassador
+  - Talent Community
+  - Resume Drop
+  - General Application
+  - Expression of Interest
+  - Don't see what
+  - No current openings
+  # ENGINEERING and the visual crafts. He is not a software developer and cannot
+  # pass a coding screen; "Product Designer" is not a product-management role.
   - Engineer
-  - Engineering Manager
+  - Engineering
   - Developer
-  - Designer
-  - Data Scientist
-  - Data Engineer
-  - Researcher
+  - Programmer
   - Architect
+  - Designer
+  - Design Lead
+  - Data Scientist
+  - Data Science
+  - Data Engineer
+  - Data Analyst
   - DevOps
   - SRE
-  - Growth
-  - Acquisition
+  - Machine Learning
+  # DEMAND-GEN marketing and sales. Excluded by name on every other track.
+  - Growth Marketing
+  - Growth Marketer
   - Demand Generation
+  - Lead Generation
+  - Performance Marketing
   - Content Marketing
+  - Social Media
   - Sales
   - Account Executive
+  - Account Manager
+  - Business Development Representative
+  # SPECIALISMS he has never practised.
+  - Counsel
+  - Paralegal
+  - Attorney
+  - Legal
+  - Compliance
+  - Accountant
+  - Accounting
+  - Payroll
+  - Controller
+  - Treasury
+  - Actuar
+  - Underwriting
+  - Recruiter
+  - Recruiting
+  - Talent Acquisition
+  - Finance
+  - Financial
+  - Loan Origination
+  - Communications
+  - Media Relations
+  - Public Relations
+  - Clinician
+  - Nurse
+  - Physician
+  - Chemist
+  - Technician
+  - Custodian
+  # TOO JUNIOR. titlePassesForTrack also requires a seniority word, but excluding
+  # here saves the JD fetch entirely.
+  - Assistant
+  - Coordinator
+  - Organizer
+  - Apprentice
+
+# ── Location filter ────────────────────────────────────────────────────────
+# VP is in Manhattan and will not relocate; lib/track.mjs gates
+# 'onsite-elsewhere'/'hybrid-elsewhere' to 1 on every track. Without this filter
+# that gate fires only AFTER a JD fetch and a scoring call. The international
+# nonprofits are the whole reason it is needed: Khan Academy's board is ~25 India
+# roles, One Acre Fund's is ~39 across Rwanda/Kenya/Nigeria/Burundi/Malawi, and
+# Acumen's is Pakistan/Nairobi/Lagos/London/Mumbai. All correctly worthless here,
+# all free to drop at this point and expensive to drop later.
+#
+# ⚠ Do NOT put a bare "ny" in the positive list. "Kenya" contains it. Negatives
+# are evaluated first so Kenya would still be dropped, but "Sunnyvale" would not.
+# An unstated location is KEPT - remote roles often leave the field blank.
+location_filter:
+  positive:
+  - remote
+  - united states
+  - u.s.
+  - usa
+  - new york
+  - brooklyn
+  - queens
+  - bronx
+  - manhattan
+  - long island city
+  - yonkers
+  - newark
+  - jersey city
+  - ', ny'
+  - 'ny,'
+  - nyc
+  - flexible
+  - telecommuter
+  - anywhere
+  - national
+  - multiple locations
+  - distributed
+  negative:
+  - kenya
+  - nairobi
+  - nigeria
+  - lagos
+  - abuja
+  - uganda
+  - kampala
+  - rwanda
+  - kigali
+  - burundi
+  - malawi
+  - zambia
+  - mozambique
+  - ethiopia
+  - tanzania
+  - ghana
+  - senegal
+  - liberia
+  - india
+  - delhi
+  - mumbai
+  - gurgaon
+  - bangalore
+  - hyderabad
+  - chennai
+  - pune
+  - kolkata
+  - odisha
+  - telangana
+  - maharashtra
+  - pakistan
+  - islamabad
+  - bangladesh
+  - nepal
+  - philippines
+  - indonesia
+  - vietnam
+  - colombia
+  - bogot
+  - mexico
+  - brazil
+  - brasil
+  - argentina
+  - chile
+  - peru
+  - guatemala
+  - haiti
+  - canada
+  - toronto
+  - vancouver
+  - montreal
+  - united kingdom
+  - london
+  - england
+  - scotland
+  - ireland
+  - dublin
+  - france
+  - paris
+  - germany
+  - berlin
+  - spain
+  - madrid
+  - barcelona
+  - netherlands
+  - amsterdam
+  - belgium
+  - sweden
+  - finland
+  - denmark
+  - norway
+  - switzerland
+  - geneva
+  - italy
+  - portugal
+  - lisbon
+  - poland
+  - romania
+  - slovenia
+  - lithuania
+  - luxembourg
+  - australia
+  - singapore
+  - japan
+  - tokyo
+  - korea
+  - taipei
+  - taiwan
+  - china
+  - hong kong
+  - dubai
+  - jordan
+  - lebanon
+  - turkey
+  - ukraine
+  - south africa
+
 tracked_companies:
+# ── already tracked before 2026-08-11 ──
 - name: Acumen
   careers_url: https://job-boards.greenhouse.io/acumen
   api: https://boards-api.greenhouse.io/v1/boards/acumen/jobs
@@ -68,10 +316,15 @@ tracked_companies:
   careers_url: https://job-boards.greenhouse.io/khanacademy
   api: https://boards-api.greenhouse.io/v1/boards/khanacademy/jobs
   enabled: true
-- name: Mozilla Foundation
-  careers_url: https://job-boards.greenhouse.io/mozilla
-  api: https://boards-api.greenhouse.io/v1/boards/mozilla/jobs
-  enabled: true
+# Mozilla was here and has been MOVED to portals.yml (Track A).
+# The greenhouse slug `mozilla` is Mozilla CORPORATION, the for-profit
+# subsidiary - its live board is "Director of Product, Gaming", "Engineering
+# Manager, Ads". Mozilla FOUNDATION has no Greenhouse board at all (checked
+# mozillafoundation and mozilla-foundation: both 0 jobs). Routing it here sent
+# commercial product roles to the nonprofit rubric, which deliberately has NO
+# $150K comp floor - the same shape as the Robinhood/Northern Trust collision
+# this file documents elsewhere. Removed rather than disabled so nobody
+# re-enables it without reading this.
 - name: ProPublica
   careers_url: https://job-boards.greenhouse.io/propublica
   api: https://boards-api.greenhouse.io/v1/boards/propublica/jobs
@@ -96,6 +349,104 @@ tracked_companies:
 - name: iMentor
   careers_url: https://jobs.lever.co/imentor
   enabled: true
+
+# ── added 2026-08-11. Every slug below was fetched live and its postings read
+#    before it was written down; the count in the comment is what it served that
+#    day, and it is there so a future audit can tell "board went quiet" from
+#    "slug was always wrong". ──
+- name: ACLU                                    # 31 postings, NYC HQ
+  careers_url: https://job-boards.greenhouse.io/aclu
+  api: https://boards-api.greenhouse.io/v1/boards/aclu/jobs
+  enabled: true
+- name: American Museum of Natural History      # 1 posting, NYC
+  careers_url: https://job-boards.greenhouse.io/amnh
+  api: https://boards-api.greenhouse.io/v1/boards/amnh/jobs
+  enabled: true
+- name: Chan Zuckerberg Initiative              # 12 postings, NYC hybrid + Redwood City
+  careers_url: https://job-boards.greenhouse.io/chanzuckerberginitiative
+  api: https://boards-api.greenhouse.io/v1/boards/chanzuckerberginitiative/jobs
+  enabled: true
+- name: Common Cause                            # 7 postings
+  careers_url: https://jobs.lever.co/commoncause
+  enabled: true
+- name: Consumer Reports                        # 13 postings, Yonkers NY - a nonprofit
+  careers_url: https://job-boards.greenhouse.io/consumerreports
+  api: https://boards-api.greenhouse.io/v1/boards/consumerreports/jobs
+  enabled: true
+- name: GiveDirectly                            # 24 postings
+  careers_url: https://job-boards.greenhouse.io/givedirectly
+  api: https://boards-api.greenhouse.io/v1/boards/givedirectly/jobs
+  enabled: true
+- name: GiveWell                                # 19 postings, US remote
+  careers_url: https://job-boards.greenhouse.io/givewell
+  api: https://boards-api.greenhouse.io/v1/boards/givewell/jobs
+  enabled: true
+- name: Human Rights Watch                      # 10 postings, NYC HQ
+  careers_url: https://job-boards.greenhouse.io/humanrightswatch
+  api: https://boards-api.greenhouse.io/v1/boards/humanrightswatch/jobs
+  enabled: true
+- name: Jobs for the Future                     # 2 postings
+  careers_url: https://job-boards.greenhouse.io/jobsforthefuture
+  api: https://boards-api.greenhouse.io/v1/boards/jobsforthefuture/jobs
+  enabled: true
+- name: Kiva                                    # 3 postings
+  careers_url: https://job-boards.greenhouse.io/kivaorg
+  api: https://boards-api.greenhouse.io/v1/boards/kivaorg/jobs
+  enabled: true
+- name: LISC                                    # 6 postings, NYC HQ
+  careers_url: https://job-boards.greenhouse.io/lisc
+  api: https://boards-api.greenhouse.io/v1/boards/lisc/jobs
+  enabled: true
+- name: Nava PBC                                # 16 postings, civic tech, US remote
+  careers_url: https://job-boards.greenhouse.io/navapbc
+  api: https://boards-api.greenhouse.io/v1/boards/navapbc/jobs
+  enabled: true
+- name: Nonprofit Finance Fund                  # 5 postings, NYC
+  careers_url: https://job-boards.greenhouse.io/nonprofitfinancefund
+  api: https://boards-api.greenhouse.io/v1/boards/nonprofitfinancefund/jobs
+  enabled: true
+- name: Omidyar Network                         # 1 posting
+  careers_url: https://job-boards.greenhouse.io/omidyarnetwork
+  api: https://boards-api.greenhouse.io/v1/boards/omidyarnetwork/jobs
+  enabled: true
+- name: One Acre Fund                           # 39 postings, almost all East/West Africa
+  careers_url: https://job-boards.greenhouse.io/oneacrefund
+  api: https://boards-api.greenhouse.io/v1/boards/oneacrefund/jobs
+  enabled: true
+- name: Planned Parenthood Federation of America # 10 postings, NYC HQ
+  careers_url: https://jobs.lever.co/ppfa
+  enabled: true
+- name: Pursuit                                 # 7 postings, Long Island City NY
+  careers_url: https://job-boards.greenhouse.io/pursuit
+  api: https://boards-api.greenhouse.io/v1/boards/pursuit/jobs
+  enabled: true
+- name: Resolve to Save Lives                   # 4 postings, NYC HQ
+  careers_url: https://job-boards.greenhouse.io/resolvetosavelives
+  api: https://boards-api.greenhouse.io/v1/boards/resolvetosavelives/jobs
+  enabled: true
+- name: Results for America                     # 1 posting
+  careers_url: https://job-boards.greenhouse.io/resultsforamerica
+  api: https://boards-api.greenhouse.io/v1/boards/resultsforamerica/jobs
+  enabled: true
+- name: Sierra Club                             # 3 postings
+  careers_url: https://jobs.lever.co/sierraclub
+  enabled: true
+- name: Social Finance                          # 3 postings
+  careers_url: https://job-boards.greenhouse.io/socialfinance
+  api: https://boards-api.greenhouse.io/v1/boards/socialfinance/jobs
+  enabled: true
+- name: Southern Poverty Law Center             # 14 postings
+  careers_url: https://job-boards.greenhouse.io/southernpovertylawcenter
+  api: https://boards-api.greenhouse.io/v1/boards/southernpovertylawcenter/jobs
+  enabled: true
+- name: Tides                                   # 5 postings
+  careers_url: https://jobs.ashbyhq.com/tides
+  enabled: true
+- name: UnidosUS                                # 5 postings
+  careers_url: https://job-boards.greenhouse.io/unidosus
+  api: https://boards-api.greenhouse.io/v1/boards/unidosus/jobs
+  enabled: true
+
 scan_settings:
   max_results_per_company: 20
   max_age_days: 60

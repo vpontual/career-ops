@@ -990,7 +990,20 @@ async function main() {
 
   for (let i = 0; i < toScore.length; i++) {
     const jd = toScore[i];
-    if (!RESCORE && cache[jd.filename]) {
+    // The cache hit tests the SCORE, not merely the key. recompute-scores.mjs
+    // quarantines pre-facts records by setting `score: null` (it cannot re-derive
+    // a tier for them - `aiNative` is a model judgement with no code substitute -
+    // so it records "unknown" rather than manufacturing a number). Keying the hit
+    // on `cache[jd.filename]` alone made that permanent: a quarantined record
+    // would be cache-hit for ever and could never earn a real score back.
+    //
+    // This is the heal path, and it costs nothing today. `toScore` has already
+    // been through the freshness filter, and all 207 quarantined postings are
+    // 42-140 days old - zero of them are in scope. The only way one reaches this
+    // line is if the requisition is REPOSTED and comes back inside the 30-day
+    // window, which is exactly the case where spending ~34s of DGX time to score
+    // it properly is worth it.
+    if (!RESCORE && cache[jd.filename] && cache[jd.filename].score != null) {
       scored.push({ ...jd, ...cache[jd.filename] });
       cacheHits++;
       continue;

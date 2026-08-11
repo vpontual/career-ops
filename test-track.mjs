@@ -7,7 +7,7 @@ const JDS = 'jds';
 const scores = JSON.parse(await readFile('data/lead-scores.json', 'utf-8'));
 const files = await readdir(JDS);
 
-const byTrack = { pm: [], teaching: [], nonprofit: [] };
+const byTrack = { pm: [], teaching: [], nonprofit: [], civic: [], now: [] };  // civic+now added 2026-08-11: this script had not been updated since Tracks D and E landed, so it threw on the first civic JD.
 for (const f of files) {
   const jd = parseJd(await readFile(path.join(JDS, f), 'utf-8'), f);
   byTrack[detectTrack(jd)].push({ f, jd });
