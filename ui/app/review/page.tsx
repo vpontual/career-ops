@@ -2,6 +2,7 @@ import { readFile, stat } from "fs/promises";
 import path from "path";
 import Link from "next/link";
 import ReviewControls from "@/components/ReviewControls";
+import SiteNav from "@/components/SiteNav";
 
 export const dynamic = "force-dynamic";
 
@@ -301,9 +302,7 @@ export default async function ReviewPage({
   if (!queue || !queue.items?.length) {
     return (
       <main className="mx-auto min-h-screen max-w-5xl px-6 py-10">
-        <Link href="/?tab=shortlist" className="font-mono text-xs text-slate-500 hover:text-blue-300">
-          ← back to dashboard
-        </Link>
+        <SiteNav active="review" />
         <h1 className="mt-3 text-2xl font-semibold">Review queue</h1>
         <p className="mt-4 text-sm text-slate-400">
           Nothing waiting. Batches land in <code className="text-slate-300">data/review-queue.json</code>.
@@ -336,12 +335,10 @@ export default async function ReviewPage({
   return (
     <main className="mx-auto min-h-screen max-w-5xl px-6 py-8 md:px-10">
       <header className="mb-6">
+        <SiteNav active="review" counts={{ review: totalPending }} />
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <div>
-            <Link href="/?tab=shortlist" className="font-mono text-xs text-slate-500 hover:text-blue-300">
-              ← back to dashboard
-            </Link>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-100">Review queue</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-100">Review queue</h1>
           </div>
           <p className="font-mono text-xs text-slate-500">
             <span className="text-blue-200">{totalPending}</span> awaiting you · {queue.batch}

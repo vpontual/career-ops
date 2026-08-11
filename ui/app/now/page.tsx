@@ -1,4 +1,5 @@
 import { readFile } from "fs/promises";
+import SiteNav from "@/components/SiteNav";
 import path from "path";
 import Link from "next/link";
 
@@ -161,6 +162,7 @@ export default async function GetHiredNow() {
       </header>
 
       <main className="mx-auto max-w-5xl px-6 py-8 md:px-10">
+      <SiteNav active="now" />
         <section>
           <div className="flex items-baseline justify-between">
             <h2 className="text-lg font-semibold text-slate-100">Live roles on this track</h2>
