@@ -1,4 +1,5 @@
 import { readFile } from "fs/promises";
+import SiteNav from "@/components/SiteNav";
 import path from "path";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -113,6 +114,7 @@ export default async function PackPage({ params }: { params: Promise<{ slug: str
 
   return (
     <main className="min-h-screen px-6 py-8 md:px-12 md:py-10 max-w-5xl mx-auto">
+      <SiteNav active="staged" />
       <header className="mb-8 border-b border-slate-800 pb-6">
         <Link href="/?tab=staged" className="text-xs text-slate-500 hover:text-blue-300 font-mono">
           ← back to dashboard

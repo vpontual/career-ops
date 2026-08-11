@@ -3,6 +3,7 @@ import StatusControl from "@/components/StatusControl";
 import SearchFilter from "@/components/SearchFilter";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import SiteNav, { SiteNavId } from "@/components/SiteNav";
 import { readFile } from "fs/promises";
 import path from "path";
 
@@ -369,39 +370,31 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
 
           {/* views + controls */}
           <div className="flex flex-wrap items-center justify-between gap-3 pb-3">
-            <nav className="flex flex-wrap items-center gap-1">
-              {/* Review queue first, and the page lands here (see the redirect at
-                  the top of this component). It is the only view where every card
-                  is complete - CV, answers, diligence, a resolved apply URL and a
-                  posting confirmed live. The other tabs are browsing: Shortlist is
-                  scored-and-eligible but unstaged, Ranked and All roles are the
-                  corpus. Leading with a browse view meant the actionable list was
-                  the one place VP had to navigate to. */}
-              <Link
-                href="/review"
-                className={"flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors " + (pendingReview > 0 ? "bg-blue-500/15 text-blue-200 ring-1 ring-inset ring-blue-400/40 hover:bg-blue-500/25" : "text-slate-500 hover:text-slate-300")}
-              >
-                Review queue
-                {pendingReview > 0 && (
-                  <span className="rounded bg-blue-400/20 px-1.5 py-0.5 text-[10px] tabular-nums text-blue-100">{pendingReview}</span>
-                )}
-              </Link>
-              <span className="mx-1 h-5 w-px bg-slate-800" />
-              {CORE_VIEWS.map(v => (
-                <TabLink key={v.id} view={v} active={v.id === activeView.id} count={count(v)} sortParam={sortParam} q={q} fresh={fresh} />
-              ))}
-              {visibleStatusViews.length > 0 && <span className="mx-1 h-5 w-px bg-slate-800" />}
-              {visibleStatusViews.map(v => (
-                <TabLink key={v.id} view={v} active={v.id === activeView.id} count={count(v)} sortParam={sortParam} q={q} fresh={fresh} />
-              ))}
-              <span className="mx-1 h-5 w-px bg-slate-800" />
-              <Link
-                href="/now"
-                className="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium text-emerald-300/80 transition-colors hover:bg-emerald-500/10 hover:text-emerald-200"
-              >
-                Get Hired Now
-              </Link>
-            </nav>
+            {/* ONE nav, shared with /review, /now, /pack and /role via
+                ui/components/SiteNav.tsx. This page used to render its own,
+                which is why the bar looked different depending on where you
+                were standing. The status filters below are genuinely local to
+                this page - they filter THIS table - so they stay separate. */}
+            <div className="flex flex-col gap-1">
+              <SiteNav
+                active={activeView.id as SiteNavId}
+                counts={{
+                  review: pendingReview,
+                  shortlist: count(CORE_VIEWS[0]),
+                  staged: count(CORE_VIEWS[1]),
+                  ranked: count(CORE_VIEWS[2]),
+                  all: count(CORE_VIEWS[3]),
+                }}
+                params={{ sort: sortParam, q, fresh }}
+              />
+              {visibleStatusViews.length > 0 && (
+                <nav className="flex flex-wrap items-center gap-1">
+                  {visibleStatusViews.map(v => (
+                    <TabLink key={v.id} view={v} active={v.id === activeView.id} count={count(v)} sortParam={sortParam} q={q} fresh={fresh} />
+                  ))}
+                </nav>
+              )}
+            </div>
 
             <div className="flex items-center gap-2">
               <FreshToggle active={fresh} tab={activeView.id} sortParam={sortParam} q={q} />

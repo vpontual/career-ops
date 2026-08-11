@@ -35,10 +35,28 @@ export const SITE_NAV: { id: SiteNavId; label: string; href: string; accent?: "b
 export default function SiteNav({
   active,
   counts = {},
+  params,
 }: {
   active: SiteNavId;
   counts?: Partial<Record<SiteNavId, number>>;
+  /**
+   * The home page's sort/search/fresh state. Its tabs are views OF one page, so
+   * switching tab must not silently drop the filter you had applied - that is
+   * why page.tsx had its own renderer in the first place. Passing the state
+   * here lets one component serve both without the home page keeping a second,
+   * differently-styled copy of the nav, which is what made the bar look
+   * different depending on where you were standing.
+   */
+  params?: { sort?: string; q?: string; fresh?: boolean };
 }) {
+  const withParams = (href: string) => {
+    if (!params || !href.startsWith("/?")) return href;
+    const u = new URLSearchParams(href.slice(2));
+    if (params.sort) u.set("sort", params.sort);
+    if (params.q) u.set("q", params.q);
+    if (params.fresh) u.set("fresh", "1");
+    return `/?${u.toString()}`;
+  };
   return (
     <nav className="mb-4 flex flex-wrap items-center gap-1">
       {SITE_NAV.map((item) => {
@@ -53,7 +71,7 @@ export default function SiteNav({
               ? base + "text-emerald-300/80 hover:bg-emerald-500/10 hover:text-emerald-200"
               : base + "text-slate-400 hover:bg-slate-800/60 hover:text-slate-200";
         return (
-          <Link key={item.id} href={item.href} className={cls} aria-current={isActive ? "page" : undefined}>
+          <Link key={item.id} href={withParams(item.href)} className={cls} aria-current={isActive ? "page" : undefined}>
             {item.label}
             {typeof n === "number" && (
               <span className="rounded bg-slate-700/60 px-1.5 py-0.5 text-[10px] tabular-nums text-slate-300">{n}</span>
