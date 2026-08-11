@@ -24,7 +24,7 @@
  * Usage: node test-answers-matcher.mjs
  */
 
-import { loadDefaults, canonMatch, bestMatch } from './generate-answers.mjs';
+import { loadDefaults, canonMatch, bestMatch, applyStepUrl, looksLikeLoginWall } from './generate-answers.mjs';
 
 // Mirror of renderAnswers()'s resolution order. If that order changes, change it
 // here too — deliberately duplicated so the test pins the ORDER as well as the
@@ -201,3 +201,49 @@ if (failures.length) {
   process.exit(1);
 }
 console.log('');
+
+// ── Account-wall detection ────────────────────────────────────────────────
+// WHY THIS EXISTS. On 2026-08-11 five Citi cards (Workday) failed the nightly
+// ready gate because the job page renders zero inputs - Workday only starts the
+// application after an account step. The first fix INFERRED the wall from the
+// hostname plus an empty read, and wrote an answers.md stating "Form inspected:
+// <today>" - the exact token batch/ready-check.py accepts as proof the live form
+// was opened. A review agent reproduced it firing with playwright entirely
+// missing and against a hostname that does not resolve, i.e. it manufactured the
+// gate's own evidence out of an absence. These tests pin the replacement: the
+// wall must be OBSERVED (real fields on the board's account step), never
+// inferred, so a dead page or a broken browser still fails loudly.
+
+function checkAccountWall() {
+  let pass = 0, fail = 0;
+  const t = (name, cond) => { if (cond) pass++; else { fail++; console.log(`  FAIL ${name}`); } };
+
+  // applyStepUrl builds the board's documented account step from a job URL.
+  t('workday job url -> apply step',
+    applyStepUrl('https://citi.wd5.myworkdayjobs.com/en-US/2/job/New-York/Custody-PM_123')
+      === 'https://citi.wd5.myworkdayjobs.com/en-US/2/job/New-York/Custody-PM_123/apply/applyManually');
+  t('trailing slash collapses',
+    applyStepUrl('https://x.myworkdayjobs.com/a/b/') === 'https://x.myworkdayjobs.com/a/b/apply/applyManually');
+  t('query and hash dropped',
+    applyStepUrl('https://x.myworkdayjobs.com/a?src=li#top') === 'https://x.myworkdayjobs.com/a/apply/applyManually');
+  t('vanity domain fronting workday is not special-cased',
+    applyStepUrl('https://careers.happydance.website/job/9') === 'https://careers.happydance.website/job/9/apply/applyManually');
+
+  for (const bad of [null, undefined, '', 'not a url', '/relative/path', 'javascript:alert(1)', 'file:///etc/passwd']) {
+    t(`rejects ${JSON.stringify(bad)}`, applyStepUrl(bad) === null);
+  }
+
+  // The wall is recognised ONLY from observed fields.
+  t('observed create-account fields are a wall',
+    looksLikeLoginWall([{ label: 'Email Address' }, { label: 'Password' }, { label: 'Verify New Password' }]) === true);
+  t('empty read is NOT a wall (absence of evidence)', looksLikeLoginWall([]) === false);
+  t('a real application form is not a wall',
+    looksLikeLoginWall([{ label: 'Why do you want to work here?' }, { label: 'Resume' }]) === false);
+  t('password alone is not a wall', looksLikeLoginWall([{ label: 'Password' }]) === false);
+
+  console.log(`  ${pass} passed, ${fail} failed — account-wall detection`);
+  return fail;
+}
+
+const wallFailures = checkAccountWall();
+if (wallFailures) process.exitCode = 1;

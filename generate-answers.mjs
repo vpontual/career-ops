@@ -358,6 +358,25 @@ function isNoise(label) {
 // The scraper happily returns Username / Password / recaptcha and calls it a
 // form, so every teaching card got a confidently wrong answers.md. Detect it and
 // say so instead.
+// Some boards - Workday, and the vanity domains that front a Workday tenant -
+// render no inputs at all on the job page: the application only begins after an
+// account step. An empty read there is not evidence of a wall, it is the absence
+// of evidence, and the two are indistinguishable from a nav timeout, a 404, a
+// bot block or a broken browser. So we do NOT infer a wall from an empty read.
+// We follow the board's own apply path and let looksLikeLoginWall fire on fields
+// we actually observed. If the page is dead or the browser is broken this yields
+// nothing and the card still fails loudly, which is the point.
+function applyStepUrl(url) {
+  try {
+    const u = new URL(url);
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+    u.hash = '';
+    u.search = '';
+    u.pathname = u.pathname.replace(/\/+$/, '') + '/apply/applyManually';
+    return u.toString();
+  } catch { return null; }
+}
+
 function looksLikeLoginWall(fields) {
   const labels = fields.map((f) => (f.label || '').toLowerCase());
   const hasPassword = labels.some((l) => /password/.test(l));
@@ -588,6 +607,20 @@ const main = async () => {
         console.log(`[${i}] browser read failed for ${c.slug}: ${String(e.message).slice(0, 70)}`);
       }
     }
+    if ((!fields || !fields.length) && !NO_BROWSER) {
+      const step = applyStepUrl(url);
+      if (step) {
+        try {
+          const viaApply = await readRendered(step);
+          if (viaApply && viaApply.length) {
+            fields = viaApply;
+            how = "the board's own account step";
+          }
+        } catch (e) {
+          console.log(`[${i}] apply-step read failed for ${c.slug}: ${String(e.message).slice(0, 70)}`);
+        }
+      }
+    }
     if (fields && looksLikeLoginWall(fields)) {
       // Record the finding rather than a fabricated field list.
       if (!DRY) {
@@ -636,4 +669,4 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
 
 // Exported for test-answers-matcher.mjs. These are the functions that decide what
 // goes into a live employer form; they are not helpers.
-export { loadDefaults, tokenize, canonMatch, bestMatch, renderAnswers, CANON, isNoise };
+export { loadDefaults, tokenize, canonMatch, bestMatch, renderAnswers, CANON, isNoise, applyStepUrl, looksLikeLoginWall };

@@ -883,3 +883,20 @@ Rows removed from the board by prune-stale.mjs. Kept so a bad prune is recoverab
 - 2026-08-10 | age 81d | https://www.amazon.jobs/en/jobs/10426437/senior-product-manager-technical | Audible | Senior Product Manager - Technical,
 - 2026-08-10 | age 161d | https://www.amazon.jobs/en/jobs/3193640/senior-product-manager-commerce | Twitch Interactive | Senior Product Manager, Commerce
 - 2026-08-10 | age 48d | https://jobs.ashbyhq.com/ultralytics/d2fac891-1a8d-48e2-ac72-17ed578a6e93 | Ultralytics LLC | Product Marketing Manager
+- 2026-08-10 | age 46d | https://jobs.ashbyhq.com/langchain/5ac59bcb-0245-4a82-bab0-0ebdeae07ccd | LangChain | Product Manager, Fleet
+- 2026-08-10 | ats: req gone | https://job-boards.greenhouse.io/airtable/jobs/8400814002 | Airtable | Product Manager
+- 2026-08-10 | ats: req gone | https://jobs.ashbyhq.com/pika/bfe1fa19-5602-487e-b386-2e5754e1d4cf | Pika | Product Marketing Manager
+- 2026-08-10 | age 46d | https://job-boards.greenhouse.io/chainguard/jobs/4689624006 | Chainguard | Sr. Product Marketing Manager
+- 2026-08-10 | age 46d | https://job-boards.greenhouse.io/yext/jobs/7815403 | Yext | Product Manager
+- 2026-08-10 | age 46d | https://job-boards.greenhouse.io/democracypreppublicschools/jobs/7943620 | Democracy Prep Public Schools | High School Korean Teacher (2026-2027 School Year)
+- 2026-08-10 | age 46d | https://job-boards.greenhouse.io/democracypreppublicschools/jobs/7600362 | Democracy Prep Public Schools | High School Math Teacher (2026-2027 School Year)
+- 2026-08-10 | age 46d | https://job-boards.greenhouse.io/vtex/jobs/6101900004 | VTEX | Product Marketing Manager
+- 2026-08-10 | ats: req gone | https://job-boards.greenhouse.io/ebanx/jobs/7512640003 | EBANX | [Talent pool] Business Development Specialist
+- 2026-08-10 | ats: req gone | https://job-boards.greenhouse.io/gitlab/jobs/8597847002 | GitLab | Senior Professional Services Partners Manager, Subcontractor Partner Solutions
+- 2026-08-10 | page: insufficient content — likely nav/footer only | https://www.mongodb.com/careers/job/?gh_jid=8111736 | MongoDB | Staff Product Manager
+- 2026-08-10 | ats: req gone | https://job-boards.greenhouse.io/gympass/jobs/8620364002 | Wellhub | Especialista de Customer Success
+- 2026-08-10 | age 47d | https://www.amazon.jobs/en/jobs/10458249/senior-product-manager-community | Twitch Interactive | Senior Product Manager, Community
+- 2026-08-10 | age 69d | https://www.amazon.jobs/en/jobs/10436860/product-manager-technical | Audible | Product Manager - Technical
+- 2026-08-10 | age 81d | https://www.amazon.jobs/en/jobs/10426678/principal-product-manager-tech-fauna | Amazon.com Services | Principal Product Manager - Tech, Fauna
+- 2026-08-10 | age 81d | https://www.amazon.jobs/en/jobs/10426437/senior-product-manager-technical | Audible | Senior Product Manager - Technical,
+- 2026-08-10 | age 161d | https://www.amazon.jobs/en/jobs/3193640/senior-product-manager-commerce | Twitch Interactive | Senior Product Manager, Commerce

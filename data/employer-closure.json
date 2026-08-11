@@ -1,28 +1,28 @@
 {
-  "measuredAt": "2026-08-10",
+  "measuredAt": "2026-08-11",
   "matureDays": 30,
   "note": "pctAlive = share of this employer's postings, watched MATURE+ days, that are STILL OPEN. High means the board is evergreen and an old posting there signals nothing about hiring intent.",
   "curve": [
     {
       "lo": 0,
       "hi": 3,
-      "n": 11,
-      "alive": 11,
-      "pct": 100
+      "n": 13,
+      "alive": 12,
+      "pct": 92.3076923076923
     },
     {
       "lo": 4,
       "hi": 7,
-      "n": 330,
+      "n": 331,
       "alive": 304,
-      "pct": 92.12121212121212
+      "pct": 91.8429003021148
     },
     {
       "lo": 8,
       "hi": 14,
       "n": 224,
-      "alive": 189,
-      "pct": 84.375
+      "alive": 186,
+      "pct": 83.03571428571429
     },
     {
       "lo": 15,
@@ -34,16 +34,16 @@
     {
       "lo": 22,
       "hi": 30,
-      "n": 24,
-      "alive": 22,
-      "pct": 91.66666666666667
+      "n": 13,
+      "alive": 12,
+      "pct": 92.3076923076923
     },
     {
       "lo": 31,
       "hi": 45,
-      "n": 2,
-      "alive": 2,
-      "pct": 100
+      "n": 13,
+      "alive": 11,
+      "pct": 84.61538461538461
     },
     {
       "lo": 46,
@@ -63,8 +63,8 @@
       "lo": 91,
       "hi": 9999,
       "n": 106,
-      "alive": 39,
-      "pct": 36.79245283018868
+      "alive": 38,
+      "pct": 35.84905660377358
     }
   ],
   "employers": {
@@ -84,7 +84,7 @@
       "n": 5,
       "pctAlive": 60
     },
-    "cohere": {
+    "mercury": {
       "n": 6,
       "pctAlive": 50
     },
@@ -96,13 +96,13 @@
       "n": 18,
       "pctAlive": 44
     },
-    "mercury": {
-      "n": 5,
-      "pctAlive": 40
-    },
     "harvey": {
-      "n": 19,
-      "pctAlive": 32
+      "n": 20,
+      "pctAlive": 35
+    },
+    "cohere": {
+      "n": 6,
+      "pctAlive": 33
     },
     "ramp": {
       "n": 4,
