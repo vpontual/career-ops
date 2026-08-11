@@ -712,6 +712,20 @@ if (!fileExists('test-score-now.mjs')) {
   else pass(`track D rubric ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
 }
 
+// ── 21d. COVER-LETTER REQUIREMENT ───────────────────────────────
+// Both failure directions are expensive: claiming a requirement nobody observed
+// puts a fabricated fact on a live application, and shrugging "could not be
+// determined" at a form this pipeline already read is how 67 of 104 pending
+// cards ended up with no answer and no letter.
+console.log('\n21d. Cover-letter requirement');
+if (!fileExists('test-cover-letter-requirement.mjs')) {
+  fail('test-cover-letter-requirement.mjs missing — the cover-letter gate has no specification');
+} else {
+  const out = run('node', ['test-cover-letter-requirement.mjs']);
+  if (out === null) fail('cover-letter requirement tests failing — run: node test-cover-letter-requirement.mjs');
+  else pass(`cover-letter requirement ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
+}
+
 // ── 20. SEARCH-RESOLVED APPLY PATHS ─────────────────────────────
 // A wrong resolution is worse than a miss: the chain stages a tailored CV
 // against whatever it resolves and VP reviews the card as real. A permissive

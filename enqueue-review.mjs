@@ -37,6 +37,7 @@ import { classifyArchetype } from './tailor-cv.mjs';
 import { parseBlacklist, blacklistEntry } from './blacklist.mjs';
 import { canonicalizeUrl } from './lib/url-canonical.mjs';
 import { parseJd } from './lib/jd-parse.mjs';
+import { readCoverLetterFinding } from './lib/cover-letter-requirement.mjs';
 import {
   loadFreshnessPolicy,
   recencyDays,
@@ -575,7 +576,13 @@ const main = async () => {
       score: c.score,
       ageDays: c.days,
       geo: c.geo,
-      coverLetter: 'unknown',
+      // ⚠ THIS WAS THE LITERAL STRING 'unknown', ALWAYS (fixed 2026-08-11).
+      // Staging had already resolved the requirement and written it into the
+      // pack, and the card threw that away: counted on the 2026-08-11 queue, all
+      // 104 pending cards read "unknown" while 17 of the packs behind them
+      // recorded a determined answer. Read the pack's finding instead; 'unknown'
+      // is now what we say when we genuinely do not know.
+      coverLetter: (await readCoverLetterFinding(path.join(ROOT, 'output', slug)))?.value || 'unknown',
       cvVariant: cvVariantFor(c.jdContent || `${c.role}\n${c.company}`, c.track),
       notes,
       decision: null,
@@ -605,8 +612,28 @@ const main = async () => {
     for (const h of held.slice(0, 10)) console.log(`    [${h.score}] ${h.company} | ${String(h.role).slice(0, 52)}`);
   }
 
+  // A card's coverLetter is set once, when it is MINTED, and almost every
+  // pending card was minted before the requirement could be resolved at all -
+  // so 103 of 104 read "unknown" while their packs on disk now carry a settled
+  // finding. Refresh from the pack here. Computed BEFORE updateQueue because
+  // readCoverLetterFinding is async and the writer callback is not.
+  //
+  // Only ever overwrite with a DETERMINED value: 'unknown' from a pack that has
+  // not been re-read must not clobber a real finding already on the card.
+  const clRefresh = new Map();
+  for (const it of queue.items) {
+    if (it.decision) continue;
+    const found = (await readCoverLetterFinding(path.join(ROOT, 'output', it.slug)))?.value;
+    if (found && found !== 'unknown' && found !== it.coverLetter) clRefresh.set(it.slug, found);
+  }
+
   const written = fresh.length - held.length;
-  if (!written && !retiredSlugs.size) {
+  // ⚠ THIRD reason to reach the writer. This guard has now skipped it three
+  // separate ways (see the note below); refreshing an existing card is a WRITE
+  // exactly like retiring one, and leaving clRefresh out here would have made
+  // the refresh above a no-op on precisely the nights it matters - the ones
+  // that mint nothing.
+  if (!written && !retiredSlugs.size && !clRefresh.size) {
     console.log('\nno cards written (every qualifying role was held for a missing CV)');
     return;
   }
@@ -636,6 +663,15 @@ const main = async () => {
       fresh.items = fresh.items.filter((i) => i.decision || !retiredSlugs.has(i.slug));
       const removed = before - fresh.items.length;
       if (removed) console.log(`retired ${removed} pending card(s) that no longer qualify`);
+    }
+    if (clRefresh.size) {
+      let n = 0;
+      for (const i of fresh.items) {
+        if (i.decision) continue;
+        const v = clRefresh.get(i.slug);
+        if (v && i.coverLetter !== v) { i.coverLetter = v; n++; }
+      }
+      if (n) console.log(`refreshed coverLetter on ${n} existing card(s)`);
     }
     const have = new Set(fresh.items.map((i) => i.slug));
     for (const card of appended) if (!have.has(card.slug)) fresh.items.push(card);

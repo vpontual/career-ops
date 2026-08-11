@@ -12,6 +12,10 @@
  *
  * Designed to run inside the `applier` container which has Chromium.
  *
+ * Flags:
+ *   --list / --dry-run   show what WOULD be staged, generate nothing
+ *   --slug a,b,c         stage only these packs (comma-separated)
+ *
  * Tunables (env overrides):
  *   MIN_SCORE=4.0
  *   MAX_CONCURRENT=2
@@ -22,7 +26,7 @@
  *   reintroduce a local one here; that is the bug lib/freshness.mjs exists for.
  */
 
-import { readFile, writeFile, mkdir, stat } from 'fs/promises';
+import { readFile, writeFile, mkdir, stat, unlink } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -31,7 +35,11 @@ import { checkUrl } from './check-liveness.mjs';
 import { checkFacts } from './verify-cv-facts.mjs';
 import { classifyArchetype } from './tailor-cv.mjs';
 import { canonKey } from './lib/canonical.mjs';
-import { BRANDED_GREENHOUSE } from './lib/branded-boards.mjs';
+import { greenhouseRef } from './lib/branded-boards.mjs';
+import {
+  resolveCoverLetterRequirement, loadPackFormEvidence,
+  readCoverLetterFinding, writeCoverLetterFinding, renderSkipMarkdown,
+} from './lib/cover-letter-requirement.mjs';
 import { parseJd } from './lib/jd-parse.mjs';
 import {
   loadFreshnessPolicy, recencyDays,
@@ -243,36 +251,49 @@ async function callGeminiWithRetry(prompt, maxAttempts = 6) {
 // six of them render a literal [Date] into the PDF.
 //
 // A default of "write it anyway" also removed the incentive to detect properly.
-// The branded-host map below is how a non-Greenhouse-domain employer gets
-// resolved; extending it is cheap and is the real fix for a specific board.
-async function coverLetterRequirement(url) {
-  const u = String(url || '');
-  let slug = null, id = null;
-  let m = u.match(/greenhouse\.io\/([a-z0-9-]+)\/jobs\/(\d+)/i);
-  if (m) { slug = m[1]; id = m[2]; }
-  if (!slug) {
-    const g = u.match(/gh_jid=(\d+)/);
-    const host = (() => { try { return new URL(u).host; } catch { return ''; } })();
-    // Shared map — see lib/branded-boards.mjs. This copy knew four hosts while
-    // fetch-jds knew six, so a resolvable board still returned 'unknown' here.
-    if (g && BRANDED_GREENHOUSE[host]) { slug = BRANDED_GREENHOUSE[host]; id = g[1]; }
-  }
-  if (!slug || !id) return 'unknown';
+//
+// ⚠ THE DETECTION ITSELF NOW LIVES IN lib/cover-letter-requirement.mjs (moved
+// 2026-08-11). What used to be here read exactly one ATS and said "could not be
+// determined for this ATS" about everything else — 72 of 104 pending cards.
+// A third of those were Greenhouse roles the board API answers on request; the
+// function was simply handed the wrong URL, because loadCandidates() dedups
+// across jds/*.md and can keep the Indeed variant of a role whose review card
+// holds the real board link. It also never looked at the form generate-answers
+// had already enumerated for the same pack, nor at the JD, where NYC's civic
+// postings state the requirement in plain English ("Applications submitted
+// without a cover letter will not be considered"). The full incident, and the
+// evidence rules that keep this honest, are in that file's header.
+async function coverLetterRequirement(c, dir) {
+  return resolveCoverLetterRequirement({
+    url: c.url,
+    // Staging's URL and the card's apply URL are not always the same link to the
+    // same requisition, and only one of them may be answerable.
+    cardUrl: cardUrlFor(c),
+    jdText: c.jdContent || '',
+    formEvidence: await loadPackFormEvidence(dir),
+    greenhouseRef,
+  });
+}
+
+// The review queue is the only place the resolved ATS apply URL is recorded, and
+// staging runs before enqueue — so on a role's first night there is no card yet
+// and this returns null, which is fine. From the second night on it is the
+// better of the two URLs.
+let REVIEW_CARDS = null;
+async function loadReviewCards() {
+  if (REVIEW_CARDS) return REVIEW_CARDS;
+  REVIEW_CARDS = new Map();
   try {
-    const res = await fetch(
-      `https://boards-api.greenhouse.io/v1/boards/${slug}/jobs/${id}?questions=true`,
-      { headers: { 'User-Agent': 'career-ops/1.0' }, signal: AbortSignal.timeout(15000) }
-    );
-    if (!res.ok) return 'unknown';
-    const data = await res.json();
-    const qs = data.questions || [];
-    const cover = qs.find((q) => /cover.?letter/i.test(q.label || '') ||
-      (q.fields || []).some((f) => /cover_letter/i.test(f.name || '')));
-    if (!cover) return 'absent';
-    return cover.required ? 'required' : 'optional';
-  } catch {
-    return 'unknown';
-  }
+    const q = JSON.parse(await readFile(path.join(ROOT, 'data', 'review-queue.json'), 'utf-8'));
+    for (const it of q.items || []) {
+      const u = it.applyUrl || it.sourceUrl;
+      if (it.slug && u) REVIEW_CARDS.set(it.slug, u);
+    }
+  } catch {}
+  return REVIEW_CARDS;
+}
+function cardUrlFor(c) {
+  return (REVIEW_CARDS && REVIEW_CARDS.get(c.slug)) || null;
 }
 
 async function generateCoverLetter(candidate, profile, cv, profileOverrides) {
@@ -338,7 +359,21 @@ async function main() {
   let profileOverrides = '';
   try { profileOverrides = await readFile(PROFILE_OVERRIDES, 'utf-8'); } catch {}
 
-  const candidates = await loadCandidates();
+  let candidates = await loadCandidates();
+
+  // --slug a,b,c — run the chain for named packs only. There was no way to
+  // exercise staging against a handful of real roles: the only options were the
+  // full 335-candidate set (a browser liveness probe per role, then Gemini at 5
+  // requests a minute) or nothing, so every change to this file was verified by
+  // reading it. A change to what goes onto a live application deserves better.
+  const slugArg = (() => { const i = process.argv.indexOf('--slug'); return i >= 0 ? process.argv[i + 1] : null; })();
+  if (slugArg) {
+    const want = new Set(slugArg.split(',').map(s => s.trim()).filter(Boolean));
+    const before = candidates.length;
+    candidates = candidates.filter(c => want.has(c.slug));
+    console.log(`--slug: ${candidates.length} of ${before} candidate(s) selected`);
+    for (const s of want) if (!candidates.some(c => c.slug === s)) console.log(`  ⚠ not a current candidate: ${s}`);
+  }
   console.log(`\nstage-applications: score>=${MIN_SCORE}, freshness per lib/freshness.mjs `
     + `(<=${FRESH_MAX_AGE_DAYS}d, whales <=${WHALE_MAX_AGE_DAYS}d, evergreen <=${EVERGREEN_MAX_AGE_DAYS}d, `
     + `teaching <=${TEACHING_MAX_AGE_DAYS}d) → ${candidates.length} candidates\n`);
@@ -390,6 +425,100 @@ async function main() {
   const sharedCvPdf = path.join(OUTPUT_DIR, 'cv.pdf');
   console.log(`Rendering shared CV PDF → ${sharedCvPdf}`);
   await renderPdf(renderCvHtml(cv), sharedCvPdf, browser);
+
+  // ONE cover-letter generator, used by both the first-staging path and the
+  // revisit path below. There is deliberately no second one: the fact check, the
+  // sanitiser and the PDF render are part of producing a letter, and a second
+  // copy of this is how a letter ships without one of them.
+  async function produceCoverLetter(c, dir, finding, idx) {
+    const letterText = sanitizeAtsText(await generateCoverLetter(c, profile, cv, profileOverrides));
+
+    // Fact check: flag metric-like claims in the letter that aren't in cv.md/
+    // profile.yml (Gemini invention guard, zero extra LLM calls). Warn, don't
+    // block — a human reviews every letter before submitting.
+    // The JD is passed as context so a number the letter QUOTES from the
+    // employer's own posting is not reported as a hallucinated metric. Measured
+    // 2026-08-06: the checker fired on 109 of 275 letters and every one I opened
+    // was either that, or the "100 brands" phrasing mismatch against cv.md. A
+    // gate that is wrong 40% of the time is one VP learns to skip.
+    const fc = checkFacts(letterText, factSource, cvFacts, { jdText: c.jdContent || c.body || '' });
+    let factNote = '';
+    if (fc.quoted?.length) {
+      console.log(`  [${idx}] fact check: ${fc.quoted.length} figure(s) quoted from the posting (not flagged)`);
+    }
+    if (!fc.ok) {
+      const bits = [...fc.invented.map(m => `unverified metric "${m}"`), ...fc.forbidden.map(p => `forbidden phrase "${p}"`)];
+      factNote = `\n> ⚠ **FACT CHECK — review before sending:** ${bits.join('; ')}\n`;
+      console.log(`  [${idx}] ⚠ fact check: ${bits.join('; ')}`);
+    }
+    // The letter records WHY it exists. "Cover letter field: required" was a
+    // claim with nothing behind it; this quotes the observation instead, so VP
+    // can check the requirement without re-opening the posting.
+    await writeFile(path.join(dir, 'cover-letter.md'),
+      `# Cover letter — ${c.company}: ${c.role}\n\n**URL:** ${c.url}\n`
+      + `**Generated:** ${new Date().toISOString()}\n**Days old at staging:** ${c.days}\n`
+      + `**Score:** ${c.score}\n**Cover letter is required — determined from:** ${finding.evidence}`
+      + `${finding.observedOn ? ` (observed ${finding.observedOn})` : ''}\n${factNote}\n---\n\n${letterText}\n`);
+    await renderPdf(renderCoverLetterHtml(letterText, profile, `Re: ${c.role} - ${c.company}`),
+      path.join(dir, 'cover-letter.pdf'), browser);
+  }
+
+  // A pack that is already staged but whose cover-letter question was never
+  // ANSWERED gets asked again, with whatever evidence exists tonight. This is
+  // cheap: no Gemini call unless the answer turns out to be 'required', and at
+  // most one Greenhouse API request. A pack whose finding is already settled is
+  // left completely alone — including the ones VP has letters for.
+  // The marker VP reads must agree with the finding beside it. Cheap and
+  // network-free, so it runs even for a pack whose answer is already settled:
+  // 98 of the markers on disk came from the 2026-08-06 retraction pass and say
+  // "could not be determined for this ATS" about packs that ARE determined.
+  async function syncMarker(c, dir, finding, hasLetter) {
+    const p = path.join(dir, 'cover-letter-skipped.md');
+    if (finding.value === 'required') {
+      if (!hasLetter) return false;
+      try { await unlink(p); return true; } catch { return false; }
+    }
+    const want = renderSkipMarkdown({ company: c.company, role: c.role, url: c.url, finding, existingLetter: hasLetter });
+    let have = null;
+    try { have = await readFile(p, 'utf-8'); } catch {}
+    if (have === want) return false;
+    await writeFile(p, want);
+    return true;
+  }
+
+  async function revisitCoverLetter(c, dir, idx) {
+    const prior = await readCoverLetterFinding(dir);
+    let hasLetter = false;
+    try { await stat(path.join(dir, 'cover-letter.md')); hasLetter = true; } catch {}
+
+    if (prior && prior.value !== 'unknown') {
+      // Settled. No network, no Gemini — but keep the prose honest.
+      const fixed = await syncMarker(c, dir, prior, hasLetter);
+      return fixed ? `cover-letter marker corrected to "${prior.value}" (${prior.source})` : null;
+    }
+
+    const finding = await coverLetterRequirement(c, dir);
+    await writeCoverLetterFinding(dir, finding);
+
+    if (finding.value === 'required' && !hasLetter) {
+      console.log(`[${idx}] cover letter now REQUIRED (${finding.source}) for ${c.company} | ${c.role}`);
+      await produceCoverLetter(c, dir, finding, idx);
+      try { await unlink(path.join(dir, 'cover-letter-skipped.md')); } catch {}
+      return `cover letter GENERATED — required per ${finding.source}`;
+    }
+    if (finding.value === 'required') {
+      await syncMarker(c, dir, finding, hasLetter);
+      return `cover letter: required (${finding.source}) — one already exists, left as is`;
+    }
+
+    await syncMarker(c, dir, finding, hasLetter);
+    if (finding.value === 'unknown') return null;
+    return hasLetter
+      ? `cover letter: ${finding.value} (${finding.source}) — a letter exists; VP's rule says do not send it`
+      : `cover letter: ${finding.value} (${finding.source}), was undetermined`;
+  }
+
+  await loadReviewCards();
 
   let staged = 0;
   const results = await pLimit(liveCandidates, MAX_CONCURRENT, async (c, idx) => {
@@ -444,63 +573,30 @@ async function main() {
     }
 
     if (already) {
-      console.log(`[${idx}] SKIP (already staged): ${c.slug}`);
+      // ⚠ NOT A NO-OP ANY MORE (2026-08-11). "Already staged" used to end the
+      // role's night, which meant the cover-letter question was answered ONCE,
+      // on the pack's first night — before generate-answers had ever enumerated
+      // the form, and therefore with the least evidence this pipeline will ever
+      // have about that role. The answer was 'unknown' 72 times out of 104 and
+      // could never be revisited, so a pack that became determinable on night two
+      // stayed "could not be determined" forever.
+      const note = await revisitCoverLetter(c, dir, idx);
+      console.log(`[${idx}] SKIP (already staged): ${c.slug}${note ? ` — ${note}` : ''}`);
       staged++;
       return;
     }
 
-    const clReq = await coverLetterRequirement(c.url);
-    if (clReq === 'absent' || clReq === 'optional' || clReq === 'unknown') {
+    const finding = await coverLetterRequirement(c, dir);
+    await writeCoverLetterFinding(dir, finding);
+    if (finding.value !== 'required') {
       // Record the finding so the review card can say so, and move on. No Gemini
       // call, no PDF, nothing for VP to read and discard.
       await writeFile(path.join(dir, 'cover-letter-skipped.md'),
-        `# No cover letter for ${c.company}: ${c.role}\n\n` +
-        `**URL:** ${c.url}\n**Checked:** ${new Date().toISOString()}\n` +
-        (clReq === 'unknown'
-          ? `**Cover letter requirement:** could not be determined for this ATS.\n\n` +
-            `Not written. VP's standing rule is that an optional cover letter is not ` +
-            `submitted at all, and an undetermined requirement is not evidence that ` +
-            `one is required. Add this employer's board to the branded-host map in ` +
-            `coverLetterRequirement() to resolve it properly, or ask for one by hand.\n\n`
-          : `**Greenhouse says the cover letter field is:** ${clReq}\n\n`) +
-        `Not written, per the standing rule: if it is optional, do not submit one at all.\n`);
-      console.log(`[${idx}] no cover letter needed (${clReq}): ${c.company} | ${c.role}`);
-    }
-
-    let letterText = null;
-    // Only a REQUIRED cover letter is written. 'unknown' used to appear here as
-    // well, which after the 2026-08-06 rule change meant a pack got BOTH a
-    // skip marker and a generated letter — contradictory, and the Gemini call
-    // it triggered is what was failing between the marker and the CV render.
-    if (clReq === 'required') {
-      console.log(`[${idx}] generating cover letter (${clReq}) for ${c.company} | ${c.role} (${c.days}d, score ${c.score})`);
-      letterText = sanitizeAtsText(await generateCoverLetter(c, profile, cv, profileOverrides));
-    }
-
-    // Fact check: flag metric-like claims in the letter that aren't in cv.md/
-    // profile.yml (Gemini invention guard, zero extra LLM calls). Warn, don't
-    // block — a human reviews every letter before submitting.
-    // The JD is passed as context so a number the letter QUOTES from the
-    // employer's own posting is not reported as a hallucinated metric. Measured
-    // 2026-08-06: the checker fired on 109 of 275 letters and every one I opened
-    // was either that, or the "100 brands" phrasing mismatch against cv.md. A
-    // gate that is wrong 40% of the time is one VP learns to skip.
-    const fc = letterText
-      ? checkFacts(letterText, factSource, cvFacts, { jdText: c.jdContent || c.body || '' })
-      : { ok: true, invented: [], quoted: [], forbidden: [] };
-    let factNote = '';
-    if (fc.quoted?.length) {
-      console.log(`  [${idx}] fact check: ${fc.quoted.length} figure(s) quoted from the posting (not flagged)`);
-    }
-    if (!fc.ok) {
-      const bits = [...fc.invented.map(m => `unverified metric "${m}"`), ...fc.forbidden.map(p => `forbidden phrase "${p}"`)];
-      factNote = `\n> ⚠ **FACT CHECK — review before sending:** ${bits.join('; ')}\n`;
-      console.log(`  [${idx}] ⚠ fact check: ${bits.join('; ')}`);
-    }
-    if (letterText) {
-      await writeFile(coverMdPath, `# Cover letter — ${c.company}: ${c.role}\n\n**URL:** ${c.url}\n**Generated:** ${new Date().toISOString()}\n**Days old at staging:** ${c.days}\n**Score:** ${c.score}\n**Cover letter field:** ${clReq}\n${factNote}\n---\n\n${letterText}\n`);
-      const coverPdfPath = path.join(dir, 'cover-letter.pdf');
-      await renderPdf(renderCoverLetterHtml(letterText, profile, `Re: ${c.role} - ${c.company}`), coverPdfPath, browser);
+        renderSkipMarkdown({ company: c.company, role: c.role, url: c.url, finding }));
+      console.log(`[${idx}] no cover letter needed (${finding.value}, from ${finding.source}): ${c.company} | ${c.role}`);
+    } else {
+      console.log(`[${idx}] generating cover letter (required, from ${finding.source}) for ${c.company} | ${c.role} (${c.days}d, score ${c.score})`);
+      await produceCoverLetter(c, dir, finding, idx);
     }
 
     // Per-role tailored CV: classify the JD's archetype (tailor-cv.mjs) and render

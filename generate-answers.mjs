@@ -482,6 +482,28 @@ async function readRendered(url) {
   }
 }
 
+// ── Persisting the reading ────────────────────────────────────────────────
+// The field list was the most expensive thing this script produced and the only
+// place it survived was as a markdown TABLE in answers.md — prose, for a human.
+// So stage-applications, which has to decide whether a cover letter is wanted,
+// could not use the very reading that answers the question, and said "could not
+// be determined for this ATS" about 72 of 104 pending cards. It is now written
+// as data next to answers.md; lib/cover-letter-requirement.mjs reads it.
+//
+// It records `how` and the date, because "we read this form" and "we could not
+// read this form" must stay distinguishable later, and an undated claim about a
+// form is not checkable.
+async function writeFormFields(slug, { loginWall, how, fields }) {
+  await writeFile(path.join(OUT, slug, 'form-fields.json'), JSON.stringify({
+    inspectedOn: today(),
+    how: how || null,
+    loginWall: !!loginWall,
+    fields: (fields || []).map((f) => ({
+      label: f.label, required: f.required === true, type: f.type || null,
+    })),
+  }, null, 2));
+}
+
 // ── Rendering ─────────────────────────────────────────────────────────────
 function renderAnswers(card, fields, defaults, how) {
   // ONE pass. requiredGaps used to be computed by re-running canonMatch and
@@ -625,6 +647,7 @@ const main = async () => {
       // Record the finding rather than a fabricated field list.
       if (!DRY) {
         await mkdir(path.join(OUT, c.slug), { recursive: true });
+        await writeFormFields(c.slug, { loginWall: true, how: null, fields: [] });
         await writeFile(path.join(OUT, c.slug, 'answers.md'),
           `# ${c.company} — ${c.role}\n\n**Apply:** ${url}\n**ATS:** ${c.ats || 'unknown'} · ` +
           `**Form inspected: ${today()}** — the application is behind an account wall, so the ` +
@@ -650,6 +673,7 @@ const main = async () => {
     const md = renderAnswers(c, fields, defaults, how);
     if (!DRY) {
       await mkdir(path.join(OUT, c.slug), { recursive: true });
+      await writeFormFields(c.slug, { loginWall: false, how, fields });
       await writeFile(path.join(OUT, c.slug, 'answers.md'), md);
     }
     ok++;
