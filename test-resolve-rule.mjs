@@ -28,6 +28,41 @@ const acc = (label, url, co, want, titles, org) =>
 rej('wrong company: MoneyHash on Rippling\'s ATS',
     'https://ats.rippling.com/moneyhash/jobs/36100f75', 'Rippling', 'Product Manager',
     ['Product Manager [Mid-Level & Senior] [Remote | EMEA]']);
+
+// ⚠ The case above passes on the TITLE guard, not the host guard: the title it
+// supplies is not equal to the wanted one, so it would still pass with the host
+// check deleted. It did. Measured 2026-08-11: branch 1 matched
+// registrable("ats.rippling.com") === "rippling" and returned `own domain`
+// BEFORE the slug was ever consulted, so the documented MoneyHash guard was not
+// actually holding, and the suite was green throughout. This case isolates it -
+// same URL, EXACTLY matching title, so only the host rule can reject it.
+rej('wrong company: MoneyHash on Rippling ATS, title matches exactly',
+    'https://ats.rippling.com/moneyhash/jobs/36100f75', 'Rippling', 'Product Manager',
+    ['Product Manager']);
+acc('right company on the same multi-tenant ATS host',
+    'https://ats.rippling.com/rippling/jobs/1', 'Rippling', 'Product Manager',
+    ['Product Manager']);
+
+// ── legal-entity suffixes ────────────────────────────────────────────
+// Board slugs never carry ", Inc." / "LLC" / "Ltd", but the pipeline's company
+// names do. Comparing "counterpartinc" against a slug of "counterpart" rejected
+// the CORRECT answer, which is why this resolver had accepted nothing across
+// every query it had ever logged (0 of 27). Stripped only for the slug/domain
+// comparison - normalizeCompany still builds the dedup key and must not move.
+acc('legal suffix: "Counterpart, Inc." matches greenhouse/counterpart',
+    'https://job-boards.greenhouse.io/counterpart/jobs/4248295005', 'Counterpart, Inc.',
+    'Technical Product Manager', ['Technical Product Manager']);
+acc('legal suffix: "Sycle LLC" matches greenhouse/sycle',
+    'https://boards.greenhouse.io/sycle/jobs/1', 'Sycle LLC',
+    'Product Manager', ['Product Manager']);
+acc('legal suffix: "Affinity Ltd." matches ashby/affinity.co',
+    'https://jobs.ashbyhq.com/affinity.co/x', 'Affinity Ltd.',
+    'Product Manager', ['Product Manager']);
+// Stripping must not turn a suffix into a wildcard: the slug still has to name
+// the company, and an unrelated employer on the same board is still wrong.
+rej('legal suffix does not loosen the slug rule',
+    'https://boards.greenhouse.io/someoneelse/jobs/1', 'Counterpart, Inc.',
+    'Technical Product Manager', ['Technical Product Manager']);
 // normalizeCompany strips whitespace from the whole page, so short names match
 // incidental prose: "affinity" matched "...jobdescriptionaffinityisa...".
 rej('wrong company: Indian aggregator matched on prose',

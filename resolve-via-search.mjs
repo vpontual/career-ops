@@ -118,14 +118,47 @@ export function registrable(host) {
  *      [Remote | EMEA]" != "Product Manager"), Gartner's "Sr Digital Product
  *      Manager", and LawnStarter's "…, Service Delivery".
  */
+/**
+ * Legal-entity suffixes appear in the pipeline's company names but never in
+ * board slugs or registrable domains: "Counterpart, Inc." posts at
+ * job-boards.greenhouse.io/counterpart, "Sycle LLC" at .../sycle. Measured
+ * 2026-08-11: accepts() rejected the CORRECT greenhouse URL for Counterpart
+ * because it compared "counterpartinc" against a slug of "counterpart", while
+ * the identical URL passed once the suffix was dropped. That is why the search
+ * resolver had 0 accepts across every query it had ever logged.
+ *
+ * This deliberately does NOT change normalizeCompany in lib/canonical.mjs -
+ * that function also builds the dedup key (`company::title`), so widening it
+ * would silently re-key every existing record in the pipeline.
+ *
+ * Only unambiguous legal-entity forms are stripped. Trade-name words that
+ * merely look corporate - Group, Technologies, Labs, Holdings - are NOT
+ * stripped, because shortening the needle makes the `includes` test looser and
+ * this file's whole thesis is precision over yield.
+ */
+const LEGAL_SUFFIX = /[,\s]*\b(?:inc|incorporated|llc|l\.l\.c|ltd|limited|corp|corporation|co|company|plc|gmbh|ag|s\.a|sa|nv|bv|ab|oy|pty|lp|llp)\b\.?[.,\s]*$/i;
+export function companyForSlug(name) {
+  let s = String(name ?? '').trim();
+  let prev;
+  do { prev = s; s = s.replace(LEGAL_SUFFIX, '').trim(); } while (s !== prev && s);
+  return normalizeCompany(s || name);
+}
+
 export function accepts(url, company, wantTitle, titles, hiringOrg = '') {
   let host;
   try { host = new URL(url).hostname; } catch { return { ok: false, why: 'unparseable url' }; }
-  const co = normalizeCompany(company);
+  const co = companyForSlug(company);
 
   // Branch 1 — the employer's OWN domain. This is the shape all 4 correct
   // answers in the measured sample had (Bank of America, Capital One x2, Citi).
-  let identity = registrable(host) === co ? `own domain ${host}` : null;
+  // A multi-tenant board host is NEVER "the employer's own domain", even when
+  // the registrable domain matches the company: ats.rippling.com/moneyhash IS
+  // Rippling's domain, and the posting is MoneyHash's. Measured 2026-08-11 -
+  // the header above claims the slug check stops that, but branch 1 fired first
+  // and returned before the slug was ever consulted, so the documented
+  // MoneyHash guard did not actually hold. It never bit only because this
+  // resolver had accepted nothing, ever (0 of 27 logged queries).
+  let identity = (!ATS_HOST.test(host) && registrable(host) === co) ? `own domain ${host}` : null;
 
   // Branch 2 — an ATS-hosted board whose SLUG or hiringOrganization names this
   // company. This exists because the unguessable slugs live here and are the
@@ -138,7 +171,7 @@ export function accepts(url, company, wantTitle, titles, hiringOrg = '') {
   if (!identity && ATS_HOST.test(host)) {
     const slugPath = String(new URL(url).pathname || '').toLowerCase().replace(/[^a-z0-9]/g, '');
     if (co && co.length >= 4 && slugPath.includes(co)) identity = `ats slug matches ${company}`;
-    else if (hiringOrg && normalizeCompany(hiringOrg) === co) identity = `hiringOrganization is ${company}`;
+    else if (hiringOrg && companyForSlug(hiringOrg) === co) identity = `hiringOrganization is ${company}`;
   }
   if (!identity) return { ok: false, why: `${host} is neither ${company}'s own domain nor an ATS board naming it` };
 
@@ -152,7 +185,10 @@ export function accepts(url, company, wantTitle, titles, hiringOrg = '') {
   return { ok: true, proof: hit, identity };
 }
 
-const ATS_HOST = /(greenhouse\.io|ashbyhq\.com|lever\.co|smartrecruiters\.com|myworkdayjobs\.com|icims\.com|successfactors|jobvite\.com|workable\.com|phenompeople|eightfold\.ai|taleo\.net)$/i;
+// ats.rippling.com is Rippling's ATS PRODUCT, not Rippling's board - it hosts
+// other employers' boards on a tenant path, which is exactly the MoneyHash
+// case below. It has to be in this list so branch 1 cannot claim it.
+const ATS_HOST = /(greenhouse\.io|ashbyhq\.com|lever\.co|smartrecruiters\.com|myworkdayjobs\.com|icims\.com|successfactors|jobvite\.com|workable\.com|phenompeople|eightfold\.ai|taleo\.net|ats\.rippling\.com)$/i;
 
 /** Titles the page claims: JSON-LD JobPosting first, then <title>/<h1>. */
 export function hiringOrg(html) {
