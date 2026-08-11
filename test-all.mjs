@@ -770,6 +770,21 @@ if (!fileExists('test-track-freshness.mjs')) {
   else pass(`track freshness ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
 }
 
+// ── 21h. ANSWER CLASSIFIER (the draft deny list) ────────────────
+// generate-answers.mjs now lets a language model write into answers.md, which
+// VP transcribes into live employer forms. The classifier is what keeps that
+// model away from an address, a salary, an EEO row, a work-authorisation
+// status, prior employment or a legal attestation. This file is that
+// boundary's specification, not a description of it.
+console.log('\n21h. Answer classifier (draft deny list)');
+if (!fileExists('test-answer-classifier.mjs')) {
+  fail('test-answer-classifier.mjs missing — the draft deny list has no specification');
+} else {
+  const out = run('node', ['test-answer-classifier.mjs']);
+  if (out === null) fail('answer classifier tests failing — run: node test-answer-classifier.mjs');
+  else pass(`answer classifier ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
+}
+
 // ── 20. SEARCH-RESOLVED APPLY PATHS ─────────────────────────────
 // A wrong resolution is worse than a miss: the chain stages a tailored CV
 // against whatever it resolves and VP reviews the card as real. A permissive
