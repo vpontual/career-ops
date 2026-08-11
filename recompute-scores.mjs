@@ -22,6 +22,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { parseJd } from './lib/jd-parse.mjs';
 import { detectTrack, trackFacts, scoreTeaching, scoreCivic, scoreNonprofit, scoreNow } from './lib/track.mjs';
+import { detectHardCredential } from './lib/credential-gate.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const SCORES = path.join(ROOT, 'data', 'lead-scores.json');
@@ -107,6 +108,18 @@ for (const [k, v] of Object.entries(scores)) {
     v.technicalScreenStated = sv.action === 'gate';
     v.technicalScreenEvidence = sv.phrase || '';
   } catch { v.technicalScreenStated = false; }
+  // Same treatment for the credential fact, and for the same reason: it is
+  // derived from the posting, so it must be RE-derived here or a record scored
+  // before lib/credential-gate.mjs existed would come back through this tool
+  // with no credentialBlocked at all and quietly lose the gate.
+  try {
+    const body = readFileSync(path.join(ROOT, 'jds', k), 'utf8');
+    const cg = detectHardCredential(body);
+    v.credentialBlocked = cg.blocked;
+    v.credentialName = cg.credential || '';
+    v.credentialEvidence = cg.evidence || '';
+    v.credentialWarnings = cg.warned.map(w => `${w.credential} (${w.why})`).join(' | ');
+  } catch { v.credentialBlocked = false; }
 
   // Track-aware, or this tool silently reverts Tracks B and C. It rewrites every
   // entry carrying an `aiNative` key, and teaching entries carry one, so a single

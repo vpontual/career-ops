@@ -683,6 +683,35 @@ if (!fileExists('test-skill-gate.mjs')) {
   else pass(`skill gate ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
 }
 
+// ── 21b. A CREDENTIAL HE CANNOT HOLD ────────────────
+// Blocks only where the posting STATES the licence/clearance is required.
+// Tuned harder toward NOT blocking than the skill gate: "license" is a SaaS
+// noun in a PM search, and a false block deletes a role VP never sees.
+console.log('\n21b. Credential gate');
+if (!fileExists('test-credential-gate.mjs')) {
+  fail('test-credential-gate.mjs missing — the credential gate has no specification');
+} else {
+  const out = run('node', ['test-credential-gate.mjs']);
+  if (out === null) fail('credential-gate tests failing — run: node test-credential-gate.mjs');
+  else pass(`credential gate ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
+}
+
+// ── 21c. TRACK D RUBRIC ─────────────────────────────────────────
+// "Get Hired Now" is deliberately loose - no comp floor, no archetype, no
+// NYC-fit requirement - and that looseness once included "no geography gate at
+// all", which scored a role that is remote WITHIN Brazil a 5 and put it top of
+// the shortlist. Time-to-income for a job VP cannot be hired into is not 5. The
+// cases pin BOTH halves: foreign residence is disqualifying, and the parts VP
+// asked to stay loose must not quietly tighten.
+console.log('\n21c. Track D rubric');
+if (!fileExists('test-score-now.mjs')) {
+  fail('test-score-now.mjs missing — the Get Hired Now rubric has no specification');
+} else {
+  const out = run('node', ['test-score-now.mjs']);
+  if (out === null) fail('Track D rubric tests failing — run: node test-score-now.mjs');
+  else pass(`track D rubric ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
+}
+
 // ── 20. SEARCH-RESOLVED APPLY PATHS ─────────────────────────────
 // A wrong resolution is worse than a miss: the chain stages a tailored CV
 // against whatever it resolves and VP reviews the card as real. A permissive

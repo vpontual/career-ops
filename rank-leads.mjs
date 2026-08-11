@@ -29,6 +29,7 @@ import { detectTrack, titlePassesForTrack, trackFacts, scoreTeaching, scoreCivic
 import { screenVerdict, findReportableFormats } from './lib/screen-evidence.mjs';
 import { compBand } from './lib/comp-band.mjs';
 import { skillGate, defaultLacks } from './lib/skill-gate.mjs';
+import { detectHardCredential } from './lib/credential-gate.mjs';
 
 dotenv.config();
 
@@ -611,6 +612,45 @@ function scoreFromFacts(f) {
   // Nice-to-haves surface as a card warning instead and cost nothing.
   if (Array.isArray(f.skillBlocked) && f.skillBlocked.length) return 1;
 
+  // A CREDENTIAL he cannot hold is the same kind of no, and until 2026-08-11
+  // Track A had NO SUCH GATE AT ALL. `scoreNow` and `scoreCivic` each carry
+  // `if (f.hardCredential) return 1`, but `hardCredential` is computed only by
+  // `trackFacts()` for those two tracks: measured over data/lead-scores.json it
+  // is present on 187 records and ABSENT from 1,171, and every one of the 1,171
+  // is pm / teaching / nonprofit / untracked. It is not a field the model fails
+  // to fill in — SYSTEM_PROMPT never asks for it — so on the 839 pm records
+  // there was no fact and no gate, and a stated clearance requirement cost a
+  // role nothing. CACI's Director of Product Development ("Active Secret
+  // clearance required") scored 3 and Karthik Consulting's TS/SCI req scored 4.
+  //
+  // `credentialBlocked` is set in CODE by lib/credential-gate.mjs, which
+  // requires the posting to STATE the credential is required and stores the
+  // sentence it read. Anything softer — "preferred", "a plus", "or the
+  // field-earned equivalent", "able to obtain" — lands in credentialWarnings
+  // and costs nothing.
+  //
+  // SHOULD A MODEL `hardCredential: true` BLOCK ON ITS OWN, with no code
+  // evidence? No, and it is not wired here. Two reasons. First, the premise
+  // does not hold: nothing asks the model for this field, so a `true` on a pm
+  // record could only arrive from a future prompt change. Second, and this is
+  // the settled precedent, `technicalScreen` is the same experiment already
+  // run — the model set it on 176 of 806 records and NONE of those postings
+  // stated a screen, and treating that inference as knowledge buried a $240K
+  // Google GenAI GPM role. Gate on evidence, flag on inference. If the prompt
+  // ever does ask, `hardCredential` belongs on the card as a flag beside
+  // credentialWarnings, not in this line.
+  //
+  // The existing `if (f.hardCredential) return 1` in scoreNow/scoreCivic is
+  // deliberately LEFT ALONE and OR'd with this one rather than replaced: that
+  // value is code-derived too (a regex in track.mjs), so removing it would be a
+  // silent relaxation of a live gate. It is, however, the looser of the two —
+  // it scans the whole body with no section or equivalency awareness, which is
+  // why all 14 of its `true` verdicts are NYC civil-service qualification
+  // LADDERS ("...a valid license as a professional engineer, registered
+  // architect, or registered landscape architect...", i.e. one of several
+  // alternative routes in) that this module deliberately does not block.
+  if (f.credentialBlocked) return 1;
+
   if (f.technicalScreenStated) return 1;
 
   // Geography he can work is assumed, not rewarded; only ambiguity costs.
@@ -738,6 +778,23 @@ async function scoreOne(jd, resume, targets) {
             skillBlocked: sg.blocked.map(b => b.skill),
             skillBlockedEvidence: sg.blocked.map(b => `${b.skill}: ${b.evidence}`).join(' | '),
             skillWarnings: sg.warned.map(w => w.skill),
+          };
+        })(),
+        ...(() => {
+          // A licence, clearance or registration he cannot obtain inside a
+          // hiring cycle. Derived in CODE from the posting, exactly like
+          // technicalScreenStated and skillBlocked, and the verbatim sentence
+          // is stored so a wrong block can be found and reversed by hand
+          // instead of silently deleting a role. See lib/credential-gate.mjs.
+          const cg = detectHardCredential(`${jd.title || ''}\n${jd.body || ''}`);
+          return {
+            credentialBlocked: cg.blocked,
+            credentialName: cg.credential || '',
+            credentialEvidence: cg.evidence || '',
+            // Named but not required — a card flag that costs nothing, the way
+            // skillWarnings does. KlearNow's "a US broker license ... is a
+            // strong plus" belongs here and NOT in the gate.
+            credentialWarnings: cg.warned.map(w => `${w.credential} (${w.why})`).join(' | '),
           };
         })(),
         ...(() => {
