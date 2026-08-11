@@ -301,7 +301,7 @@ export default async function ReviewPage({
   if (!queue || !queue.items?.length) {
     return (
       <main className="mx-auto min-h-screen max-w-5xl px-6 py-10">
-        <Link href="/" className="font-mono text-xs text-slate-500 hover:text-blue-300">
+        <Link href="/?tab=shortlist" className="font-mono text-xs text-slate-500 hover:text-blue-300">
           ← back to dashboard
         </Link>
         <h1 className="mt-3 text-2xl font-semibold">Review queue</h1>
@@ -338,7 +338,7 @@ export default async function ReviewPage({
       <header className="mb-6">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <div>
-            <Link href="/" className="font-mono text-xs text-slate-500 hover:text-blue-300">
+            <Link href="/?tab=shortlist" className="font-mono text-xs text-slate-500 hover:text-blue-300">
               ← back to dashboard
             </Link>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-100">Review queue</h1>

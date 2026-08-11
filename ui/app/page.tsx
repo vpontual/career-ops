@@ -2,6 +2,7 @@ import { loadPipeline, PipelineRow } from "@/lib/pipeline";
 import StatusControl from "@/components/StatusControl";
 import SearchFilter from "@/components/SearchFilter";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { readFile } from "fs/promises";
 import path from "path";
 
@@ -313,7 +314,14 @@ function TabLink({
 export default async function Home({ searchParams }: { searchParams: Promise<{ tab?: string; sort?: string; q?: string; fresh?: string }> }) {
   const data = await loadPipeline();
   const pendingReview = await pendingReviewCount();
-  const { tab = "shortlist", sort: sortParam, q: rawQ, fresh: freshParam } = await searchParams;
+  const sp = await searchParams;
+  // The review queue is the product; this page is the browser around it. With no
+  // explicit tab, land on the actionable list rather than on a browse view.
+  // Guarded by the presence of `tab`, NOT by pathname: /review links back here
+  // with ?tab=shortlist, so an unconditional redirect would bounce between the
+  // two forever.
+  if (!sp.tab) redirect("/review");
+  const { tab = "shortlist", sort: sortParam, q: rawQ, fresh: freshParam } = sp;
   const q = (rawQ ?? "").trim().toLowerCase();
   const fresh = freshParam === "1";
 
@@ -362,14 +370,13 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
           {/* views + controls */}
           <div className="flex flex-wrap items-center justify-between gap-3 pb-3">
             <nav className="flex flex-wrap items-center gap-1">
-              {CORE_VIEWS.map(v => (
-                <TabLink key={v.id} view={v} active={v.id === activeView.id} count={count(v)} sortParam={sortParam} q={q} fresh={fresh} />
-              ))}
-              {visibleStatusViews.length > 0 && <span className="mx-1 h-5 w-px bg-slate-800" />}
-              {visibleStatusViews.map(v => (
-                <TabLink key={v.id} view={v} active={v.id === activeView.id} count={count(v)} sortParam={sortParam} q={q} fresh={fresh} />
-              ))}
-              <span className="mx-1 h-5 w-px bg-slate-800" />
+              {/* Review queue first, and the page lands here (see the redirect at
+                  the top of this component). It is the only view where every card
+                  is complete - CV, answers, diligence, a resolved apply URL and a
+                  posting confirmed live. The other tabs are browsing: Shortlist is
+                  scored-and-eligible but unstaged, Ranked and All roles are the
+                  corpus. Leading with a browse view meant the actionable list was
+                  the one place VP had to navigate to. */}
               <Link
                 href="/review"
                 className={"flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors " + (pendingReview > 0 ? "bg-blue-500/15 text-blue-200 ring-1 ring-inset ring-blue-400/40 hover:bg-blue-500/25" : "text-slate-500 hover:text-slate-300")}
@@ -379,6 +386,15 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
                   <span className="rounded bg-blue-400/20 px-1.5 py-0.5 text-[10px] tabular-nums text-blue-100">{pendingReview}</span>
                 )}
               </Link>
+              <span className="mx-1 h-5 w-px bg-slate-800" />
+              {CORE_VIEWS.map(v => (
+                <TabLink key={v.id} view={v} active={v.id === activeView.id} count={count(v)} sortParam={sortParam} q={q} fresh={fresh} />
+              ))}
+              {visibleStatusViews.length > 0 && <span className="mx-1 h-5 w-px bg-slate-800" />}
+              {visibleStatusViews.map(v => (
+                <TabLink key={v.id} view={v} active={v.id === activeView.id} count={count(v)} sortParam={sortParam} q={q} fresh={fresh} />
+              ))}
+              <span className="mx-1 h-5 w-px bg-slate-800" />
               <Link
                 href="/now"
                 className="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium text-emerald-300/80 transition-colors hover:bg-emerald-500/10 hover:text-emerald-200"
