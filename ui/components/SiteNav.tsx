@@ -1,54 +1,96 @@
 import Link from "next/link";
+import { cache } from "react";
+import { readFile } from "fs/promises";
+import path from "path";
+import { loadPipeline, PipelineRow } from "@/lib/pipeline";
 
 /**
- * The cross-page navigation, in ONE place.
+ * The cross-page navigation, in ONE place, INCLUDING ITS NUMBERS.
  *
- * WHY THIS EXISTS. `/review` became the landing page on 2026-08-11, and it
- * shipped carrying only a "← back to dashboard" link: you arrived at the front
- * door and could not reach Shortlist, Ranked or Get Hired Now without a detour
- * through a page you had just been redirected away from. VP caught it
- * immediately.
+ * WHY IT LOADS ITS OWN COUNTS. The first version took counts as a prop, and
+ * every page passed something different: the home page passed all five, /review
+ * passed only its own, /now and /pack and /role passed none. So the bar was
+ * "the same component" and still rendered four different ways - VP put three
+ * screenshots side by side and asked whether they had the same nav. They did
+ * not. A shared component whose contents depend on what each caller remembers
+ * to pass is not shared; it just moves the drift into the call sites.
  *
- * The obvious fix - paste the nav into the review page - is how the two drift.
- * This repo has been bitten by exactly that shape more than once today alone
- * (three copies of the branded-board host map had drifted; stage and enqueue
- * each hand-wrote a freshness banner and each listed a different subset of the
- * windows). So the ITEMS live here and every page renders from this list.
+ * Now nothing is passed. Every page renders the identical bar because none of
+ * them can render anything else.
  *
- * `/` (page.tsx) keeps its own richer renderer because its tabs must preserve
- * sort/search/fresh query state, which a plain cross-page link must not carry.
- * It reads its labels and order from SITE_NAV all the same.
+ * The loads are wrapped in React's cache() so the home page, which already
+ * calls loadPipeline for its table, pays for it once per request rather than
+ * twice.
  */
-export type SiteNavId = "review" | "shortlist" | "staged" | "ranked" | "all" | "now";
+export type SiteNavId = "review" | "shortlist" | "staged" | "ranked" | "all" | "applied" | "now";
+
+/**
+ * The view predicates, shared with page.tsx (ui/lib/views.ts) so the count in
+ * the tab and the rows in the table can never disagree about what a view is.
+ */
+import { VIEW_MATCH } from "@/lib/views";
 
 export const SITE_NAV: { id: SiteNavId; label: string; href: string; accent?: "blue" | "emerald" }[] = [
-  // Review queue first: it is the only view where every card is complete - CV,
+  // Review queue first: the only view where every card is complete - CV,
   // answers, diligence, a resolved apply URL, a posting confirmed live.
   { id: "review", label: "Review queue", href: "/review", accent: "blue" },
   { id: "shortlist", label: "Shortlist", href: "/?tab=shortlist" },
   { id: "staged", label: "Ready to apply", href: "/?tab=staged" },
   { id: "ranked", label: "Ranked", href: "/?tab=ranked" },
   { id: "all", label: "All roles", href: "/?tab=all" },
+  { id: "applied", label: "Applied", href: "/?tab=applied" },
   { id: "now", label: "Get Hired Now", href: "/now", accent: "emerald" },
 ];
 
-export default function SiteNav({
+const pendingReviewCount = cache(async (): Promise<number> => {
+  try {
+    const root = process.env.CAREER_OPS_ROOT ?? "/data";
+    const q = JSON.parse(await readFile(path.join(root, "data", "review-queue.json"), "utf-8"));
+    return (q.items ?? []).filter((i: { decision?: string | null }) => !i.decision).length;
+  } catch {
+    return 0;
+  }
+});
+
+const nowTrackCount = cache(async (): Promise<number> => {
+  try {
+    const root = process.env.CAREER_OPS_ROOT ?? "/data";
+    const q = JSON.parse(await readFile(path.join(root, "data", "review-queue.json"), "utf-8"));
+    return (q.items ?? []).filter((i: { decision?: string | null; track?: string }) => !i.decision && i.track === "now").length;
+  } catch {
+    return 0;
+  }
+});
+
+const navCounts = cache(async (): Promise<Partial<Record<SiteNavId, number>>> => {
+  const out: Partial<Record<SiteNavId, number>> = {};
+  out.review = await pendingReviewCount();
+  out.now = await nowTrackCount();
+  try {
+    const data = await loadPipeline();
+    const rows: PipelineRow[] = data.rows;
+    for (const id of ["shortlist", "staged", "ranked", "all", "applied"] as const) {
+      const m = VIEW_MATCH[id];
+      if (m) out[id] = rows.filter(m).length;
+    }
+  } catch {
+    // A nav that cannot count is still a nav. Render the labels.
+  }
+  return out;
+});
+
+export default async function SiteNav({
   active,
-  counts = {},
   params,
 }: {
   active: SiteNavId;
-  counts?: Partial<Record<SiteNavId, number>>;
   /**
    * The home page's sort/search/fresh state. Its tabs are views OF one page, so
-   * switching tab must not silently drop the filter you had applied - that is
-   * why page.tsx had its own renderer in the first place. Passing the state
-   * here lets one component serve both without the home page keeping a second,
-   * differently-styled copy of the nav, which is what made the bar look
-   * different depending on where you were standing.
+   * switching tab must not silently drop the filter you had applied.
    */
   params?: { sort?: string; q?: string; fresh?: boolean };
 }) {
+  const counts = await navCounts();
   const withParams = (href: string) => {
     if (!params || !href.startsWith("/?")) return href;
     const u = new URLSearchParams(href.slice(2));

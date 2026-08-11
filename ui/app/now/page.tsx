@@ -155,8 +155,10 @@ export default async function GetHiredNow() {
             </span>
           </Link>
           <div className="ml-auto flex items-center gap-2 text-xs">
-            <Link href="/" className="rounded-md px-2.5 py-1 text-slate-400 hover:text-slate-200">Pipeline</Link>
-            <Link href="/review" className="rounded-md px-2.5 py-1 text-slate-400 hover:text-slate-200">Review queue</Link>
+            {/* The page-local "Pipeline | Review queue" links used to live here.
+                Removed: this page renders the shared SiteNav below, so keeping
+                them meant /now displayed TWO different navigation bars, one of
+                them a two-item subset. */}
           </div>
         </div>
       </header>

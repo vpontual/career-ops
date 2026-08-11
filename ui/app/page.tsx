@@ -378,13 +378,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
             <div className="flex flex-col gap-1">
               <SiteNav
                 active={activeView.id as SiteNavId}
-                counts={{
-                  review: pendingReview,
-                  shortlist: count(CORE_VIEWS[0]),
-                  staged: count(CORE_VIEWS[1]),
-                  ranked: count(CORE_VIEWS[2]),
-                  all: count(CORE_VIEWS[3]),
-                }}
                 params={{ sort: sortParam, q, fresh }}
               />
               {visibleStatusViews.length > 0 && (

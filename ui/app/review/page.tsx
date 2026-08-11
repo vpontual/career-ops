@@ -335,7 +335,7 @@ export default async function ReviewPage({
   return (
     <main className="mx-auto min-h-screen max-w-5xl px-6 py-8 md:px-10">
       <header className="mb-6">
-        <SiteNav active="review" counts={{ review: totalPending }} />
+        <SiteNav active="review" />
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-slate-100">Review queue</h1>
