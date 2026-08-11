@@ -40,8 +40,7 @@ const DRY = process.argv.includes('--dry-run');
 // behind the argv check), so the same guarantee costs nothing and cannot break.
 import {
   normalizeGeo, normalizeArchetype, normalizeFunctionArea, normalizeLevel, scoreFromFacts,
-  sanitizeCompLow,
-} from './rank-leads.mjs';
+  sanitizeCompLow, hasCaveat } from './rank-leads.mjs';
 import { screenVerdict } from './lib/screen-evidence.mjs';
 import { compBand } from './lib/comp-band.mjs';
 import { skillGate, defaultLacks } from './lib/skill-gate.mjs';
@@ -231,11 +230,13 @@ for (const [k, v] of Object.entries(scores)) {
   // loop because it needs the parsed JD.
   const archetype = mod.normalizeArchetype(v.archetypeRaw ?? v.archetype, jd ? jd.title : '');
   const facts = { ...v, ...extra, geo, archetype, track, functionArea };
-  const score = track === 'teaching' ? scoreTeaching(facts)
+  const rubricScore = track === 'teaching' ? scoreTeaching(facts)
               : track === 'civic' ? scoreCivic(facts)
               : track === 'nonprofit' ? scoreNonprofit(facts)
               : track === 'now' ? scoreNow(facts)
               : mod.scoreFromFacts(facts);
+  // Same rule as rank-leads: the top of the scale means nothing is flagged.
+  const score = rubricScore === 5 && hasCaveat(facts) ? 4 : rubricScore;
   if (geo !== v.geo || score !== v.score) {
     moves.push({ k, from: v.score, to: score, geoFrom: v.geo, geoTo: geo });
     changed++;

@@ -726,6 +726,20 @@ if (!fileExists('test-cover-letter-requirement.mjs')) {
   else pass(`cover-letter requirement ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
 }
 
+// ── 21e. CAVEAT CAP ─────────────────────────────────────────────
+// A 5 means nothing is flagged. VP: "a perfect score is only for a perfect
+// job." Also pins that a flag is never cut mid-word - the stored text used to
+// be sliced at 200 chars with no ellipsis, which removed the clause after
+// "however", i.e. the part that decides whether the flag matters.
+console.log('\n21e. Caveat cap');
+if (!fileExists('test-caveat-cap.mjs')) {
+  fail('test-caveat-cap.mjs missing — the meaning of a 5 has no specification');
+} else {
+  const out = run('node', ['test-caveat-cap.mjs']);
+  if (out === null) fail('caveat cap tests failing — run: node test-caveat-cap.mjs');
+  else pass(`caveat cap ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
+}
+
 // ── 20. SEARCH-RESOLVED APPLY PATHS ─────────────────────────────
 // A wrong resolution is worse than a miss: the chain stages a tailored CV
 // against whatever it resolves and VP reviews the card as real. A permissive

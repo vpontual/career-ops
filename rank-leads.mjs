@@ -503,6 +503,63 @@ export function normalizeFunctionArea(raw, title = '') {
   return 'other';
 }
 
+/**
+ * The stored red-flag text used to be `.slice(0, 200)` with no ellipsis, so a
+ * card rendered "...however, the core responsibility i" - cut mid-word, and cut
+ * at WRITE time, so the rest was not merely hidden by the UI, it was gone from
+ * the record for good. VP spotted it on a Decagon card whose flag was chopped
+ * exactly at 200 characters.
+ *
+ * Cut on a boundary and say so. 600 is long enough for the two- or three-clause
+ * flags the model actually writes ("X, however Y") to survive intact - the
+ * clause after "however" is usually the part that decides whether the flag
+ * matters at all.
+ */
+function truncateFlags(raw) {
+  const t = String(raw || '').trim();
+  if (t.length <= 600) return t;
+  const cut = t.slice(0, 600);
+  const stop = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('; '), cut.lastIndexOf(', '), cut.lastIndexOf(' '));
+  return (stop > 400 ? cut.slice(0, stop) : cut).replace(/[\s,;.]+$/, '') + '…';
+}
+
+/**
+ * VP, 2026-08-11, looking at a 5.0 sitting directly above a yellow caveat:
+ * "why is it a perfect score if there is a caveat? a perfect score is only for
+ * a perfect job."
+ *
+ * He is right, and it was systemic rather than one card: of 217 fives, only 93
+ * had nothing flagged at all. 109 carried a model-written red flag, 40 a skill
+ * warning, 18 no stated compensation, 6 a named credential.
+ *
+ * So the top of the scale now means "nothing to flag". Anything with a caveat -
+ * from any source - tops out at 4, which is still "worth applying to".
+ *
+ * ⚠ This DOES let the model's prose move a score, which everywhere else in this
+ * file is forbidden ("the LLM reports facts, policy is applied in code"), and
+ * that is a deliberate exception rather than an oversight. The reason: the card
+ * SHOWS that prose. A 5.0 rendered above a visible warning is incoherent to the
+ * person reading it no matter how defensible the arithmetic was, and the fix
+ * VP asked for is about what the number MEANS. The blast radius is bounded -
+ * it can only ever move 5 to 4, never below, and never up.
+ *
+ * The KlearNow case is the known cost: the model overstated "a strong plus"
+ * into "Requires", so that role drops to 4 on a flag its posting does not
+ * support. Being one rank low on a real role is a far cheaper error than
+ * telling VP a role is perfect when the card itself lists a concern.
+ */
+function hasCaveat(f) {
+  if ((f.redFlags || '').trim()) return true;
+  if (f.credentialWarnings && String(f.credentialWarnings).trim()) return true;
+  if (Array.isArray(f.skillWarnings) && f.skillWarnings.length) return true;
+  if (f.geo === 'unclear') return true;
+  if (f.leadGen) return true;
+  // Unstated pay is a real unknown, not a neutral. It is the single most common
+  // reason a role that looks perfect turns out not to be.
+  if (f.compSource === 'unstated' || f.compLow == null) return true;
+  return false;
+}
+
 function scoreFromFacts(f) {
   // Hard gates — things VP will not do, which no upside can offset.
   //
@@ -814,12 +871,20 @@ async function scoreOne(jd, resume, targets) {
       // characters and has silently truncated before.
       const track = jd.track || detectTrack(jd);
       const extra = trackFacts(track, jd);
-      const allFacts = { ...facts, ...extra, track };
-      const score = track === 'teaching' ? scoreTeaching(allFacts)
+      // redFlags must be part of the facts the CAP sees, not only of the record
+      // written below. It used to be attached to the returned object further
+      // down, so hasCaveat() never saw it and a freshly scored role kept its 5
+      // with a visible warning on the card - the exact thing VP reported. The
+      // recompute path did not have the bug because it reads the stored record.
+      const redFlags = truncateFlags(parsed.redFlags);
+      const allFacts = { ...facts, ...extra, track, redFlags };
+      const rubricScore = track === 'teaching' ? scoreTeaching(allFacts)
                   : track === 'civic' ? scoreCivic(allFacts)
                   : track === 'nonprofit' ? scoreNonprofit(allFacts)
                   : track === 'now' ? scoreNow(allFacts)
                   : scoreFromFacts(allFacts);
+      // A 5 means nothing is flagged - see hasCaveat. Caps only, never lifts.
+      const score = rubricScore === 5 && hasCaveat(allFacts) ? 4 : rubricScore;
 
       return {
         // Score is derived, never taken from the model. Facts are kept so a
@@ -827,7 +892,7 @@ async function scoreOne(jd, resume, targets) {
         score,
         ...allFacts,
         verdict: String(parsed.verdict || '').slice(0, 240),
-        redFlags: String(parsed.redFlags || '').slice(0, 200),
+        redFlags,
       };
     } catch (e) {
       lastErr = e;
@@ -1069,4 +1134,4 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
 // corpus rather than re-derived. recompute-scores.mjs previously reached in and
 // sliced these out of this file's SOURCE TEXT to avoid drifting from them - which
 // works until a brace moves. Importing is the same guarantee without the fragility.
-export { normalizeGeo, normalizeArchetype, scoreFromFacts, PRODUCT_ROLE };
+export { normalizeGeo, normalizeArchetype, scoreFromFacts, PRODUCT_ROLE, hasCaveat, truncateFlags };
