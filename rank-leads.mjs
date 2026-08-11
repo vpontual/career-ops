@@ -456,7 +456,20 @@ const FUNCTION_AREA = [
   ['finance', /financ|accounting|accountant|\btax\b|audit|treasury|controller|payroll|fp&a|\bsox\b|billing|\bsec (analyst|report)/i],
   ['legal', /legal|counsel|attorney|lawyer|paralegal|compliance officer|regulatory affairs/i],
   ['hr', /human resources|\bhr\b|people ops|people operations|talent acquisition|recruit|compensation|benefits|hrbp|people business partner/i],
-  ['security', /information security|security engineer|\bsoc\b|\bgrc\b|infosec|cyber/i],
+  // \bisso\b, security/compliance and "security officer" added 2026-08-11.
+  // Nava's "ISSO Program Manager" (Information System Security Officer - Risk
+  // Management Framework and Authorization to Operate work) carried
+  // functionAreaRaw "Security/Compliance" and matched NONE of the patterns
+  // here, so the title scan fell through to `program manager` and the role was
+  // carded to VP as a nonprofit product role. FUNCTION_AREA is first-match-wins
+  // and `security` already sat above `program`; the entry simply did not
+  // recognise the words the posting used.
+  //
+  // Kept deliberately narrow: a bare /security/ would also catch "Senior PM,
+  // Security Platform", a domain PM role, because the product-title test above
+  // only rescues titles that spell out "product manager" - "Senior PM, X" does
+  // not match it.
+  ['security', /information security|security engineer|\bsoc\b|\bgrc\b|infosec|cyber|\bisso\b|information system security officer|security\s*\/\s*compliance|\bsecurity officer\b/i],
   ['clinical', /clinical|medical|nurse|physician|patient care/i],
   ['support', /technical support|help ?desk|support engineer|tier [123]|director,? support|head of support/i],
   ['customer-success', /customer success|client success|customer experience|onboarding manager/i],
