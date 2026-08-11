@@ -91,8 +91,10 @@ export default async function RolePage({ params }: { params: Promise<{ encoded: 
   const { row, reportMd, jdPreview } = data;
 
   return (
+    <>
+    <SiteHeader active="all" />
+
     <main className="min-h-screen px-6 py-8 md:px-12 md:py-10 max-w-4xl mx-auto">
-      <SiteHeader active="all" />
       <header className="mb-6 border-b border-slate-800 pb-6">
         <Link href="/?tab=all" className="text-xs text-slate-500 hover:text-blue-300 font-mono">
           ← back to dashboard
@@ -168,5 +170,6 @@ export default async function RolePage({ params }: { params: Promise<{ encoded: 
         </section>
       )}
     </main>
+    </>
   );
 }

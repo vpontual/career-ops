@@ -301,13 +301,16 @@ export default async function ReviewPage({
 
   if (!queue || !queue.items?.length) {
     return (
+      <>
+      <SiteHeader active="review" />
+
       <main className="mx-auto min-h-screen max-w-5xl px-6 py-10">
-        <SiteHeader active="review" />
         <h1 className="mt-3 text-2xl font-semibold">Review queue</h1>
         <p className="mt-4 text-sm text-slate-400">
           Nothing waiting. Batches land in <code className="text-slate-300">data/review-queue.json</code>.
         </p>
       </main>
+      </>
     );
   }
 
@@ -333,9 +336,11 @@ export default async function ReviewPage({
   const totalPending = items.filter(i => !i.decision).length;
 
   return (
+    <>
+    <SiteHeader active="review" />
+
     <main className="mx-auto min-h-screen max-w-5xl px-6 py-8 md:px-10">
       <header className="mb-6">
-        <SiteHeader active="review" />
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-slate-100">Review queue</h1>
@@ -532,5 +537,6 @@ export default async function ReviewPage({
         })}
       </div>
     </main>
+    </>
   );
 }

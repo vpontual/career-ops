@@ -113,8 +113,10 @@ export default async function PackPage({ params }: { params: Promise<{ slug: str
   if (!pack) return notFound();
 
   return (
+    <>
+    <SiteHeader active="staged" />
+
     <main className="min-h-screen px-6 py-8 md:px-12 md:py-10 max-w-5xl mx-auto">
-      <SiteHeader active="staged" />
       <header className="mb-8 border-b border-slate-800 pb-6">
         <Link href="/?tab=staged" className="text-xs text-slate-500 hover:text-blue-300 font-mono">
           ← back to dashboard
@@ -281,5 +283,6 @@ export default async function PackPage({ params }: { params: Promise<{ slug: str
         <p>Edit materials in <code className="text-slate-400">output/{pack.slug}/</code> on the VM.</p>
       </footer>
     </main>
+    </>
   );
 }
