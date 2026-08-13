@@ -39,6 +39,7 @@ import { checkUrl } from './check-liveness.mjs';
 import { checkFacts } from './verify-cv-facts.mjs';
 import { classifyArchetype } from './tailor-cv.mjs';
 import { canonKey } from './lib/canonical.mjs';
+import { loadAppliedKeys } from './lib/applied-gate.mjs';
 import { greenhouseRef } from './lib/branded-boards.mjs';
 import {
   resolveCoverLetterRequirement, loadPackFormEvidence,
@@ -210,7 +211,27 @@ async function loadCandidates() {
   // the card gate and fail the pack gate, which is the state that puts it in
   // data/held-no-pack.md with a remedy that cannot work.
   const freshness = await loadFreshnessPolicy(ROOT);
-  return [...best.values()].filter(r => r.days != null && r.days <= freshness.maxAgeDaysFor(r));
+  const fresh = [...best.values()].filter(r => r.days != null && r.days <= freshness.maxAgeDaysFor(r));
+
+  // ALREADY SUBMITTED OR CLOSED OUT — see lib/applied-gate.mjs for why this is
+  // safe against the held-no-pack invariant. Without it, an applied role
+  // rebuilds its whole pack every night for as long as its posting stays fresh.
+  const applied = await loadAppliedKeys(ROOT);
+  if (!applied.size) return fresh;
+  const kept = [], skipped = [];
+  for (const r of fresh) {
+    const hit = applied.get(canonKey(r.company, r.role));
+    (hit ? skipped : kept).push(hit ? { r, hit } : r);
+  }
+  // Never a silent cap: say what was dropped and why, or a pack that stops
+  // being built looks identical to a role that stopped qualifying.
+  if (skipped.length) {
+    console.log(`skipping ${skipped.length} role(s) already on the tracker:`);
+    for (const { r, hit } of skipped) {
+      console.log(`    [${hit.status}] ${r.company} | ${String(r.role).slice(0, 52)}`);
+    }
+  }
+  return kept;
 }
 
 async function callGeminiWithRetry(prompt, maxAttempts = 6) {

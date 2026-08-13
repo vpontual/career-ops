@@ -33,7 +33,7 @@ import { canonKey } from './lib/canonical.mjs';
 import { loadReposts, repostNote } from './lib/repost.mjs';
 import { updateQueue } from './lib/queue-file.mjs';
 import { detectTrack } from './lib/track.mjs';
-import { classifyArchetype } from './tailor-cv.mjs';
+import { cvVariantFor } from './lib/cv-variant.mjs';
 import { parseBlacklist, blacklistEntry } from './blacklist.mjs';
 import { canonicalizeUrl } from './lib/url-canonical.mjs';
 import { parseJd } from './lib/jd-parse.mjs';
@@ -94,14 +94,9 @@ function isApplyable(url) {
 // cards pointed at a missing file - and tailor-cv.mjs does not fall back, it
 // returns "variant cv-leadership.md not found" and renders nothing. Same lesson
 // as the slug and the track: one source of truth, imported, not re-implemented.
-function cvVariantFor(jdContent, track) {
-  if (track === 'teaching') return 'teaching';
-  try {
-    return classifyArchetype(jdContent) || 'ai-product';
-  } catch {
-    return 'ai-product';
-  }
-}
+// MOVED to lib/cv-variant.mjs — rank-leads.mjs needs the same answer at
+// scoring time, and a second copy of this function is exactly what the comment
+// above is about. Imported at the top of this file.
 
 function slugify(s) {
   return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
@@ -292,6 +287,16 @@ const main = async () => {
       certRequired: rec.certRequired === true,
       cteEligible: rec.cteEligible === true,
       compLow: rec.compLow ?? null,
+      // ⚠ THIS FIELD WAS NEVER CARRIED, so the "Listed as preferred, not
+      // required" note below it — written on 2026-08-10 to VP's spec, "it
+      // doesnt have to be a loud warning, just a normal warning" — could not
+      // fire once. skillWarnings was computed by lib/skill-gate.mjs, stored in
+      // lead-scores.json, read by nothing, and rendered never. 339 postings
+      // carried at least one at the time this was found.
+      skillWarnings: rec.skillWarnings || [],
+      cvCoverageMissing: rec.cvCoverageMissing || [],
+      cvCoverageRatio: rec.cvCoverageRatio ?? null,
+      cvCoverageGap: rec.cvCoverageGap === true,
     });
   }
 
@@ -580,6 +585,19 @@ const main = async () => {
         : '',
       c.certRequired && c.cteEligible
         ? 'CERTIFICATION: the posting asks for NYS certification VP does not hold. Not a blocker for a CTE subject - NYSED Transitional A is nominated BY the hiring district and is the designed route for industry professionals (2 years experience required; he has 15). But the district must agree to nominate, so confirm early.'
+        : '',
+      // ⚠ THIS IS ABOUT THE DOCUMENT, NOT ABOUT VP, and the wording carries
+      // that. "Your CV does not mention SCIM" is checkable and fixable in an
+      // afternoon; "you do not know SCIM" is a claim this pipeline has no
+      // standing to make and has made by accident before - see the header of
+      // lib/cv-coverage.mjs and skill-gate's note that cv.md omits Kubernetes
+      // while VP runs a k3s cluster.
+      //
+      // It has to RENDER, not just cap the score. A 5 quietly becoming a 4 with
+      // nothing on the card explaining why is the same incoherence the caveat
+      // cap was introduced to remove.
+      c.cvCoverageGap
+        ? `CV COVERAGE: the posting names ${(c.cvCoverageMissing || []).join(', ')} and the CV variant that would be sent does not mention ${(c.cvCoverageMissing || []).length > 1 ? 'them' : 'it'}. This is about the DOCUMENT, not about what you can do - fix the CV or ignore the flag.`
         : '',
       'ON ME: Glassdoor and interview-process research not yet done for this role - auto-enqueued from the nightly score.',
     ].filter(Boolean).join(' ');

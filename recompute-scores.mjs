@@ -23,6 +23,8 @@ import { fileURLToPath } from 'url';
 import { parseJd } from './lib/jd-parse.mjs';
 import { detectTrack, trackFacts, scoreTeaching, scoreCivic, scoreNonprofit, scoreNow } from './lib/track.mjs';
 import { detectHardCredential } from './lib/credential-gate.mjs';
+import { cvCoverage, coverageGap } from './lib/cv-coverage.mjs';
+import { cvVariantFor } from './lib/cv-variant.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const SCORES = path.join(ROOT, 'data', 'lead-scores.json');
@@ -229,7 +231,25 @@ for (const [k, v] of Object.entries(scores)) {
   // free-text guess at seniority. Computed here rather than at the top of the
   // loop because it needs the parsed JD.
   const archetype = mod.normalizeArchetype(v.archetypeRaw ?? v.archetype, jd ? jd.title : '');
-  const facts = { ...v, ...extra, geo, archetype, track, functionArea };
+  // CV coverage, re-derived for the same reason credentialBlocked above is:
+  // it comes from the posting and from the variant file on disk, so a record
+  // scored before lib/cv-coverage.mjs existed would come back through this tool
+  // with no coverage facts at all and quietly keep a 5 it should not hold. This
+  // is the payoff the header describes — the policy changed, the facts are
+  // still good, and reapplying it costs no LLM calls.
+  const cov = (() => {
+    if (!jd) return null;
+    const body = `${jd.title || ''}\n${jd.body || ''}`;
+    return cvCoverage(body, cvVariantFor(body, track), { company: jd.company || '' });
+  })();
+  const cvFacts = cov ? {
+    cvCoverageRequired: cov.required,
+    cvCoverageMissing: cov.missing,
+    cvCoverageRatio: cov.ratio,
+    cvCoverageEvidence: cov.evidence,
+    cvCoverageGap: coverageGap(cov),
+  } : {};
+  const facts = { ...v, ...extra, ...cvFacts, geo, archetype, track, functionArea };
   const rubricScore = track === 'teaching' ? scoreTeaching(facts)
               : track === 'civic' ? scoreCivic(facts)
               : track === 'nonprofit' ? scoreNonprofit(facts)
@@ -243,6 +263,11 @@ for (const [k, v] of Object.entries(scores)) {
     if (score === 1 && v.score > 1) gated++;
   }
   Object.assign(v, extra);
+  // The coverage facts have to be PERSISTED, not just used for the cap. The
+  // card renders the missing tokens and their evidence line; without this the
+  // score silently drops to 4 with nothing on screen explaining why, which is
+  // the incoherent-card problem the caveat cap was introduced to fix.
+  Object.assign(v, cvFacts);
   v.track = track;
   v.functionArea = functionArea;
   v.archetypeRaw = v.archetypeRaw ?? v.archetype;

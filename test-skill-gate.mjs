@@ -99,6 +99,47 @@ eq('level: query optimisation exceeds it',
 eq('level: advanced SQL in nice-to-haves still only warns',
    lv('Nice to have\n- Advanced SQL including window functions.').blocked, '');
 
+// ── the heading runs into the first bullet (Ashby) ───────────────────
+// skill-gate used to require a heading line to be <= 90 chars, so a posting
+// that opens its requirements with "What You Have - 5+ years of ..." on one
+// 145-character line reported NO requirements section and nothing could block.
+eq('an inline "What You Have" heading is still a requirements section',
+   run('What You Have - 5+ years of product experience, including writing SQL against a warehouse.').blocked, 'SQL');
+
+// ── benefits blocks are not requirements (STOP_HEAD) ─────────────────
+// Every line used to be attributed to the last heading seen, so a perks
+// paragraph after "Qualifications" was read as requirement text.
+eq('a skill named in the benefits block does not block',
+   run('Qualifications\n- Strong product sense.\n\nBenefits\n- Free Python courses and SQL training.').blocked, '');
+eq('and does not even warn',
+   run('Qualifications\n- Strong product sense.\n\nBenefits\n- Free Python courses and SQL training.').warned, '');
+
+// ⚠ THE FILE HEADER IS NOT SECTION STRUCTURE. jds/*.md open with metadata, and
+// **Salary:** / **Compensation:** collide with STOP_HEAD's own words. On the
+// many postings scraped onto ONE line (all of NYC's cityjobs feed), a stop
+// section opened at the header could never be reopened and the entire
+// requisition was discarded — three NYC data roles silently stopped reporting
+// a Python requirement they plainly state.
+eq('a **Salary:** metadata line does not swallow the posting',
+   run('**Salary:** $87,743 - $100,904 Annual\n---\nRequirements\n- Demonstrated expertise with Python.').blocked, 'Python');
+eq('nor does **Compensation:**',
+   run('**Compensation:** $177.7K – $266.5K\n---\nRequirements\n- Deep expertise writing Python.').blocked, 'Python');
+
+// ── collaboration framing is not a hands-on requirement ──────────────
+// config/profile.yml records VP as "data pipelines (understands them; does not
+// build them)". Harvey asks for "the ability to engage deeply with engineering
+// on system design, distributed systems, data pipelines" — and `beyond` matched
+// the NOUN "design" out of "system design", hard-scoring ten Harvey postings
+// to 1 the moment their requirements section became parseable.
+eq('engaging WITH engineers about a skill warns, never blocks',
+   run('Requirements\n- Ability to engage deeply with engineering on system design and Python services.').blocked, '');
+eq('substantive CONVERSATIONS with engineers about it also only warns',
+   run('Requirements\n- Strong technical fluency — you can have deep, substantive conversations with engineers about Python.').blocked, '');
+eq('but doing it yourself still blocks',
+   run('Requirements\n- You will write Python to automate reporting.').blocked, 'Python');
+eq('and the collaboration case is still SHOWN, not swallowed',
+   run('Requirements\n- Ability to engage deeply with engineering on Python services.').warned.includes('Python'), true);
+
 let pass = 0; const fails = [];
 for (const [l, g, w] of T) { if (g === w) pass++; else fails.push(`  ❌ ${l}\n     expected ${JSON.stringify(w)}, got ${JSON.stringify(g)}`); }
 console.log(`\nskill gate — ${T.length} cases`);

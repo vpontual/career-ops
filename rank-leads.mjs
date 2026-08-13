@@ -31,6 +31,8 @@ import { screenVerdict, findReportableFormats } from './lib/screen-evidence.mjs'
 import { compBand } from './lib/comp-band.mjs';
 import { skillGate, defaultLacks } from './lib/skill-gate.mjs';
 import { detectHardCredential } from './lib/credential-gate.mjs';
+import { cvCoverage, coverageGap } from './lib/cv-coverage.mjs';
+import { cvVariantFor } from './lib/cv-variant.mjs';
 
 dotenv.config();
 
@@ -700,6 +702,13 @@ function hasCaveat(f) {
   if (f.credentialWarnings && String(f.credentialWarnings).trim()) return true;
   if (Array.isArray(f.skillWarnings) && f.skillWarnings.length) return true;
   if (f.geo === 'unclear') return true;
+  // The CV that would be sent does not mention most of what the posting names.
+  // Same bounded blast radius as every other clause here: it can only take a 5
+  // to a 4, never lower and never up. Added 2026-08-13 after Harvey's Command
+  // Center role — a clean 5 whose requirements name SSO, SCIM and RBAC, none of
+  // which appear anywhere in cv-ai-enterprise.md, and which was rejected at the
+  // resume screen seven days after applying.
+  if (f.cvCoverageGap) return true;
   if (f.leadGen) return true;
   // Unstated pay is a real unknown, not a neutral. It is the single most common
   // reason a role that looks perfect turns out not to be.
@@ -1018,13 +1027,32 @@ async function scoreOne(jd, resume, targets) {
       // characters and has silently truncated before.
       const track = jd.track || detectTrack(jd);
       const extra = trackFacts(track, jd);
+      // Does the CV we would actually SEND mention the concrete things this
+      // posting asks for? Code-derived from the posting and from the variant
+      // file on disk, so it is checkable and reversible by hand — the same
+      // discipline as skillBlocked and credentialEvidence above.
+      //
+      // ⚠ THIS SAYS NOTHING ABOUT WHAT VP CAN DO. See the header of
+      // lib/cv-coverage.mjs: it measures the DOCUMENT, because a resume screen
+      // reads the document. Never render it as a statement about his ability.
+      const cov = (() => {
+        const body = `${jd.title || ''}\n${jd.body || ''}`;
+        return cvCoverage(body, cvVariantFor(body, track), { company: jd.company || '' });
+      })();
+      const cvFacts = {
+        cvCoverageRequired: cov.required,
+        cvCoverageMissing: cov.missing,
+        cvCoverageRatio: cov.ratio,
+        cvCoverageEvidence: cov.evidence,
+        cvCoverageGap: coverageGap(cov),
+      };
       // redFlags must be part of the facts the CAP sees, not only of the record
       // written below. It used to be attached to the returned object further
       // down, so hasCaveat() never saw it and a freshly scored role kept its 5
       // with a visible warning on the card - the exact thing VP reported. The
       // recompute path did not have the bug because it reads the stored record.
       const redFlags = truncateFlags(parsed.redFlags);
-      const allFacts = { ...facts, ...extra, track, redFlags };
+      const allFacts = { ...facts, ...extra, ...cvFacts, track, redFlags };
       const rubricScore = track === 'teaching' ? scoreTeaching(allFacts)
                   : track === 'civic' ? scoreCivic(allFacts)
                   : track === 'nonprofit' ? scoreNonprofit(allFacts)

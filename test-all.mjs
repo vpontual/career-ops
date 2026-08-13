@@ -785,6 +785,36 @@ if (!fileExists('test-answer-classifier.mjs')) {
   else pass(`answer classifier ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
 }
 
+// ── 21i. CV COVERAGE ────────────────────────────────────────────
+// Does the CV we would SEND name the concrete things the posting asks for?
+// Harvey's Command Center role scored a clean 5 and was rejected at the resume
+// screen; its requirements name SSO, SCIM and RBAC and the variant that went
+// out contains none of them. This is a precision-first gate — a false "missing"
+// prints a wrong warning on the card AND knocks a good role off tier 5 — so the
+// filters are pinned here against the shapes measured across all 2,255 JDs.
+console.log('\n21i. CV coverage');
+if (!fileExists('test-cv-coverage.mjs')) {
+  fail('test-cv-coverage.mjs missing — the coverage gate has no specification');
+} else {
+  const out = run('node', ['test-cv-coverage.mjs']);
+  if (out === null) fail('cv coverage tests failing — run: node test-cv-coverage.mjs');
+  else pass(`cv coverage ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
+}
+
+// ── 21j. APPLIED GATE ───────────────────────────────────────────
+// A pack is not rebuilt for an application already sent. Pins the one status
+// that must NOT gate (`evaluated` = on the tracker, not yet sent) — gating it
+// would starve the queue silently, which is the failure held-no-pack.md exists
+// to make visible.
+console.log('\n21j. Applied gate');
+if (!fileExists('test-applied-gate.mjs')) {
+  fail('test-applied-gate.mjs missing — the staging gate has no specification');
+} else {
+  const out = run('node', ['test-applied-gate.mjs']);
+  if (out === null) fail('applied gate tests failing — run: node test-applied-gate.mjs');
+  else pass(`applied gate ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
+}
+
 // ── 20. SEARCH-RESOLVED APPLY PATHS ─────────────────────────────
 // A wrong resolution is worse than a miss: the chain stages a tailored CV
 // against whatever it resolves and VP reviews the card as real. A permissive
