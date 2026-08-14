@@ -85,6 +85,15 @@ run_step olas       /usr/bin/docker compose run --rm applier node fetch-olas.mjs
 # Without it Track E scores nothing: NYC hires through its own system, never
 # through the ~155 tracked ATS boards.
 run_step civic      /usr/bin/node fetch-civic.mjs
+# NYCPS runs its own board and posts NOTHING to the NYC Open Data feed civic
+# reads: measured 2026-08-14, 1,389 external postings, zero education agencies.
+# Without this step every DOE central role is invisible — which is why VP's
+# corpus held 2,255 JDs and not one Administrative Education title.
+run_step doe        /usr/bin/node fetch-doe.mjs
+# A canvass or pool notice is answered in days, and Personnel Rule 4 treats
+# silence exactly like a declination. This is the backstop for that; the Gmail
+# filter is the primary defence.
+run_step civilsvc   /usr/bin/node watch-civil-service.mjs
 
 # Turn the Indeed/aggregator backlog into real apply URLs. This script was
 # written 2026-08-05 to fix exactly the problem it names in its own header -
