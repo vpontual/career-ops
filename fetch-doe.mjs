@@ -60,6 +60,21 @@ const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Geck
 const WANTED = /\b(director|deputy|executive|chief|project manager|program manager|product|data|analyt|strateg|operations|policy|planning|innovation|technology|research)\b/i;
 const EXCLUDED = /\b(interpreter|teacher|paraprofessional|nurse|therapist|counselor|social worker|custodial|bus |food service|coach|substitute|principal|assistant principal)\b/i;
 
+/**
+ * ⚠ A LEADERSHIP NOUN BEATS THE EXCLUSION LIST, and this is not hypothetical.
+ * On the first run EXCLUDED's `teacher` deleted "Director of Teacher Pathways
+ * Team, TRQ" (vacancy 26922) — a G4 whose Civil Service Title is literally
+ * ADMINISTRATIVE EDUCATION OFFICER, the exam VP passed. It was the ONLY posting
+ * on the whole 79-vacancy board carrying that title, and a keyword meant to
+ * skip classroom vacancies threw it away. Reported as "zero AEO postings",
+ * which was wrong.
+ *
+ * The exclusions exist to skip school-based instructional and clinical roles.
+ * A title that opens with Director/Executive/Deputy/Chief is a central-office
+ * management line no matter which subject noun follows it.
+ */
+const LEADERSHIP = /\b(director|executive|deputy|chief|head of|superintendent)\b/i;
+
 const INTERNAL_ONLY = /only open to current City employees|only open to current NYCPS employees|permanent (?:NYC )?civil service status/i;
 
 const strip = (s) => String(s || '')
@@ -111,7 +126,8 @@ const main = async () => {
   const rows = parseList(await get(LIST_URL));
   console.log(`NYCPS board: ${rows.length} vacancies listed`);
 
-  const matched = rows.filter(r => WANTED.test(r.title) && !EXCLUDED.test(r.title));
+  const matched = rows.filter(r =>
+    WANTED.test(r.title) && (LEADERSHIP.test(r.title) || !EXCLUDED.test(r.title)));
   console.log(`after title filter: ${matched.length} director/program/data/strategy roles`);
 
   const keep = [], internal = [];
@@ -129,6 +145,10 @@ const main = async () => {
       // Everything from "Description:" on is the actual posting.
       body: ls.slice(Math.max(0, ls.findIndex(l => /^Description:?$/i.test(l)))).join('\n').slice(0, 12000),
     };
+    // Flagged separately because it is the demand signal VP's exam actually
+    // feeds: an AEO-titled vacancy is what a certification off the AEO eligible
+    // list gets used to fill, even though the posting itself is closed to him.
+    rec.aeo = /administrative education officer/i.test(rec.civilServiceTitle);
     (INTERNAL_ONLY.test(blob) ? internal : keep).push(rec);
     await new Promise(s => setTimeout(s, 400));   // this board is not a CDN
   }
@@ -137,7 +157,13 @@ const main = async () => {
   // the log is indistinguishable from one that was never posted.
   if (internal.length) {
     console.log(`\nskipping ${internal.length} INTERNAL-ONLY posting(s) — permanent city employees only:`);
-    for (const r of internal) console.log(`    ${r.civilServiceTitle || '?'} | ${r.title.slice(0, 62)}`);
+    for (const r of internal) console.log(`    ${r.aeo ? '★ AEO ' : ''}${r.civilServiceTitle || '?'} | ${r.title.slice(0, 62)}`);
+    const aeo = internal.filter(r => r.aeo);
+    if (aeo.length) {
+      console.log(`\n  ★ ${aeo.length} of these carry VP's own exam title (Administrative Education Officer).`);
+      console.log(`    He cannot apply through this board — it wants permanent status, not list standing —`);
+      console.log(`    but these are the lines a DCAS certification off exam 6003 exists to fill.`);
+    }
   }
   const use = ALL ? [...keep, ...internal] : keep;
   console.log(`\napplyable: ${keep.length}`);
