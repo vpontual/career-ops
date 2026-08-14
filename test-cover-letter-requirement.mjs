@@ -197,5 +197,25 @@ r = await resolveCoverLetterRequirement({
 });
 eq(r.value, 'unknown', 'a 404 from the board API is unknown, not absent');
 
+// ── "please include": excluded, then restored ────────────────────────
+// Every NYC Public Schools posting closes with this exact sentence. `include`
+// was left out of the verb list to stop "Current Employees please include your
+// ERN on your cover letter and resume" from matching — so all 8 NYCPS postings
+// in the corpus resolved to `unknown`, and three were staged on 2026-08-14
+// carrying cover-letter-skipped.md. That applied VP's "if it is optional, send
+// nothing" rule to postings that require one, which is the expensive direction.
+// The ERN case is now held by the precise `current employees` guard instead.
+eq(!!requiredFromJdText('Please include a resume and cover letter with your application.'), true,
+   '"Please include a resume and cover letter" is required');
+eq(!!requiredFromJdText('Please enclose a cover letter with your submission.'), true,
+   '"please enclose" counts too');
+eq(!!requiredFromJdText('Current Employees please include your ERN on your cover letter and resume.'), false,
+   'the ERN instruction is still NOT a requirement');
+eq(!!requiredFromJdText('Please submit a resume and answer the application questions in lieu of a cover letter.'), false,
+   '"in lieu of a cover letter" is still not a requirement');
+eq((requiredFromJdText('Please include a resume and cover letter with your application.') || {}).sentence,
+   'Please include a resume and cover letter with your application.',
+   'the evidence quotes the sentence that actually fired');
+
 console.log(`\n${passed} passed, ${failed} failed\n`);
 process.exit(failed ? 1 : 0);
