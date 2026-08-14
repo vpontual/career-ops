@@ -815,6 +815,23 @@ if (!fileExists('test-applied-gate.mjs')) {
   else pass(`applied gate ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
 }
 
+// ── 21k. TRACK DETECTION ────────────────────────────────────────
+// Which rubric a posting is scored against. This had NO assertions at all —
+// test-track.mjs prints corpus counts and was never run from here — and the
+// routing is silent by construction: a role sent to the wrong track is dropped
+// by that track's title filter before scoring, leaving no error and no card.
+// It broke that way on 2026-08-14, when all 8 NYCPS central-office JDs were
+// routed to TEACHING on the words "public schools" and discarded unscored,
+// while the run reported success.
+console.log('\n21k. Track detection');
+if (!fileExists('test-track-detect.mjs')) {
+  fail('test-track-detect.mjs missing — rubric routing has no specification');
+} else {
+  const out = run('node', ['test-track-detect.mjs']);
+  if (out === null) fail('track detection tests failing — run: node test-track-detect.mjs');
+  else pass(`track detection ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
+}
+
 // ── 20. SEARCH-RESOLVED APPLY PATHS ─────────────────────────────
 // A wrong resolution is worse than a miss: the chain stages a tailored CV
 // against whatever it resolves and VP reviews the card as real. A permissive
