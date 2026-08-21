@@ -6,13 +6,13 @@
   padding: 10px 14px;
   font: 600 13px/1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   color: #fff;
-  background: #4f46e5;
+  background: #6366f1;
   border: none;
   border-radius: 8px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
   cursor: pointer;
 }
-#co-autofill-btn:hover { background: #4338ca; }
+#co-autofill-btn:hover { background: #4f46e5; }
 #co-autofill-btn:active { transform: translateY(1px); }
 
 #co-autofill-toast {
@@ -36,7 +36,7 @@
 #co-autofill-toast.co-ok { border-left-color: #16a34a; }
 #co-autofill-toast.co-warn { border-left-color: #d97706; }
 #co-autofill-toast.co-err { border-left-color: #dc2626; }
-#co-autofill-toast.co-info { border-left-color: #4f46e5; }
+#co-autofill-toast.co-info { border-left-color: #6366f1; }
 
 /* Defensive: force normal block flow so the host page's global CSS (e.g.
    `div { position: absolute }`) can't collapse or overlap the toast lines. */

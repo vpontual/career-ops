@@ -1,0 +1,308 @@
+/* ==========================================================================
+   veex.css — the veextensions design kit
+   Shared look and feel for VP's browser extensions.
+
+   Browser extensions cannot share files at runtime: every extension ships
+   its own copy. This file is the ONE source of truth — edit it here in
+   ~/Dev/veextensions and run ./sync.sh to push it into each extension's
+   src/lib/veex.css. Never hand-edit a vendored copy.
+
+   Family rule: shared neutrals, shared shape, shared typography.
+   Each extension keeps ONE signature hue by overriding --veex-accent.
+   Siblings, not clones.
+   ========================================================================== */
+
+:root {
+  /* ---- Signature hue (each extension overrides these three) ------------- */
+  --veex-accent:        #4f8cf7;
+  --veex-accent-hover:  #6b9efb;
+  --veex-accent-fg:     #0b1220;
+
+  /* ---- Neutrals: dark is the default ----------------------------------- */
+  --veex-bg:         #0e0e10;
+  --veex-surface:    #18181b;
+  --veex-surface-2:  #202024;
+  --veex-border:     #2a2a2f;
+  --veex-fg:         #ececee;
+  --veex-muted:      #9b9ba2;
+  --veex-faint:      #6a6a72;
+
+  /* ---- Semantic ---------------------------------------------------------*/
+  --veex-ok:    #34d399;
+  --veex-warn:  #fbbf24;
+  --veex-err:   #f87171;
+
+  /* ---- Type ------------------------------------------------------------ */
+  --veex-font:  system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --veex-mono:  "JetBrains Mono", "SF Mono", Menlo, ui-monospace, monospace;
+  --veex-serif: "Iowan Old Style", Charter, "Source Serif Pro", Georgia, serif;
+
+  /* ---- Shape ----------------------------------------------------------- */
+  --veex-radius:    10px;
+  --veex-radius-sm: 6px;
+  --veex-shadow:    0 1px 2px rgba(0,0,0,.24), 0 4px 16px rgba(0,0,0,.18);
+  --veex-ring:      0 0 0 2px color-mix(in srgb, var(--veex-accent) 45%, transparent);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-veex-theme="dark"]) {
+    --veex-accent-fg:  #ffffff;
+    --veex-bg:         #f7f7f8;
+    --veex-surface:    #ffffff;
+    --veex-surface-2:  #f1f1f4;
+    --veex-border:     #e3e3e8;
+    --veex-fg:         #1c1c1f;
+    --veex-muted:      #5a5a62;
+    --veex-faint:      #8a8a92;
+    --veex-ok:         #15803d;
+    --veex-warn:       #b45309;
+    --veex-err:        #b91c1c;
+    --veex-shadow:     0 1px 2px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.05);
+  }
+}
+
+/* Explicit override wins in both directions. */
+:root[data-veex-theme="light"] {
+  --veex-accent-fg: #ffffff;
+  --veex-bg: #f7f7f8;      --veex-surface: #ffffff;  --veex-surface-2: #f1f1f4;
+  --veex-border: #e3e3e8;  --veex-fg: #1c1c1f;       --veex-muted: #5a5a62;
+  --veex-faint: #8a8a92;   --veex-ok: #15803d;       --veex-warn: #b45309;
+  --veex-err: #b91c1c;
+  --veex-shadow: 0 1px 2px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.05);
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+.veex, .veex * { box-sizing: border-box; }
+
+.veex {
+  margin: 0;
+  font-family: var(--veex-font);
+  font-size: 14px;
+  line-height: 1.5;
+  background: var(--veex-bg);
+  color: var(--veex-fg);
+  -webkit-font-smoothing: antialiased;
+}
+
+.veex ::selection { background: color-mix(in srgb, var(--veex-accent) 30%, transparent); }
+
+.veex :focus-visible {
+  outline: none;
+  box-shadow: var(--veex-ring);
+  border-radius: var(--veex-radius-sm);
+}
+
+/* ==========================================================================
+   Header — every extension surface opens with this
+   ========================================================================== */
+
+.veex-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--veex-border);
+  background: var(--veex-surface);
+}
+
+.veex-header__mark {
+  width: 20px; height: 20px;
+  flex: 0 0 auto;
+  border-radius: var(--veex-radius-sm);
+  background: var(--veex-accent);
+}
+
+.veex-header__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.veex-header__sub {
+  margin: 0;
+  font-size: 12px;
+  color: var(--veex-muted);
+}
+
+.veex-header__spacer { flex: 1 1 auto; }
+
+/* ==========================================================================
+   Card / section
+   ========================================================================== */
+
+.veex-card {
+  background: var(--veex-surface);
+  border: 1px solid var(--veex-border);
+  border-radius: var(--veex-radius);
+  padding: 14px 16px;
+}
+
+.veex-card + .veex-card { margin-top: 12px; }
+
+.veex-card__title {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--veex-muted);
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+.veex-btn {
+  appearance: none;
+  font: inherit;
+  font-weight: 550;
+  padding: 7px 14px;
+  border-radius: var(--veex-radius-sm);
+  border: 1px solid var(--veex-border);
+  background: var(--veex-surface-2);
+  color: var(--veex-fg);
+  cursor: pointer;
+  transition: background .12s ease, border-color .12s ease, opacity .12s ease;
+}
+
+.veex-btn:hover:not(:disabled) { background: var(--veex-border); }
+.veex-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.veex-btn--primary {
+  background: var(--veex-accent);
+  border-color: var(--veex-accent);
+  color: var(--veex-accent-fg);
+}
+.veex-btn--primary:hover:not(:disabled) {
+  background: var(--veex-accent-hover);
+  border-color: var(--veex-accent-hover);
+}
+
+.veex-btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--veex-muted);
+}
+.veex-btn--ghost:hover:not(:disabled) { background: var(--veex-surface-2); color: var(--veex-fg); }
+
+.veex-btn--icon {
+  padding: 5px;
+  line-height: 0;
+  border-radius: var(--veex-radius-sm);
+}
+
+/* ==========================================================================
+   Form fields
+   ========================================================================== */
+
+.veex-field { display: block; margin-bottom: 12px; }
+.veex-field:last-child { margin-bottom: 0; }
+
+.veex-field__label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--veex-fg);
+}
+
+.veex-input, .veex-select, .veex-textarea {
+  width: 100%;
+  font: inherit;
+  padding: 7px 10px;
+  color: var(--veex-fg);
+  background: var(--veex-bg);
+  border: 1px solid var(--veex-border);
+  border-radius: var(--veex-radius-sm);
+}
+
+.veex-input::placeholder, .veex-textarea::placeholder { color: var(--veex-faint); }
+.veex-input:focus, .veex-select:focus, .veex-textarea:focus {
+  outline: none;
+  border-color: var(--veex-accent);
+  box-shadow: var(--veex-ring);
+}
+
+.veex-input--mono { font-family: var(--veex-mono); font-size: 12.5px; }
+
+.veex-hint {
+  margin: 5px 0 0;
+  font-size: 12px;
+  color: var(--veex-faint);
+}
+.veex-hint code {
+  font-family: var(--veex-mono);
+  font-size: 11.5px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--veex-surface-2);
+}
+
+.veex-toggle { display: flex; align-items: flex-start; gap: 9px; }
+.veex-toggle input { margin-top: 3px; accent-color: var(--veex-accent); transform: scale(1.15); }
+
+/* ==========================================================================
+   Chips, badges, status
+   ========================================================================== */
+
+.veex-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  font-size: 12px;
+  border-radius: 999px;
+  border: 1px solid var(--veex-border);
+  background: var(--veex-surface-2);
+  color: var(--veex-muted);
+}
+.veex-chip--ok   { color: var(--veex-ok);   border-color: color-mix(in srgb, var(--veex-ok) 40%, transparent); }
+.veex-chip--warn { color: var(--veex-warn); border-color: color-mix(in srgb, var(--veex-warn) 40%, transparent); }
+.veex-chip--err  { color: var(--veex-err);  border-color: color-mix(in srgb, var(--veex-err) 40%, transparent); }
+
+.veex-status {
+  font-size: 12px;
+  color: var(--veex-muted);
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+.veex-status[data-shown="true"] { opacity: 1; }
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+
+.veex-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--veex-border);
+  background: var(--veex-surface);
+}
+
+.veex-footer__spacer { flex: 1 1 auto; }
+
+/* ==========================================================================
+   Utilities
+   ========================================================================== */
+
+.veex-muted  { color: var(--veex-muted); }
+.veex-faint  { color: var(--veex-faint); }
+.veex-mono   { font-family: var(--veex-mono); }
+.veex-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.veex-scroll { overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--veex-border) transparent; }
+.veex-scroll::-webkit-scrollbar { width: 9px; }
+.veex-scroll::-webkit-scrollbar-thumb { background: var(--veex-border); border-radius: 999px; }
+.veex-scroll::-webkit-scrollbar-track { background: transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  .veex *, .veex *::before, .veex *::after {
+    animation-duration: .001ms !important;
+    transition-duration: .001ms !important;
+  }
+}
