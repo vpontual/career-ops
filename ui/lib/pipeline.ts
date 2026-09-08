@@ -107,8 +107,32 @@ async function maybeStat(p: string): Promise<Date | null> {
   }
 }
 
-async function readApplicationsMd(): Promise<Map<string, { status: PipelineStatus; appliedAt?: string }>> {
-  const map = new Map<string, { status: PipelineStatus; appliedAt?: string }>();
+interface TrackerEntry {
+  url: string;
+  status: PipelineStatus;
+  appliedAt?: string;
+  company: string;
+  role: string;
+}
+
+/**
+ * data/applications.md — the record of what VP actually DID. It is the only
+ * file that measures the mission, and nightly-report.mjs reports straight from
+ * it.
+ *
+ * ⚠ IT IS NOT AN OVERLAY ON pipeline.md, THOUGH IT USED TO BE READ AS ONE.
+ * Every entry here was matched to a pipeline.md row by URL and applied as a
+ * status; an entry whose row had since been pruned matched nothing and simply
+ * vanished. prune-stale archives a row once its req dies — which is exactly
+ * what happens to a role a few weeks after you apply to it — so the "Applied"
+ * tab counted 2 while this file held 9. The number that measures the mission
+ * decayed as the pipeline did its job.
+ *
+ * Company and role are read from the table columns so an entry with no
+ * surviving row can still be rendered on its own.
+ */
+async function readApplicationsMd(): Promise<TrackerEntry[]> {
+  const out: TrackerEntry[] = [];
   try {
     const content = await readFile(path.join(DATA_ROOT, "data", "applications.md"), "utf-8");
     for (const line of content.split("\n")) {
@@ -123,12 +147,16 @@ async function readApplicationsMd(): Promise<Map<string, { status: PipelineStatu
       // Parse the date appended by /api/status: "Applied 2026-05-13" or "Applied 2026-05-13 — note"
       const dateM = line.match(/(\d{4}-\d{2}-\d{2})/);
       const appliedAt = status === "applied" && dateM ? dateM[1] : undefined;
-      map.set(url, { status, appliedAt });
+      // The table /api/status writes is | # | Date | Company | Role | ... Rows
+      // that are not table rows (the header, a stray note) yield empty strings
+      // and are still usable as a URL-keyed overlay, just not on their own.
+      const cols = line.startsWith("|") ? line.split("|").map(c => c.trim()) : [];
+      out.push({ url, status, appliedAt, company: cols[3] ?? "", role: cols[4] ?? "" });
     }
   } catch {
     // no applications.md yet
   }
-  return map;
+  return out;
 }
 
 // Cache: maps URL -> staged slug so we only walk output/ once per request.
@@ -391,7 +419,16 @@ export async function loadPipeline(): Promise<PipelineData> {
     };
   }
 
-  const manualStatuses = await readApplicationsMd();
+  const tracker = await readApplicationsMd();
+  const manualStatuses = new Map(tracker.map(t => [t.url, t]));
+  // A second index by canonical company+title. prune-stale can retire the exact
+  // URL VP applied through while a per-location twin of the same req survives,
+  // and dedup then keeps the twin - so a URL-only overlay drops the status onto
+  // a row that is about to be discarded.
+  const manualByCanon = new Map<string, TrackerEntry>();
+  for (const t of tracker) {
+    if (t.company && t.role) manualByCanon.set(canonKey(t.company, t.role), t);
+  }
   stagedCache = null; // reset per-request
   jdMetaCache = null; // reset per-request
   const stagedIndex = await loadStagedIndex();
@@ -511,6 +548,16 @@ export async function loadPipeline(): Promise<PipelineData> {
     (typeof r.score === "number" ? r.score * 10 : 0) +
     (r.status !== "new" ? 5 : 0) +
     (r.postedDaysAgo != null ? Math.max(0, 100 - r.postedDaysAgo) / 100 : 0);
+  // Overlay the tracker by canonical identity too, for the rows whose exact URL
+  // is gone. URL wins where both apply: it is the stronger match.
+  for (const r of rows) {
+    if (r.status !== "new" || !r.company || !r.role) continue;
+    const t = manualByCanon.get(canonKey(r.company, r.role));
+    if (!t) continue;
+    r.status = t.status;
+    if (t.appliedAt) r.appliedAt = t.appliedAt;
+  }
+
   const bestByCanon = new Map<string, PipelineRow>();
   const dedupedRows: PipelineRow[] = [];
   for (const r of rows) {
@@ -523,6 +570,35 @@ export async function loadPipeline(): Promise<PipelineData> {
       if (i >= 0) dedupedRows[i] = r;
       bestByCanon.set(key, r);
     }
+  }
+
+  // Anything VP applied to that has no row left at all gets one. A decision he
+  // made does not stop having happened because the requisition closed, and the
+  // Applied view is the one place that must never under-report.
+  //
+  // ⚠ Appended AFTER dedup, deliberately. Before it, a synthetic row (no score,
+  // no staged pack) loses rank() to any live row for the same role and would be
+  // discarded again - the same disappearance by a different route.
+  const represented = new Set<string>();
+  for (const r of dedupedRows) {
+    represented.add(r.url);
+    if (r.company && r.role) represented.add(canonKey(r.company, r.role));
+  }
+  for (const t of tracker) {
+    if (represented.has(t.url)) continue;
+    if (t.company && t.role && represented.has(canonKey(t.company, t.role))) continue;
+    if (!t.company && !t.role) continue;   // a bare URL is not renderable on its own
+    dedupedRows.push({
+      url: t.url,
+      company: t.company,
+      role: t.role,
+      locations: [],
+      status: t.status,
+      checked: true,
+      ...(t.appliedAt ? { appliedAt: t.appliedAt } : {}),
+    });
+    represented.add(t.url);
+    if (t.company && t.role) represented.add(canonKey(t.company, t.role));
   }
 
   const visibleRows = blacklist.size
