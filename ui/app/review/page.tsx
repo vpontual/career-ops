@@ -24,6 +24,11 @@ interface QueueItem {
   notes: string;
   decision: string | null;
   decidedAt: string | null;
+  // Written by enqueue-review.mjs's nightly re-gate. Absent on every card
+  // minted before 2026-09-02, which is why liveAgeDays() falls back.
+  postedAt?: string | null;
+  updatedAt?: string | null;
+  expiredWhy?: string;
   track?: string;
   glassdoor?: Glassdoor;
 }
@@ -89,14 +94,43 @@ async function hydrate(item: QueueItem): Promise<Loaded> {
 }
 
 // Tabs need short labels; the long description belongs under the tab bar, once.
-const TRACK_ORDER = ["pm", "now", "govtech", "nonprofit", "teaching", "venture"];
+// ⚠ EVERY track a card can carry must be listed here. `present` is filtered
+// through this array, so a track missing from it is counted in "N awaiting
+// you" and rendered nowhere — `civic` was absent from 2026-08-10, hiding 71
+// cards (26% of the queue), 45 of them the ones failing the ready gate.
+const TRACK_ORDER = ["pm", "now", "civic", "govtech", "nonprofit", "teaching", "venture"];
 const TRACK_LABEL: Record<string, string> = {
   pm: "PM / PMM",
+  civic: "City of NY",
   govtech: "Government",
   nonprofit: "Nonprofit",
   teaching: "Teaching",
   venture: "Venture",
 };
+
+/**
+ * The age to SHOW. `ageDays` was written once, when the card was minted, and
+ * nothing recomputed it: on 2026-09-02 the drift between the badge and reality
+ * was a median of 19 days, and the first five cards on this page were minted on
+ * 5–6 August wearing badges of 1d, 1d, 6d, 16d and 26d. The nightly now
+ * recomputes it, but this page is rendered per request and can be a day newer
+ * than the last run, so it derives the number from the employer's own timestamp
+ * whenever the card carries one.
+ *
+ * ⚠ Falls back to `ageDays`, never to 0. A card with no timestamp is old-format,
+ * not brand new, and showing it as fresh is the exact lie this replaces.
+ */
+function liveAgeDays(item: QueueItem): number {
+  const stamp = item.updatedAt || item.postedAt;
+  if (stamp) {
+    const t = Date.parse(stamp);
+    if (Number.isFinite(t)) {
+      const d = Math.floor((Date.now() - t) / 86400000);
+      if (d >= 0) return d;
+    }
+  }
+  return item.ageDays;
+}
 
 // ≤5d is the goal, ≤30d a stretch, >30d probably filled.
 function ageColor(days: number): string {
@@ -116,6 +150,10 @@ const DECISION_BADGE: Record<string, { label: string; color: string }> = {
   approved: { label: "APPROVED", color: "text-emerald-200 border-emerald-400/50 bg-emerald-500/20" },
   hold: { label: "ON HOLD", color: "text-amber-200 border-amber-400/50 bg-amber-500/20" },
   rejected: { label: "REJECTED", color: "text-rose-200 border-rose-400/50 bg-rose-500/20" },
+  // Not a judgement VP made — the window closed while it sat here. Deliberately
+  // the quietest badge on the page: it is bookkeeping, not a decision, and it
+  // is reversible with `clear` like any other.
+  expired: { label: "EXPIRED", color: "text-slate-400 border-slate-600 bg-slate-700/30" },
 };
 
 function Badge({ label, color, title }: { label: string; color: string; title?: string }) {
@@ -330,7 +368,15 @@ export default async function ReviewPage({
 
   const present = TRACK_ORDER.filter(t => visible(t).length);
   const active = present.includes(trackParam ?? "") ? (trackParam as string) : present[0] ?? "pm";
-  const shown = visible(active);
+  // ⚠ FRESHEST FIRST. The list used to render in `queue.items` order — insertion
+  // order — so a new card landed at the BOTTOM of a 177-card tab and the first
+  // thing VP saw every time was the oldest thing in the queue. He cleared it by
+  // hand once, rejected 57 of 61 on age, and had no reason to come back.
+  // Recency first, then tier, so the top of the page is what is actually worth
+  // his next ten minutes.
+  const shown = [...visible(active)].sort(
+    (a, b) => liveAgeDays(a) - liveAgeDays(b) || b.score - a.score
+  );
   const decidedCount = items.filter(i => i.decision).length;
   const pendingIn = (t: string) => (grouped[t] ?? []).filter(i => !i.decision).length;
   const totalPending = items.filter(i => !i.decision).length;
@@ -443,7 +489,7 @@ export default async function ReviewPage({
                 {item.score > 0 && (
                   <Badge label={`fit ${item.score}`} color="text-blue-200 border-blue-400/40 bg-blue-500/15" />
                 )}
-                {item.ageDays > 0 && <Badge label={`${item.ageDays}d`} color={ageColor(item.ageDays)} />}
+                {liveAgeDays(item) > 0 && <Badge label={`${liveAgeDays(item)}d`} color={ageColor(liveAgeDays(item))} />}
                 <Badge label={item.geo} color="text-sky-300 border-sky-400/30 bg-sky-400/10" />
                 <Badge label={cover.label} color={cover.color} />
                 {item.cvVariant && item.cvVariant !== "none yet" && (
