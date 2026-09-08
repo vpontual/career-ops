@@ -10,7 +10,8 @@
  */
 import { readFileSync } from 'fs';
 import {
-  stripOffTrackClaims, cleanNotesForTrack, isCategoryError, splitClaims, NOTE_SEGMENTS,
+  stripOffTrackClaims, cleanNotesForTrack, rebuildProseFromSource,
+  isCategoryError, splitClaims, NOTE_SEGMENTS,
 } from './lib/off-track-prose.mjs';
 
 const T = [];
@@ -64,11 +65,46 @@ for (const [track, keep] of [
   eq(`kept on ${track}: ${keep.slice(0, 44)}`, stripOffTrackClaims(track, keep), keep);
 }
 
-// A `no` far from the word `product` must not take the sentence with it.
-eq('two unrelated claims in one sentence are not a category error',
-  isCategoryError('No comp is stated, and the product surface is unclear'), false);
-eq('concept and mismatch in the same clause is one',
+// A `no` in a DIFFERENT clause must not take the concept with it. isCategoryError
+// judges one clause; stripOffTrackClaims splits on commas first, and that split
+// is what makes the guarantee hold at sentence level. Assert it where it lives.
+eq('a mismatch in another clause does not condemn this one',
+  stripOffTrackClaims('civic', 'No comp is stated, and the product surface is unclear.'),
+  'No comp is stated, and the product surface is unclear.');
+eq('concept and mismatch in the same clause is a category error',
   isCategoryError('this is not a product management role'), true);
+eq('the concept alone is not',
+  isCategoryError('The role owns the agency product roadmap'), false);
+eq('a mismatch alone is not',
+  isCategoryError('Requires SQL knowledge which the candidate cannot write'), false);
+
+// ── round two: the phrasings the first concept list missed ────────────────
+// Each observed on a real card. A third round means the design is wrong — see
+// the note above PM_CONCEPT.
+eq('"not Product/AI" is a category error',
+  stripOffTrackClaims('civic', 'Role is in Public Sector/Government, not Product/AI.'),
+  'Role is in Public Sector/Government.');
+eq('"not a product or marketing position" is one',
+  stripOffTrackClaims('civic', 'Role is Chief of Staff for a government commission, not a product or marketing position.'),
+  'Role is Chief of Staff for a government commission.');
+eq('"rather than product strategy" is one, and the geography flag beside it survives',
+  stripOffTrackClaims('civic', "Located in Albany, NY, which is outside the candidate's acceptable NYC metro commute range, and the position focuses on administrative compliance rather than product strategy."),
+  "Located in Albany, NY, which is outside the candidate's acceptable NYC metro commute range.");
+eq('"target archetypes of Product" is one',
+  stripOffTrackClaims('civic', "The role is a Senior Project Manager position at a government agency, which does not align with the candidate's target archetypes of Product."),
+  'The role is a Senior Project Manager position at a government agency.');
+eq('"No product surface" is one',
+  stripOffTrackClaims('civic', 'No product surface or technical ownership.'), '');
+
+// ⚠ and the real flags beside them are untouched.
+for (const keep of [
+  'Requires SQL knowledge which the candidate cannot write.',
+  "Location is outside the candidate's acceptable NYC metro commute range.",
+  'The role owns the agency product roadmap.',
+  'Compensation is not stated.',
+]) {
+  eq(`still kept: ${keep.slice(0, 40)}`, stripOffTrackClaims('civic', keep), keep);
+}
 
 // ── shape ─────────────────────────────────────────────────────────────────
 eq('the model\u2019s ".," list join is a claim boundary',
@@ -105,6 +141,47 @@ eq('prose that is ALL category error becomes empty',
   const notes = 'FINDING: something. || SCORER: Not a product role.';
   eq('a separator orphaned by an emptied segment goes too',
     cleanNotesForTrack('civic', notes), 'FINDING: something.');
+}
+
+// ── rebuilding from the score record ──────────────────────────────────────
+// ⚠ The reason this exists: cleaning derived text repeatedly bakes every defect
+// in the cleaner into the card permanently. An early version treated ", " before
+// a capital as a claim boundary and rewrote "archetypes of Product, Product
+// Marketing, or AI roles" as "...of Product. Product Marketing, or AI roles".
+// Nothing in the card could recover the original; the score record could.
+{
+  const damaged = "SCORER: The role is a PM position at an agency. Product Marketing, or AI roles. RED FLAGS: Role is Project Management. ON ME: research not yet done.";
+  const source = {
+    verdict: "The role is a Senior Project Manager position at a government agency, which does not align with the candidate's target archetypes of Product, Product Marketing, or AI roles",
+    redFlags: 'Role is Project Management.',
+  };
+  const out = rebuildProseFromSource('civic', damaged, source);
+  eq('the orphaned fragment is gone', /Product Marketing, or AI roles/.test(out), false);
+  eq('the verdict is re-derived from the record',
+    out.includes('SCORER: The role is a Senior Project Manager position at a government agency.'), true);
+  eq('the untouched segments survive', out.includes('ON ME: research not yet done.'), true);
+  eq('rebuilding twice is stable', rebuildProseFromSource('civic', out, source), out);
+}
+{
+  // A list comma inside a surviving clause must not become a full stop. This is
+  // the exact string the first version damaged.
+  eq('City, STATE and list commas survive',
+    stripOffTrackClaims('civic', "Located in Albany, NY, and the team owns Product, Data, and Design."),
+    "Located in Albany, NY, and the team owns Product, Data, and Design.");
+}
+{
+  // A pm card is re-derived too — rebuild is about the SOURCE, not the strip —
+  // but nothing is stripped from it.
+  const notes = 'SCORER: old text. RED FLAGS: stale. ON ME: x.';
+  const out = rebuildProseFromSource('pm', notes, { verdict: 'Not a product role', redFlags: 'Not product.' });
+  eq('pm keeps its category error after a rebuild',
+    out.includes('SCORER: Not a product role.') && out.includes('RED FLAGS: Not product.'), true);
+}
+{
+  // No record, or an empty one, removes the segments rather than leaving the
+  // card's stale text behind pretending to be current.
+  const out = rebuildProseFromSource('civic', 'SCORER: old. RED FLAGS: old. ON ME: x.', {});
+  eq('an empty record clears the prose segments', out, 'ON ME: x.');
 }
 
 // ── the coupling that will rot ────────────────────────────────────────────
