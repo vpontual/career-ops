@@ -41,6 +41,30 @@
  *   ✏️  a DRAFT, written by a model from cv.md — he edits it, never pastes it
  *   ⚠  blank by design — factual, and only he can answer it
  *
+ * ── AND a dated finding when the form CANNOT be read (added 2026-09-02) ─────
+ *
+ * batch/ready-check.py failed the nightly for at least ten nights running, every
+ * failure `no answers.md`, 46 cards — 45 of them cityjobs.nyc.gov. NYC Jobs
+ * requires an account before the application form exists, so the rendered page
+ * exposes nothing but site chrome (one "Keyword" search box), the noise filter
+ * drops it, and this script printed `SKIP … form not enumerable` and wrote
+ * NOTHING. No pack change can ever produce a field list for that board, so the
+ * gate was reporting a structural fact about the employer's site as a pack
+ * defect, every night, forever. "A gate that cries wolf is a gate VP disables."
+ *
+ * The OLAS login wall was already handled correctly: a dated `loginWall` finding
+ * in answers.md, which ready-check accepts as evidence. Two things now reuse
+ * that exact shape (renderWallFinding / writeUnreadableForm):
+ *   - a board KNOWN to sit behind an account (KNOWN_ACCOUNT_WALLS) is recorded
+ *     as a wall directly, without spending a browser session discovering it;
+ *   - a read that COMPLETED and found no application fields records that, naming
+ *     the host and what was observed, so VP knows to fill it live.
+ * ⚠ A read that FAILED (browser would not launch, nav timeout, every reader
+ * threw) still writes nothing and still fails the gate. That is a pipeline
+ * defect, not a fact about the form, and it must stay loud.
+ * ⚠ Neither path drafts anything. The deny list / draft ordering below is never
+ * reached, because there are no fields to classify.
+ *
  * Usage: node generate-answers.mjs [--slug X] [--limit N] [--no-browser] [--dry-run]
  *                                  [--refresh] [--no-draft] [--draft-limit N]
  *   --refresh      rewrite packs that already have an answers.md (see canRewrite)
@@ -550,6 +574,36 @@ function looksLikeLoginWall(fields) {
   return hasPassword && hasUser && fields.length <= 10;
 }
 
+// Boards KNOWN to put the whole application behind an account, keyed by
+// hostname. This is a fact about the board, recorded once — not an inference
+// from an empty read, which the comment above rightly refuses to make. A host
+// goes on this list only when the wall has been seen by a person and no reader
+// this script has can get past it; the value is the sentence VP reads.
+//
+// ⚠ cityjobs.nyc.gov is NOT detectable by looksLikeLoginWall: the job page shows
+// no login form at all, only a "Keyword" search box, and the account step lives
+// on a separate sign-in host. Every one of 45 civic cards therefore fell through
+// to "form not enumerable" with no answers.md (2026-08-23 → 2026-09-02).
+// ⚠ OLAS is deliberately NOT here — its wall IS observed (username/password/
+// recaptcha on the page), and observing it is the stronger claim.
+const KNOWN_ACCOUNT_WALLS = {
+  'cityjobs.nyc.gov': 'requires a NYC Jobs account before the application form exists, '
+    + 'so it must be filled live after signing in',
+};
+
+function knownAccountWall(url) {
+  try {
+    const u = new URL(url);
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+    const host = u.hostname.toLowerCase();
+    return KNOWN_ACCOUNT_WALLS[host] ? { host, why: KNOWN_ACCOUNT_WALLS[host] } : null;
+  } catch { return null; }
+}
+
+function hostOf(url) {
+  try { return new URL(url).hostname.toLowerCase(); } catch { return 'this board'; }
+}
+
 async function readRendered(url) {
   const { chromium } = await import('playwright');
   const browser = await chromium.launch({ args: ['--no-sandbox'] });
@@ -659,14 +713,50 @@ async function readRendered(url) {
 // It records `how` and the date, because "we read this form" and "we could not
 // read this form" must stay distinguishable later, and an undated claim about a
 // form is not checkable.
-async function writeFormFields(slug, { loginWall, how, fields }) {
+async function writeFormFields(slug, { loginWall, how, fields, reason }) {
   await writeFile(path.join(OUT, slug, 'form-fields.json'), JSON.stringify({
     inspectedOn: today(),
     how: how || null,
     loginWall: !!loginWall,
+    // Why there is no field list, when there is none. Optional so every existing
+    // reader (lib/cover-letter-requirement.mjs) sees the shape it already knows.
+    ...(reason ? { reason } : {}),
     fields: (fields || []).map((f) => ({
       label: f.label, required: f.required === true, type: f.type || null,
     })),
+  }, null, 2));
+}
+
+// ── An unreadable form is a FINDING, not a missing file ───────────────────
+// One renderer for every "there is no field list to write" outcome, so the
+// three cases (a wall observed on the page, a wall known for the board, a read
+// that completed and found nothing) cannot drift apart in shape again. The shape
+// matters downstream:
+//   - batch/ready-check.py accepts `Form inspected: <date>` as the evidence, and
+//     ⚠ it is only honest when the date is when the finding was MADE — never
+//     re-stamp it from a cache (see the --refresh note in main()).
+//   - lib/cover-letter-requirement.mjs's parseAnswersMd() reads the literal
+//     phrase "behind an account wall" as loginWall for packs that predate
+//     form-fields.json. A wall finding must keep that phrase.
+//   - canRewrite() needs the generator footer or answers-meta.json to know the
+//     file is ours; the original OLAS branch wrote neither, so a wall finding
+//     could never be --refresh'd. Both are written now.
+function renderWallFinding(card, url, { reason, note, inspectedOn = today() }) {
+  return `# ${card.company} — ${card.role}\n\n**Apply:** ${url}\n**ATS:** ${card.ats || 'unknown'} · ` +
+    `**Form inspected: ${inspectedOn}** — ${reason}.\n\n` +
+    `> ⚠ ${note}\n\n` +
+    `_Generated by generate-answers.mjs — no field list could be read for this pack; ` +
+    `nothing above is an answer._\n`;
+}
+
+async function writeUnreadableForm(card, url, { loginWall, how, reason, note }) {
+  const dir = path.join(OUT, card.slug);
+  const md = renderWallFinding(card, url, { reason, note });
+  await mkdir(dir, { recursive: true });
+  await writeFormFields(card.slug, { loginWall, how, fields: [], reason });
+  await writeFile(path.join(dir, 'answers.md'), md);
+  await writeFile(path.join(dir, 'answers-meta.json'), JSON.stringify({
+    writtenOn: today(), sha256: sha(md),
   }, null, 2));
 }
 
@@ -967,10 +1057,29 @@ const main = async () => {
   }
   console.log('');
 
-  let ok = 0, failed = 0, drafted = 0;
+  let ok = 0, failed = 0, drafted = 0, unreadable = 0;
   for (const [i, c] of work.entries()) {
     const url = c.applyUrl || c.sourceUrl;
     let fields = null, how = null, inspectedOn = today(), fromCache = false;
+
+    // A board we KNOW hides its form behind an account: record the wall and move
+    // on. No browser session — there is nothing on the page to enumerate, and
+    // 45 of these a night was ~30 minutes of the nightly spent confirming it.
+    const known = knownAccountWall(url);
+    if (known) {
+      if (!DRY) {
+        await writeUnreadableForm(c, url, {
+          loginWall: true, how: null,
+          reason: `the application is behind an account wall — ${known.host} ${known.why}`,
+          note: `**VP must sign in to ${known.host} to reach this form.** Recorded from the ` +
+            `board's known behaviour rather than a browser read: no field list exists before the ` +
+            `account step, and no pack change can produce one.`,
+        });
+      }
+      unreadable++;
+      console.log(`[${i}] ${c.slug} — ${known.host} is a known account wall, recorded as such`);
+      continue;
+    }
     // On --refresh, a form we already enumerated is re-used rather than re-read.
     // A browser session per pack is the expensive part of this script, and the
     // point of a refresh is usually the MATCHER, not the form. The recorded
@@ -1017,30 +1126,67 @@ const main = async () => {
       }
     }
     if (fields && looksLikeLoginWall(fields)) {
-      // Record the finding rather than a fabricated field list.
+      // Record the finding rather than a fabricated field list. The wording is
+      // load-bearing — see renderWallFinding.
       if (!DRY) {
-        await mkdir(path.join(OUT, c.slug), { recursive: true });
-        await writeFormFields(c.slug, { loginWall: true, how: null, fields: [] });
-        await writeFile(path.join(OUT, c.slug, 'answers.md'),
-          `# ${c.company} — ${c.role}\n\n**Apply:** ${url}\n**ATS:** ${c.ats || 'unknown'} · ` +
-          `**Form inspected: ${today()}** — the application is behind an account wall, so the ` +
-          `field list cannot be read without registering.\n\n` +
-          `> ⚠ **VP must create an account on this board before the form can be filled.** ` +
-          `Recording that as the finding rather than guessing at fields; the login page's own ` +
-          `inputs (username, password, captcha) are not the application.\n`);
+        await writeUnreadableForm(c, url, {
+          loginWall: true, how: null,
+          reason: 'the application is behind an account wall, so the field list cannot be read ' +
+            'without registering',
+          note: '**VP must create an account on this board before the form can be filled.** ' +
+            'Recording that as the finding rather than guessing at fields; the login page\'s own ' +
+            'inputs (username, password, captcha) are not the application.',
+        });
       }
-      ok++;
+      unreadable++;
       console.log(`[${i}] ${c.slug} — behind a login wall, recorded as such`);
       continue;
     }
+    let dropped = 0;
     if (fields) {
       const before = fields.length;
       fields = fields.filter((f) => !isNoise(f.label));
-      if (before !== fields.length) console.log(`      dropped ${before - fields.length} non-question field(s)`);
+      dropped = before - fields.length;
+      if (dropped) console.log(`      dropped ${dropped} non-question field(s)`);
     }
     if (!fields || !fields.length) {
+      // Two different facts share this branch and must not share an outcome.
+      //   fields === null  → every reader THREW (no browser, nav timeout, launch
+      //                      failure). Nothing was observed. Say nothing, stay
+      //                      loud, let the gate fail — the pipeline is broken.
+      //   fields === []    → a read COMPLETED and the page held no application
+      //                      field (or only site chrome). That is an observation
+      //                      about the board, dated, with the host named. VP has
+      //                      to fill it live and the card should say so.
+      if (Array.isArray(fields) && how) {
+        const host = hostOf(url);
+        if (!DRY) {
+          await writeUnreadableForm(c, url, {
+            loginWall: false, how,
+            reason: `the form could not be enumerated — the page at ${host}, read via ${how}, ` +
+              `exposed no application field` +
+              (dropped ? ` (${dropped} input${dropped === 1 ? '' : 's'} found, all site chrome)` : '') +
+              `, so it must be filled live on the board`,
+            // ⚠ This is an OBSERVATION, not a claim about the board. Say exactly
+            // that: the read completed, no application field was on the page. A
+            // bot-block page or a form behind a button we do not click looks the
+            // same from here, and the wording must not let either read as "this
+            // board has a wall" — a wall finding names the wall.
+            note: `**Fill this one live on ${host}.** What was observed: a read of the page ` +
+              `completed on ${today()} and no application field was on it. That is NOT a ` +
+              `claim that the board hides its form behind an account — no wall was seen — ` +
+              `only that this pipeline found nothing to enumerate, and records that rather ` +
+              `than an invented field list. If the form lives at another URL or behind a ` +
+              `button, teach the reader that path and \`--refresh --slug ${c.slug}\` will ` +
+              `replace this finding.`,
+          });
+        }
+        unreadable++;
+        console.log(`[${i}] ${c.slug} — ${host} exposed no application field, recorded as such`);
+        continue;
+      }
       failed++;
-      console.log(`[${i}] SKIP ${c.slug} — form not enumerable`);
+      console.log(`[${i}] SKIP ${c.slug} — form not enumerable (no reader completed; nothing recorded)`);
       continue;
     }
 
@@ -1096,7 +1242,8 @@ const main = async () => {
     console.log(`[${i}] ${c.slug} — ${fields.length} fields, ${drafts_} draft(s), ${blanks} blank(s) [${how}${fromCache ? ', cached' : ''}]`);
   }
 
-  console.log(`\nwrote ${ok}, could not enumerate ${failed}, packs drafted ${drafted}${DRY ? ' (dry run, nothing saved)' : ''}`);
+  console.log(`\nwrote ${ok}, recorded ${unreadable} unreadable form(s) as findings, ` +
+    `could not enumerate ${failed}, packs drafted ${drafted}${DRY ? ' (dry run, nothing saved)' : ''}`);
 };
 
 // Import-safe: running the nightly form-filler must be an explicit invocation, not
@@ -1112,6 +1259,8 @@ export {
   loadDefaults, tokenize, canonMatch, bestMatch, renderAnswers, decide, CANON,
   addressParts, composeAddress, mentionsForeignCountry, canRewrite,
   applyStepUrl, looksLikeLoginWall,
+  // test-wall-finding.mjs — the unreadable-form finding and the known-wall list.
+  KNOWN_ACCOUNT_WALLS, knownAccountWall, renderWallFinding,
 };
 // Re-exported unchanged from lib/answer-classify.mjs so existing importers (and
 // test-answers-matcher.mjs) keep working after the move.
