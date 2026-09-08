@@ -1,4 +1,5 @@
-import { PipelineRow } from "@/lib/pipeline";
+import { PipelineRow, effectiveDays } from "@/lib/pipeline";
+import { FreshnessWindows, isAgedOut } from "@/lib/freshness-windows";
 
 /**
  * What each view MEANS, in one place.
@@ -19,3 +20,23 @@ export const VIEW_MATCH: Record<string, (r: PipelineRow) => boolean> = {
   all: () => true,
   applied: r => r.status === "applied",
 };
+
+/**
+ * Whether a row is on screen for a view, INCLUDING the age-out.
+ *
+ * ⚠ THE ONE PLACE THAT DECIDES. VIEW_MATCH was already shared because a count
+ * passed as a prop is how five pages drifted; adding the age filter in
+ * app/page.tsx alone put the drift straight back, with the nav advertising 811
+ * shortlist roles over a page showing 430. Both now call this.
+ */
+export function isVisible(
+  id: string,
+  r: PipelineRow,
+  windows: FreshnessWindows | null,
+  showStale: boolean
+): boolean {
+  const match = VIEW_MATCH[id];
+  if (!match || !match(r)) return false;
+  if (showStale) return true;
+  return !isAgedOut(windows, r, effectiveDays(r));
+}

@@ -21,6 +21,31 @@ interface QueueItem {
   notes: string;
   decision: string | null;
   track?: string;
+  // Written by enqueue-review's nightly re-gate. Absent on cards minted before
+  // 2026-09-02, which is why liveAge() falls back.
+  postedAt?: string | null;
+  updatedAt?: string | null;
+  enqueuedAt?: string;
+}
+
+/**
+ * The age to sort on. `ageDays` is frozen at mint time and nothing recomputes
+ * it, so on 2026-09-02 the median drift on the review page was 19 days. Same
+ * rule as ui/app/review/page.tsx's liveAgeDays.
+ *
+ * ⚠ Falls back to `ageDays`, never to 0. A card with no timestamp is
+ * old-format, not brand new.
+ */
+function liveAge(i: QueueItem): number {
+  const stamp = i.updatedAt || i.postedAt;
+  if (stamp) {
+    const t = Date.parse(stamp);
+    if (Number.isFinite(t)) {
+      const d = Math.floor((Date.now() - t) / 86400000);
+      if (d >= 0) return d;
+    }
+  }
+  return i.ageDays ?? 999;
 }
 
 async function loadRoles(): Promise<QueueItem[]> {
@@ -28,7 +53,11 @@ async function loadRoles(): Promise<QueueItem[]> {
     const raw = JSON.parse(await readFile(QUEUE_PATH, "utf-8"));
     return (raw.items as QueueItem[])
       .filter(i => i.track === "now" && !i.decision)
-      .sort((a, b) => b.score - a.score || (a.ageDays ?? 999) - (b.ageDays ?? 999));
+      // Newest first, score as the tie-break — the same order as every other
+      // list (VP, 2026-09-08). This sorted by score first, so the freshest
+      // engagement on a track whose entire point is TIME TO INCOME could sit
+      // below a two-week-old one.
+      .sort((a, b) => liveAge(a) - liveAge(b) || b.score - a.score);
   } catch {
     return [];
   }

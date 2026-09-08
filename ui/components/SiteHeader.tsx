@@ -38,7 +38,7 @@ export default async function SiteHeader({
 }: {
   active: SiteNavId;
   q?: string;
-  params?: { sort?: string; q?: string; fresh?: boolean };
+  params?: { sort?: string; q?: string; fresh?: boolean; stale?: boolean };
   children?: React.ReactNode;
 }) {
   const scanned = await lastScan();

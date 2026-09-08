@@ -3,6 +3,7 @@ import { cache } from "react";
 import { readFile } from "fs/promises";
 import path from "path";
 import { loadPipeline, PipelineRow } from "@/lib/pipeline";
+import { loadFreshnessWindows } from "@/lib/freshness-windows";
 
 /**
  * The cross-page navigation, in ONE place, INCLUDING ITS NUMBERS.
@@ -28,7 +29,7 @@ export type SiteNavId = "today" | "review" | "shortlist" | "staged" | "ranked" |
  * The view predicates, shared with page.tsx (ui/lib/views.ts) so the count in
  * the tab and the rows in the table can never disagree about what a view is.
  */
-import { VIEW_MATCH } from "@/lib/views";
+import { VIEW_MATCH, isVisible } from "@/lib/views";
 
 export const SITE_NAV: { id: SiteNavId; label: string; href: string; accent?: "blue" | "emerald" }[] = [
   // Today first. The review queue is complete and correct and it is not where
@@ -79,7 +80,14 @@ const slateCount = cache(async (): Promise<number | undefined> => {
   }
 });
 
-const navCounts = cache(async (): Promise<Partial<Record<SiteNavId, number>>> => {
+/**
+ * ⚠ The badge must count what CLICKING it shows, age-out included. It counted
+ * VIEW_MATCH alone while the page also hid roles past their window, so the nav
+ * advertised 811 shortlist roles over a page rendering 430 — the same "a count
+ * disagreeing with its own list" defect the tab badges on /review already had.
+ * `showStale` is threaded through so the two agree in both modes.
+ */
+const navCounts = cache(async (showStale: boolean): Promise<Partial<Record<SiteNavId, number>>> => {
   const out: Partial<Record<SiteNavId, number>> = {};
   out.today = await slateCount();
   out.review = await pendingReviewCount();
@@ -87,9 +95,9 @@ const navCounts = cache(async (): Promise<Partial<Record<SiteNavId, number>>> =>
   try {
     const data = await loadPipeline();
     const rows: PipelineRow[] = data.rows;
+    const windows = await loadFreshnessWindows();
     for (const id of ["shortlist", "staged", "ranked", "all", "applied"] as const) {
-      const m = VIEW_MATCH[id];
-      if (m) out[id] = rows.filter(m).length;
+      out[id] = rows.filter(r => isVisible(id, r, windows, showStale)).length;
     }
   } catch {
     // A nav that cannot count is still a nav. Render the labels.
@@ -106,15 +114,16 @@ export default async function SiteNav({
    * The home page's sort/search/fresh state. Its tabs are views OF one page, so
    * switching tab must not silently drop the filter you had applied.
    */
-  params?: { sort?: string; q?: string; fresh?: boolean };
+  params?: { sort?: string; q?: string; fresh?: boolean; stale?: boolean };
 }) {
-  const counts = await navCounts();
+  const counts = await navCounts(Boolean(params?.stale));
   const withParams = (href: string) => {
     if (!params || !href.startsWith("/?")) return href;
     const u = new URLSearchParams(href.slice(2));
     if (params.sort) u.set("sort", params.sort);
     if (params.q) u.set("q", params.q);
     if (params.fresh) u.set("fresh", "1");
+    if (params.stale) u.set("stale", "1");
     return `/?${u.toString()}`;
   };
   return (

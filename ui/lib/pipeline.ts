@@ -396,6 +396,27 @@ async function findReportForUrl(url: string): Promise<{
   return null;
 }
 
+/**
+ * The age a role is judged and sorted on: the more recent of posted/updated.
+ *
+ * ⚠ 9999 when the row carries NEITHER, and that number is load-bearing — it
+ * means "we never looked", not "ancient". 8 rows were in that state on
+ * 2026-09-08 because their JD was never fetched, and the age-out in
+ * lib/freshness-windows.ts refuses to hide them for a reason that is about our
+ * scraper rather than about the posting. It sorts them last and keeps them.
+ *
+ * Lived in app/page.tsx until the nav had to agree with the page about which
+ * rows are visible; a second copy is how the two disagree.
+ */
+export function effectiveDays(r: Pick<PipelineRow, "postedDaysAgo" | "updatedDaysAgo">): number {
+  const p = r.postedDaysAgo;
+  const u = r.updatedDaysAgo;
+  if (p == null && u == null) return 9999;
+  if (p == null) return u!;
+  if (u == null) return p;
+  return Math.min(p, u);
+}
+
 export async function loadPipeline(): Promise<PipelineData> {
   const pipelinePath = path.join(DATA_ROOT, "data", "pipeline.md");
   const appsPath = path.join(DATA_ROOT, "data", "applications.md");

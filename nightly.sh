@@ -151,6 +151,11 @@ run_step research   /usr/bin/node research-roles.mjs
 # diligence, and BEFORE the gates so a broken slate fails the run rather than
 # reaching him. Pure policy lives in lib/slate.mjs; VP's shape of the day is
 # config/slate.yml, read live.
+# Project the freshness windows into data/freshness-windows.json for the UI.
+# The Next app is built from `COPY ui/ ./`, so it cannot import lib/freshness.mjs
+# and would otherwise need a second copy of the windows in TypeScript. Runs
+# before slate so a policy change and the page agree on the same day.
+run_step freshness  /usr/bin/node export-freshness.mjs
 run_step slate      /usr/bin/node build-slate.mjs
 
 # ── gates: is what VP will see actually fit to look at? ────────────────────

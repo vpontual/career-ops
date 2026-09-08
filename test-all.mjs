@@ -886,6 +886,19 @@ if (!fileExists('test-track-detect.mjs')) {
 // positive deletes a REAL warning off a card VP is about to act on — so the
 // suite asserts the negative properties: a pm card is byte-identical, and a
 // claim that is not a category error is never dropped on any track.
+// The UI cannot import lib/freshness.mjs (Dockerfile.ui builds from `COPY ui/`),
+// so it reads a projection and restates ONE rule: the resolution order. If that
+// order drifts from maxAgeDaysFor's, the home page hides roles on a window VP
+// never set — silently, which is the failure this area keeps producing.
+console.log('\n21r. Freshness window export');
+if (!fileExists('test-freshness-export.mjs')) {
+  fail('test-freshness-export.mjs missing — the UI age-out has no specification');
+} else {
+  const out = run('node', ['test-freshness-export.mjs']);
+  if (out === null) fail('freshness export tests failing — run: node test-freshness-export.mjs');
+  else pass(`freshness export ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
+}
+
 console.log('\n21q. Off-track scorer prose');
 if (!fileExists('test-off-track-prose.mjs')) {
   fail('test-off-track-prose.mjs missing — the card-notes filter has no specification');

@@ -1,4 +1,5 @@
-import { loadPipeline, PipelineRow } from "@/lib/pipeline";
+import { loadPipeline, PipelineRow, effectiveDays } from "@/lib/pipeline";
+import { loadFreshnessWindows, isAgedOut } from "@/lib/freshness-windows";
 import StatusControl from "@/components/StatusControl";
 import SearchFilter from "@/components/SearchFilter";
 import Link from "next/link";
@@ -102,14 +103,7 @@ function encodeRoleSlug(url: string): string {
   return Buffer.from(url, "utf-8").toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-function effectiveDays(r: PipelineRow): number {
-  const p = r.postedDaysAgo;
-  const u = r.updatedDaysAgo;
-  if (p == null && u == null) return 9999;
-  if (p == null) return u!;
-  if (u == null) return p;
-  return Math.min(p, u);
-}
+
 
 function daysApplied(r: PipelineRow): number {
   if (!r.appliedAt) return 0;
@@ -313,7 +307,7 @@ function TabLink({
   );
 }
 
-export default async function Home({ searchParams }: { searchParams: Promise<{ tab?: string; sort?: string; q?: string; fresh?: string }> }) {
+export default async function Home({ searchParams }: { searchParams: Promise<{ tab?: string; sort?: string; q?: string; fresh?: string; stale?: string }> }) {
   const data = await loadPipeline();
   const pendingReview = await pendingReviewCount();
   const sp = await searchParams;
@@ -326,24 +320,54 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
   // why: the queue answers "what exists", which is not the question he opens
   // this with.
   if (!sp.tab) redirect("/today");
-  const { tab = "shortlist", sort: sortParam, q: rawQ, fresh: freshParam } = sp;
+  const { tab = "shortlist", sort: sortParam, q: rawQ, fresh: freshParam, stale: staleParam } = sp;
+  const showStale = staleParam === "1";
   const q = (rawQ ?? "").trim().toLowerCase();
   const fresh = freshParam === "1";
 
   const activeView = ALL_VIEWS.find(t => t.id === tab) ?? CORE_VIEWS[0];
+  const windows = await loadFreshnessWindows();
 
-  const count = (v: View) => data.rows.filter(v.match).length;
+  // Counted the way the page will render them — age-out included — so the
+  // summary line cannot disagree with the list beneath it.
+  const count = (v: View) => data.rows.filter(r => v.match(r) && !isAgedOut(windows, r, effectiveDays(r))).length;
   const visibleStatusViews = STATUS_VIEWS.filter(v => count(v) > 0);
 
   let filtered = data.rows.filter(activeView.match);
+
+  // ── age-out ───────────────────────────────────────────────────────────
+  // A role past the window the pipeline itself uses to decide what is worth
+  // carding is not worth showing either. 628 of 1,686 rows sat in the 31-45d
+  // band on 2026-09-08 — 37% of the board, most of it already unwinnable — and
+  // they were the first thing on the page under a score sort.
+  //
+  // ⚠ THE WINDOW IS THE MEASURED ONE, PER TRACK, not a round number invented
+  // here: civic 60, teaching 150, nonprofit 35, everything else 21, with whale
+  // and evergreen employers resolved on the .mjs side. A second definition of
+  // "too old" living in the UI is exactly the drift this repo keeps paying for.
+  //
+  // ⚠ HIDDEN, NEVER DROPPED, and the count is always shown with a link. A role
+  // that vanishes with no trace is indistinguishable from a scraper that missed
+  // it, which is the failure mode this whole area keeps producing.
+  const agedOut = filtered.filter(r => isAgedOut(windows, r, effectiveDays(r)));
+  if (!showStale) filtered = filtered.filter(r => !isAgedOut(windows, r, effectiveDays(r)));
+
   if (fresh) filtered = filtered.filter(r => effectiveDays(r) <= 30);
   if (q) filtered = filtered.filter(r => `${r.company} ${r.role}`.toLowerCase().includes(q));
 
+  // ⚠ NEWEST FIRST EVERYWHERE, not just on "All roles" (VP, 2026-09-08). The
+  // default was "Best fit" on every other view, which sorts by score and puts
+  // the freshest thing on the board below a two-week-old 5. Being late is the
+  // one cost this pipeline cannot buy back — the survival curve in
+  // lib/freshness.mjs is the whole reason the freshness gate exists — so
+  // recency leads and score is the tie-break. "Best fit" is still one click
+  // away and is remembered in the URL.
   const effectiveSort = sortParam && SORTS.some(s => s.id === sortParam)
     ? sortParam
-    : (activeView.id === "all" ? "days" : "score");
+    : "days";
   const sorted = applySort(filtered, effectiveSort);
 
+  const liveCount = count(ALL_VIEWS.find(v => v.id === "all")!);
   const shortlistCount = count(CORE_VIEWS[0]);
   const stagedCount = count(CORE_VIEWS[1]);
 
@@ -352,7 +376,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
       {/* ambient glow */}
       <div className="pointer-events-none fixed inset-x-0 top-0 h-64 bg-gradient-to-b from-indigo-500/10 to-transparent" />
 
-      <SiteHeader active={activeView.id as SiteNavId} q={q} params={{ sort: sortParam, q, fresh }}>
+      <SiteHeader active={activeView.id as SiteNavId} q={q} params={{ sort: sortParam, q, fresh, stale: showStale }}>
             <div className="flex items-center gap-2">
               <FreshToggle active={fresh} tab={activeView.id} sortParam={sortParam} q={q} />
               <div className="flex items-center rounded-lg bg-slate-900/60 p-0.5 ring-1 ring-inset ring-slate-800">
@@ -384,9 +408,26 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
             <span className="font-semibold text-slate-200">{sorted.length}</span> {activeView.label.toLowerCase()}
             {fresh && <span className="text-slate-500"> · fresh only</span>}
             {q && <span className="text-slate-500"> · matching “{q}”</span>}
+            {agedOut.length > 0 && (
+              <span className="text-slate-500">
+                {" · "}
+                <StaleLink
+                  count={agedOut.length}
+                  showing={showStale}
+                  tab={activeView.id}
+                  sortParam={sortParam}
+                  q={q}
+                  fresh={fresh}
+                />
+              </span>
+            )}
           </p>
           <p className="hidden text-xs text-slate-500 sm:block">
-            {shortlistCount} worth applying to · {stagedCount} ready · {data.totalCount} tracked
+            {/* All three on the same basis. This read data.totalCount — every row
+                ever tracked — beside two age-filtered numbers, so the line said
+                "430 worth applying to ... 1686 tracked" and invited the reader
+                to compute a ratio out of two different populations. */}
+            {shortlistCount} worth applying to · {stagedCount} ready · {liveCount} live
           </p>
         </div>
 
@@ -431,6 +472,32 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
         </footer>
       </div>
     </main>
+  );
+}
+
+/**
+ * The escape hatch for age-out. Always rendered when anything is hidden.
+ *
+ * ⚠ The count is the point. "1,058 roles" with no note that 628 more exist is a
+ * silent filter, and a silent filter is indistinguishable from a scraper that
+ * missed them.
+ */
+function StaleLink(
+  { count, showing, tab, sortParam, q, fresh }:
+  { count: number; showing: boolean; tab: string; sortParam?: string; q: string; fresh: boolean }
+) {
+  const params = new URLSearchParams();
+  params.set("tab", tab);
+  if (sortParam) params.set("sort", sortParam);
+  if (q) params.set("q", q);
+  if (fresh) params.set("fresh", "1");
+  if (!showing) params.set("stale", "1");
+  return (
+    <Link href={`?${params.toString()}`} className="underline decoration-dotted underline-offset-2 hover:text-slate-300">
+      {showing
+        ? `hide ${count} past their window`
+        : `${count} more past their window`}
+    </Link>
   );
 }
 
