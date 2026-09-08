@@ -37,9 +37,21 @@ import { classifyLivenessFromFetch, htmlToText } from './liveness-core.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 
-// The one sentence renderWallFinding() puts at the foot of every finding. Only
-// used for packs written before answers-meta.enumerated existed.
-const FINDING_MARKER = /no field list could be read for this pack/;
+// What a finding says, for packs written before answers-meta.enumerated existed.
+//
+// ⚠ FOUR ALTERNATIVES, NOT ONE, AND THAT IS NOT BELT-AND-BRACES. The footer
+// sentence was added mid-August; 21 findings predate it - every Citi Workday
+// req, all reading "behind an account wall" with no footer at all - and a
+// marker that only knew the footer counted all 21 as ANSWERED, which is the
+// exact bug this fallback exists to avoid. The other three are the `reason`
+// strings generate-answers renders into the "Form inspected:" line, one per
+// branch. test-slate.mjs asserts each is still emitted there.
+const FINDING_MARKER = new RegExp([
+  'no field list could be read for this pack',   // the footer (2026-08-17 on)
+  'behind an account wall',                       // a wall seen, or known for the board
+  'exposed no application field',                 // a read that completed and found none
+  'the application form could not be read',       // the default reason
+].join('|'));
 const argv = process.argv.slice(2);
 const DRY = argv.includes('--dry-run');
 const dateArg = (() => { const i = argv.indexOf('--date'); return i >= 0 ? argv[i + 1] : null; })();

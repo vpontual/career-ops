@@ -160,11 +160,20 @@ eq('readiness: an unchecked pack is not an unreadable one',
 // string is pinned here rather than left to a comment.
 {
   const src = readFileSync(new URL('./generate-answers.mjs', import.meta.url), 'utf-8');
-  eq('the finding sentence build-slate falls back on still exists',
-    src.includes('no field list could be read for this pack'), true);
   const bs = readFileSync(new URL('./build-slate.mjs', import.meta.url), 'utf-8');
-  eq('build-slate still carries that fallback marker',
-    bs.includes('no field list could be read for this pack'), true);
+  // Every sentence a finding can carry must be one build-slate recognises.
+  // 21 findings predate the footer - the Citi Workday reqs, "behind an account
+  // wall" with no footer - and a marker that knew only the footer read all 21
+  // as answered.
+  for (const phrase of [
+    'no field list could be read for this pack',
+    'behind an account wall',
+    'exposed no application field',
+    'the application form could not be read',
+  ]) {
+    eq(`generate-answers still emits: ${phrase}`, src.includes(phrase), true);
+    eq(`build-slate still recognises: ${phrase}`, bs.includes(phrase), true);
+  }
   eq('build-slate prefers the written flag over the prose',
     bs.includes("typeof meta.enumerated === 'boolean'"), true);
 }
