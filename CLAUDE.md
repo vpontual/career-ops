@@ -24,9 +24,11 @@
 >
 > ```
 > discovery   scan · scan-teach · scan-np · scan-now · gmail · resolve
->             fetch-jds · prune · indeed · amazon · olas · resolve-apply
+>             fetch-jds · prune · indeed · amazon · olas · civic · doe
+>             civilsvc · resolve-apply · resolve-search
 > scoring     lifespan · rank-leads · recompute
 > packaging   stage · enqueue · answers · research
+> the day     freshness · slate
 > GATES       cv-links · ready · pack-match · tests
 > closing     nightly-report
 > ```
@@ -45,9 +47,89 @@
 > **Tests.** `node test-all.mjs` is the entry point and wraps the rest:
 > `test-answers-matcher` · `test-screen-evidence` · `test-normalizers` ·
 > `test-slug-identity` · `test-fact-check` · `test-jd-findings` ·
-> `test-gmail-leads` · `test-liveness-verdict` · `test-recency` · `test-track`.
-> 133 assertions, all green as of 2026-08-07. **A property is asserted in a test
+> `test-gmail-leads` · `test-liveness-verdict` · `test-recency` · `test-track` ·
+> `test-slate` · `test-queue-expiry` · `test-apply-url` · `test-wall-finding` ·
+> `test-track-detect` · `test-cv-coverage-facts` · `test-off-track-prose` ·
+> `test-freshness-export`. **177 assertions, all green as of 2026-09-08.** **A property is asserted in a test
 > or not at all** — do not write a comment claiming code is correct.
+>
+> ### The queue is not the product. `/today` is.
+>
+> A queue only grows. On 2026-09-02 it held 277 pending cards; VP cleared it by
+> hand once in early August, rejected 57 of 61 on age, and made one decision in
+> the three weeks after. `build-slate.mjs` writes `data/slate.json` each night —
+> a small, dated, ordered set with a reason on every pick — and `/today` renders
+> it. The review queue survives as the everything-else view, one place down.
+>
+> ⚠ **ALL SLATE POLICY LIVES IN `lib/slate.mjs`, WHICH IS PURE AND TESTED.**
+> `build-slate.mjs` only gathers inputs. And there is **no cross-track score
+> anywhere in it**: `rankWithin` compares cards only inside one track,
+> `allocate` hands out SLOTS and never reads `score`. `test-slate.mjs` proves
+> both by rescaling one track's scores and by grepping the allocator for the
+> word `score`. `config/slate.yml` is read live.
+>
+> ⚠ **`/today` RENDERS A NIGHTLY ARTIFACT.** `node build-slate.mjs --dry-run`
+> prints the right answer and writes nothing; the page does not change until it
+> runs for real. That has already produced one false "it's fixed" claim.
+>
+> ### Ordering and age-out (VP, 2026-09-08)
+>
+> **Newest first everywhere** — home views, `/now`, the review queue and the
+> slate. In `compareWithinTrack` recency leads and tier/whale are TIE-BREAKS: a
+> whale still beats an equally fresh non-whale, but nothing lifts an older
+> posting above a newer one. VP's instruction was "nothing gets to be excluded";
+> the slate had been left out of an earlier pass without telling him, which is
+> the mistake not to repeat.
+>
+> **Roles age out of the home views** at the measured per-track window (civic 60,
+> teaching 150, nonprofit 35, else 21, whale/evergreen per company).
+> `export-freshness.mjs` projects that policy into
+> `data/freshness-windows.json` because `Dockerfile.ui` builds from `COPY ui/ ./`
+> and the app cannot import `lib/freshness.mjs`. Never hidden: a role with **no
+> date** (that means "we never looked", not "ancient"), anything VP has acted on,
+> or anything permanently — the count is always rendered with a link.
+>
+> ⚠ **The visibility rule lives in `ui/lib/views.ts` `isVisible()` and BOTH the
+> nav badges and the page call it.** Filtering in `app/page.tsx` alone made the
+> nav advertise 811 shortlist roles over a page rendering 430.
+>
+> ### The scorer's prose is rendered by THREE paths
+>
+> Fixing one and declaring victory has now happened twice. They are:
+>
+> 1. review cards read the queue's `notes`;
+> 2. the home-page views read `verdict`/`redFlags` straight off
+>    `data/lead-scores.json`;
+> 3. `data/inbox-leads.md` is joined **last** and used to overwrite both.
+>
+> `rank-leads`/`recompute-scores` now write `displayVerdict`/`displayRedFlags`
+> beside the untouched originals — `hasCaveat` and every audit read the raw pair
+> — the UI prefers them, and inbox-leads fills only where they are absent.
+> `lib/off-track-prose.mjs` is the one entry point; it strips a Track-A category
+> error from a non-pm card and tidies punctuation on every track.
+>
+> ⚠ **THE CAVEAT CAP IS AN OPEN DECISION OF VP'S, NOT A BUG TO FIX IN PASSING.**
+> `hasCaveat()` counts non-empty `redFlags` as a caveat and caps a rubric 5 to a
+> 4. `redFlags` comes from the Track-A prompt, so it fires on **100% of civic and
+> teaching records and 91% of `now`, against 54% of pm**. Measured over the
+> corpus: civic has 54 rubric-5 roles and **none survives as a 5**; teaching's one
+> does not either; pm keeps 200 of 450. `redFlags` is the only clause in
+> hasCaveat that is model prose. Only the DISPLAY half was changed. Surface it,
+> do not override it.
+>
+> ### Conversion is the bottleneck, not sourcing
+>
+> 9 applications sent, 8 of them in a burst ending 2026-08-06 and one in the 33
+> days after, against 287 pending cards. Measured 2026-09-08: 93 cards on a board
+> the extension ran on, 194 by hand — 95 behind a login wall (**67
+> cityjobs.nyc.gov**), 61 with a fully enumerated field list on a host the
+> extension never saw, 15 Greenhouse forms on an employer's own domain.
+>
+> The extension now injects on the toolbar click and runs on any board;
+> `/api/pack-answers` puts the role's own answers beside the form. ⚠ **Brave
+> loads `~/Dev/career-ops-extension`, not `extension/` in this repo** — check
+> `Preferences` → `extensions.settings[*].path` before believing an extension
+> change is live. See `extension/README.md`.
 >
 > ### Freshness is measured, not assumed
 >
