@@ -26,7 +26,7 @@
  * Usage: node fetch-civic.mjs [--dry-run] [--limit N]
  */
 
-import { readFile, appendFile, writeFile, mkdir } from 'fs/promises';
+import { readFile, appendFile, writeFile, mkdir, readdir } from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
 import { fileURLToPath } from 'url';
@@ -62,6 +62,105 @@ async function fetchPostings() {
   return r.json();
 }
 
+
+/**
+ * Give civic JDs already on disk the close date they were written without.
+ *
+ * ⚠ WITHOUT THIS THE FIELD ONLY EVER REACHES *FUTURE* POSTINGS. This fetcher
+ * writes a JD once and never revisits it — "all already known in pipeline.md"
+ * is the normal outcome of a run — so the 71 civic cards on the board on
+ * 2026-09-02 would have carried no deadline for as long as they existed, and
+ * the slate's "closing soon" rule would have been dead code that looked alive.
+ * Indeed repairs itself because it re-observes a posting for 30 days; NYC does
+ * not, so the repair has to be explicit.
+ *
+ * One batched query per 100 ids, `$select`ed down to two columns. Idempotent:
+ * a JD that already has the line, or a posting the city publishes no date for,
+ * is left exactly as it is.
+ */
+async function backfillPostUntil() {
+  const files = (await readdir(JDS)).filter((f) => f.endsWith('.md'));
+  const wanted = new Map();                       // job_id -> [file, ...]
+  for (const f of files) {
+    const text = await readFile(path.join(JDS, f), 'utf-8');
+    if (text.includes('**Post Until:**')) continue;
+    const m = text.match(/^\*\*URL:\*\*\s*https:\/\/cityjobs\.nyc\.gov\/job\/(\d+)/mi);
+    if (!m) continue;
+    if (!wanted.has(m[1])) wanted.set(m[1], []);
+    wanted.get(m[1]).push(f);
+  }
+  if (!wanted.size) return;
+
+  const ids = [...wanted.keys()];
+  const dates = new Map();
+  for (let i = 0; i < ids.length; i += 100) {
+    const chunk = ids.slice(i, i + 100);
+    const q = new URL(API);
+    q.searchParams.set('$select', 'job_id,post_until');
+    q.searchParams.set('$where', `job_id in (${chunk.map((id) => `'${id}'`).join(',')})`);
+    q.searchParams.set('$limit', '1000');
+    try {
+      const res = await fetch(q, { signal: AbortSignal.timeout(30000) });
+      if (!res.ok) { console.log(`  post_until backfill: HTTP ${res.status}, skipping this chunk`); continue; }
+      for (const row of await res.json()) {
+        const d = toIsoDate(row?.post_until);
+        if (d) dates.set(String(row.job_id), d);
+      }
+    } catch (e) {
+      // ⚠ A failed lookup is not "no deadline". Leave the JD untouched and try
+      // again tomorrow rather than writing an absence we did not observe.
+      console.log(`  post_until backfill: ${String(e.message).split('\n')[0]} — chunk skipped`);
+    }
+  }
+
+  let patched = 0;
+  for (const [id, fs_] of wanted) {
+    const d = dates.get(id);
+    if (!d) continue;
+    for (const f of fs_) {
+      const fp = path.join(JDS, f);
+      const text = await readFile(fp, 'utf-8');
+      if (text.includes('**Post Until:**')) continue;
+      const lines = text.split('\n');
+      const at = lines.findIndex((l) => /^\*\*Posted:\*\*/i.test(l));
+      const insertAt = at >= 0 ? at + 1 : lines.findIndex((l) => /^\*\*URL:\*\*/i.test(l)) + 1;
+      if (insertAt <= 0) continue;
+      lines.splice(insertAt, 0, `**Post Until:** ${d}`);
+      await writeFile(fp, lines.join('\n'));
+      patched++;
+    }
+  }
+  console.log(`  post_until: ${patched} existing civic JD(s) gained a close date (${wanted.size - dates.size} publish none)`);
+}
+
+/**
+ * NYC publishes TWO date formats in ONE dataset: `posting_date` is ISO
+ * ("2026-08-25T00:00:00.000") and `post_until` is `DD-MON-YYYY`
+ * ("24-SEP-2026"). Slicing the first ten characters — which is right for the
+ * ISO one — silently truncated the other to "24-SEP-202" and wrote 150 JDs
+ * carrying a date that parses as nothing. Caught the same afternoon by reading
+ * the files back rather than trusting the write.
+ *
+ * ⚠ AN UNRECOGNISED FORMAT RETURNS EMPTY, NEVER A GUESS. A wrong deadline is
+ * worse than no deadline: it would put a role at the top of VP's slate on a
+ * day that means nothing.
+ */
+const MONTHS = { jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
+                 jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12' };
+
+function toIsoDate(raw) {
+  const v = String(raw ?? '').trim();
+  if (!v) return '';
+  let m = v.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  m = v.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/);
+  if (m) {
+    const mm = MONTHS[m[2].toLowerCase()];
+    if (mm) return `${m[3]}-${mm}-${m[1].padStart(2, '0')}`;
+  }
+  return '';
+}
+
 const main = async () => {
   const rows = await fetchPostings();
   console.log(`NYC Open Data: ${rows.length} external postings pulled`);
@@ -91,6 +190,18 @@ const main = async () => {
       location: 'New York, NY',
       street: clean(j.work_location),
       posted: clean(j.posting_date).slice(0, 10),
+      // ⚠ THE ONLY REAL DEADLINE IN THE WHOLE PIPELINE. NYC publishes a hard
+      // close date per posting and nothing read it: the 60-day civic freshness
+      // window in lib/freshness.mjs was DERIVED from these values (median 60d)
+      // while the per-role date itself was dropped on the floor. A civic role
+      // three days from closing and one with six weeks left were identical to
+      // every downstream step. Carried so the slate can put the closing one in
+      // front of VP first.
+      //
+      // Frequently absent — plenty of postings carry no close date at all — so
+      // every consumer must treat it as optional and never infer urgency from
+      // its absence.
+      postUntil: toIsoDate(clean(j.post_until)),
       salaryFrom: j.salary_range_from, salaryTo: j.salary_range_to, salaryFreq: clean(j.salary_frequency),
       civilServiceTitle: clean(j.civil_service_title),
       careerLevel: clean(j.career_level),
@@ -98,6 +209,7 @@ const main = async () => {
     });
   }
   console.log(`after title filter: ${keep.length} product/program/technology roles`);
+  await backfillPostUntil();
   if (DRY) {
     for (const k of keep.slice(0, 12)) console.log(`  ${k.agency.slice(0, 30).padEnd(32)} ${k.title.slice(0, 46)}`);
     console.log('\n--dry-run, nothing written');
@@ -122,6 +234,7 @@ const main = async () => {
       // enqueue-review count the role STALE - which silently binned all 31 of
       // these on the first run despite every one being 7-18 days old.
       `**Posted:** ${k.posted} (${Math.max(0, Math.round((Date.now() - Date.parse(k.posted)) / 86400000))} days ago)`,
+      k.postUntil ? `**Post Until:** ${k.postUntil}` : '',
       `**Source:** nyc-open-data`,
       k.street ? `**Work location:** ${k.street}` : '',
       k.civilServiceTitle ? `**Civil Service Title:** ${k.civilServiceTitle}` : '',
