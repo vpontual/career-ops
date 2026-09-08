@@ -2,7 +2,6 @@ import { readFile } from "fs/promises";
 import path from "path";
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
-import SiteNav from "@/components/SiteNav";
 import ReviewControls from "@/components/ReviewControls";
 import ApplyButton from "@/components/ApplyButton";
 
@@ -83,9 +82,14 @@ export default async function TodayPage() {
 
   return (
     <>
-      <SiteHeader active="review" />
+      {/* ⚠ ONE NAV. SiteHeader RENDERS SiteNav ITSELF (see its line 68), so this
+          page drawing a second <SiteNav> put two identical, fully populated nav
+          bars on screen, one above the other, on the page VP opens first. It
+          also passed active="review", so the header highlighted the Review
+          queue while standing on /today. Every other page passes SiteHeader
+          alone; this one was the outlier. */}
+      <SiteHeader active="today" />
       <main className="mx-auto min-h-screen max-w-4xl px-6 py-8 md:px-10">
-        <SiteNav active="today" />
 
         <header className="mb-6">
           <h1 className="text-2xl font-semibold tracking-tight text-slate-100">Today</h1>

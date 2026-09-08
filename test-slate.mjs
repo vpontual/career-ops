@@ -69,21 +69,47 @@ const pmOnly = (items, extra = {}) =>
 
 // ── within a track: the order, one boundary at a time ─────────────────────
 
-same('tier beats recency',
+// ⚠ RECENCY IS FIRST, and these three cases are the ones that changed when it
+// became so (VP, 2026-09-08). The slate had been the one surface still ordering
+// by tier and whale ahead of the date, which put Stripe at 11d above Google at
+// 1d — both tier 5 — on the page he opens first.
+same('recency beats tier',
   slugs(pmOnly([card({ slug: 'fresh-4', score: 4, ageDays: 1 }), card({ slug: 'old-5', score: 5, ageDays: 15 })])),
-  ['old-5', 'fresh-4']);
+  ['fresh-4', 'old-5']);
 
-same('whale beats non-whale at equal tier, even when older',
+same('recency beats whale — the Stripe/Google case, exactly',
+  slugs(buildSlate({
+    today: TODAY, quotas: { pm: 10 }, rotation: null,
+    policy: { isWhale: (c) => /stripe/i.test(c) },
+    items: [
+      card({ slug: 'stripe-11d', company: 'Stripe', score: 5, ageDays: 11 }),
+      card({ slug: 'google-1d', company: 'Google', score: 5, ageDays: 1 }),
+    ],
+  })),
+  ['google-1d', 'stripe-11d']);
+
+// ⚠ ...and tier and whale still do real work as TIE-BREAKS. Dropping them
+// entirely would be the opposite overcorrection: at equal freshness the rubric
+// and the whale list are exactly how two roles should be separated.
+same('at equal recency, tier breaks the tie',
+  slugs(pmOnly([card({ slug: 'four', score: 4, ageDays: 3 }), card({ slug: 'five', score: 5, ageDays: 3 })])),
+  ['five', 'four']);
+
+same('at equal recency and tier, whale breaks the tie',
   slugs(buildSlate({
     today: TODAY, quotas: { pm: 10 }, rotation: null,
     policy: { isWhale: (c) => /anthropic/i.test(c) },
-    items: [card({ slug: 'acme-1d', ageDays: 1 }), card({ slug: 'anthropic-9d', company: 'Anthropic', ageDays: 9 })],
+    items: [card({ slug: 'acme-3d', ageDays: 3 }), card({ slug: 'anthropic-3d', company: 'Anthropic', ageDays: 3 })],
   })),
-  ['anthropic-9d', 'acme-1d']);
+  ['anthropic-3d', 'acme-3d']);
 
-same('a `whale: true` flag on the card is honoured without a policy',
-  slugs(pmOnly([card({ slug: 'a', ageDays: 1 }), card({ slug: 'w', whale: true, ageDays: 9 })])),
+same('a `whale: true` flag on the card is honoured without a policy, at equal recency',
+  slugs(pmOnly([card({ slug: 'a', ageDays: 9 }), card({ slug: 'w', whale: true, ageDays: 9 })])),
   ['w', 'a']);
+
+same('but the flag does not lift an older whale over a fresher role',
+  slugs(pmOnly([card({ slug: 'a', ageDays: 1 }), card({ slug: 'w', whale: true, ageDays: 9 })])),
+  ['a', 'w']);
 
 same('fresher beats older at equal tier, non-whale',
   slugs(pmOnly([card({ slug: 'nine', ageDays: 9 }), card({ slug: 'two', ageDays: 2 })])),
@@ -237,7 +263,9 @@ same('equal on everything falls through to slug, so the order is stable',
   const want = slugs(pmOnly(base));
   const perms = [base.slice().reverse(), [base[2], base[4], base[0], base[3], base[1]], [base[3], base[1], base[4], base[2], base[0]]];
   eq('deterministic under every permutation of the input', perms.every((p) => JSON.stringify(slugs(pmOnly(p))) === JSON.stringify(want)), true);
-  same('...and the order is the documented one', want, ['p5', 'p1', 'p2', 'p4', 'p3']);
+  // recency first: p3 (1d), then the three at 2d separated by tier then whale
+  // (p5 is the whale), then p4 (7d).
+  same('...and the order is the documented one', want, ['p3', 'p5', 'p1', 'p2', 'p4']);
 }
 
 // ── ⚠ NO CROSS-TRACK SCORE, EVER ───────────────────────────────────────────
