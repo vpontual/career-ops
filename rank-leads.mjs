@@ -697,6 +697,32 @@ function truncateFlags(raw) {
  * support. Being one rank low on a real role is a far cheaper error than
  * telling VP a role is perfect when the card itself lists a concern.
  */
+// ── CV coverage facts ─────────────────────────────────────────────────────
+/**
+ * The five cvCoverage* fields a score record carries, from the parsed JD and
+ * its track. ONE exported function, because the scoring path here and the
+ * backfill path in recompute-scores.mjs must write byte-identical shapes and
+ * until 2026-09-02 each carried its own inline copy of this block - the
+ * two-copies-drift bug class this repo keeps re-learning. test-cv-coverage-
+ * facts.mjs pins the shape against the persisted corpus. Pure and LLM-free:
+ * the posting and the variant file on disk are its only inputs.
+ *
+ * ⚠ This measures the DOCUMENT that would be sent, never what VP can do, and
+ * it predicts nothing (see the header of lib/cv-coverage.mjs). It rides on the
+ * record so the card can show it; it is not a score input.
+ */
+export function cvCoverageFacts(jd, track) {
+  const body = `${jd.title || ''}\n${jd.body || ''}`;
+  const cov = cvCoverage(body, cvVariantFor(body, track), { company: jd.company || '' });
+  return {
+    cvCoverageRequired: cov.required,
+    cvCoverageMissing: cov.missing,
+    cvCoverageRatio: cov.ratio,
+    cvCoverageEvidence: cov.evidence,
+    cvCoverageGap: coverageGap(cov),
+  };
+}
+
 function hasCaveat(f) {
   if ((f.redFlags || '').trim()) return true;
   if (f.credentialWarnings && String(f.credentialWarnings).trim()) return true;
@@ -1035,17 +1061,7 @@ async function scoreOne(jd, resume, targets) {
       // ⚠ THIS SAYS NOTHING ABOUT WHAT VP CAN DO. See the header of
       // lib/cv-coverage.mjs: it measures the DOCUMENT, because a resume screen
       // reads the document. Never render it as a statement about his ability.
-      const cov = (() => {
-        const body = `${jd.title || ''}\n${jd.body || ''}`;
-        return cvCoverage(body, cvVariantFor(body, track), { company: jd.company || '' });
-      })();
-      const cvFacts = {
-        cvCoverageRequired: cov.required,
-        cvCoverageMissing: cov.missing,
-        cvCoverageRatio: cov.ratio,
-        cvCoverageEvidence: cov.evidence,
-        cvCoverageGap: coverageGap(cov),
-      };
+      const cvFacts = cvCoverageFacts(jd, track);
       // redFlags must be part of the facts the CAP sees, not only of the record
       // written below. It used to be attached to the returned object further
       // down, so hasCaveat() never saw it and a freshly scored role kept its 5
