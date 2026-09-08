@@ -44,11 +44,20 @@ GATE_FAILURES=""
 step() { echo "=== $(date -Iseconds) $1 ==="; }
 
 # Run a pipeline step, record failure, never abort the run.
+#
+# ⚠ THE STATUS IS CAPTURED BEFORE ANY TEST, NOT INSIDE ONE. This read
+# `if ! "$@"; then local code=$?`, and inside that branch $? is the status of
+# the `!` PIPELINE - which is 0 precisely when the command failed. So every
+# failure the log has ever reported carried "(exit 0)": the 2026-09-08 DNS
+# failure against data.cityofnewyork.us printed
+# `!!! STEP FAILED: civic (exit 0)`. The step name was right and the one number
+# that says WHY was a constant.
 run_step() {
   local name="$1"; shift
   step "$name"
-  if ! "$@"; then
-    local code=$?
+  local code=0
+  "$@" || code=$?
+  if [ "$code" -ne 0 ]; then
     echo "!!! STEP FAILED: $name (exit $code)"
     FAILED_STEPS="$FAILED_STEPS $name"
   fi
@@ -59,8 +68,10 @@ run_step() {
 run_gate() {
   local name="$1"; shift
   step "gate:$name"
-  if ! "$@"; then
-    echo "!!! GATE FAILED: $name"
+  local code=0
+  "$@" || code=$?
+  if [ "$code" -ne 0 ]; then
+    echo "!!! GATE FAILED: $name (exit $code)"
     GATE_FAILURES="$GATE_FAILURES $name"
   fi
 }

@@ -316,6 +316,34 @@ function dismiss() {
 
 // ── MAIN ────────────────────────────────────────────────────────
 
+// ⚠ DISABLED IN THIS FORK. Do not remove this guard; do not add a flag that
+// makes it easier to pass.
+//
+// `apply` pulls santifer/career-ops over what DATA_CONTRACT.md calls the
+// "system layer" — *.mjs, lib/, batch/, templates/, CLAUDE.md. Upstream calls
+// that layer auto-updatable. Here it is where essentially all of the work
+// lives: the scoring rewrite, the five tracks, the review queue, the slate, the
+// Next.js UI, the gate scripts. Upstream has since done a ground-up
+// .mjs → TypeScript rewrite, so a merge does not conflict cleanly — it
+// clobbers. Sync is one-way and by hand, recorded in docs/FORK-CHANGES.md.
+//
+// CLAUDE.md has said "never run this, in any form" since 2026-08-06, and the
+// npm aliases `update` / `update:check` / `rollback` went on working the whole
+// time. A ban documented beside a working one-keystroke trigger is not a
+// control, so the refusal lives here, next to the thing it refuses.
+if (!process.env.CAREER_OPS_ALLOW_UPSTREAM_UPDATE) {
+  console.error(
+    'update-system.mjs is disabled in this fork.\n\n' +
+    'It pulls santifer/career-ops over the system layer, which here holds\n' +
+    'essentially all local work and has diverged by hundreds of commits.\n' +
+    'Upstream rewrote .mjs to TypeScript, so a merge clobbers rather than\n' +
+    'conflicts.\n\n' +
+    'To take something from upstream, cherry-pick it by hand and record it in\n' +
+    'docs/FORK-CHANGES.md. See CLAUDE.md.'
+  );
+  process.exit(1);
+}
+
 const cmd = process.argv[2] || 'check';
 
 switch (cmd) {
