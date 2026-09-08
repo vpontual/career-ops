@@ -304,12 +304,22 @@ function NoteBlocks({ notes }: { notes: string }) {
         // Split on the COLON only. A non-greedy match that also accepted "-"
         // chopped "TAKE-HOME RISK: ..." into label "TAKE" + body "HOME: ...",
         // which silently stripped the danger colour off the risk callouts.
-        const m = seg.match(/^([A-Z][A-Z0-9 \-/&']{2,60}):\s*(.*)$/s);
+        // ⚠ THE EM DASH IS PART OF A LABEL. Without it in the class,
+        // "INTERVIEW PROCESS — NOT STATED:" failed to parse, and the tone test
+        // below then fell back to the BODY — which reads "That is normal and
+        // not a red flag". Matching /FLAG/ against that painted the box red on
+        // every card in the queue: the loudest element on the page was a
+        // sentence saying there was nothing to worry about.
+        const m = seg.match(/^([A-Z][A-Z0-9 \-—–/&']{2,60}):\s*(.*)$/s);
         const label = m ? m[1].trim() : null;
         const body = m ? m[2].trim() : seg;
         // Ownership has to be obvious. A card in VP's queue showing Claude's
         // own chores as "TO DO" read like a task list for him.
-        const danger = /RISK|EXCLUD|DILIGENCE|READ THIS|FLAG/i.test(label ?? seg);
+        // ⚠ THE LABEL ONLY, NEVER THE BODY. Keyword-testing prose is what made
+        // "not a red flag" render as a danger callout; a sentence that mentions
+        // a risk in order to dismiss it is indistinguishable from one that
+        // raises it. An unlabelled segment is neutral rather than alarming.
+        const danger = label ? /RISK|EXCLUD|DILIGENCE|READ THIS|FLAG/i.test(label) : false;
         const needsYou = /NEEDS YOU|DECIDE|YOUR CALL/i.test(label ?? "");
         const onMe = /ON ME|NOT YET|UNRESOLVED|UNKNOWN/i.test(label ?? "");
         const tone = danger

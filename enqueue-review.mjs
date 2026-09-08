@@ -33,7 +33,7 @@ import { canonKey } from './lib/canonical.mjs';
 import { resolveApplyPath, openCache, DEFAULT_CACHE_PATH } from './lib/apply-url.mjs';
 import { loadReposts, repostNote } from './lib/repost.mjs';
 import { updateQueue } from './lib/queue-file.mjs';
-import { stripOffTrackClaims, cleanNotesForTrack } from './lib/off-track-prose.mjs';
+import { displayProse, cleanNotesForTrack } from './lib/off-track-prose.mjs';
 import { detectTrack, TRACK_LABELS } from './lib/track.mjs';
 import { cvVariantFor } from './lib/cv-variant.mjs';
 import { parseBlacklist, blacklistEntry } from './blacklist.mjs';
@@ -871,8 +871,8 @@ const main = async () => {
       // Stripped per CLAUSE, so the half that says what the role IS survives.
       // Display only — hasCaveat still reads the raw redFlags and still caps a
       // 5 to a 4. See the header of lib/off-track-prose.mjs.
-      (() => { const v = stripOffTrackClaims(c.track, c.verdict); return v ? `SCORER: ${v}` : ''; })(),
-      (() => { const f = stripOffTrackClaims(c.track, c.redFlags); return f ? `RED FLAGS: ${f}` : ''; })(),
+      (() => { const v = displayProse(c.track, c.verdict); return v ? `SCORER: ${v}` : ''; })(),
+      (() => { const f = displayProse(c.track, c.redFlags); return f ? `RED FLAGS: ${f}` : ''; })(),
       // Nice-to-have skills VP does not have. A normal warning, not a block -
       // his words: "it doesnt have to be a loud warning, just a normal warning".
       (c.skillWarnings || []).length ? `Listed as preferred, not required: ${(c.skillWarnings || []).join(', ')}` : '',
@@ -1065,6 +1065,7 @@ const main = async () => {
       let n = 0;
       for (const i of fresh.items) {
         if (i.decision) continue;
+        // Every track, pm included: on pm this only tidies punctuation.
         const cleaned = cleanNotesForTrack(i.track, i.notes || '');
         if (cleaned !== (i.notes || '')) { i.notes = cleaned; n++; }
       }

@@ -22,6 +22,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { parseJd } from './lib/jd-parse.mjs';
 import { detectTrack, trackFacts, scoreTeaching, scoreCivic, scoreNonprofit, scoreNow } from './lib/track.mjs';
+import { displayProse } from './lib/off-track-prose.mjs';
 import { detectHardCredential } from './lib/credential-gate.mjs';
 import { cvCoverage, coverageGap } from './lib/cv-coverage.mjs';
 import { cvVariantFor } from './lib/cv-variant.mjs';
@@ -268,6 +269,11 @@ for (const [k, v] of Object.entries(scores)) {
   // score silently drops to 4 with nothing on screen explaining why, which is
   // the incoherent-card problem the caveat cap was introduced to fix.
   Object.assign(v, cvFacts);
+  // Recomputed for EVERY stored record, which is what makes a change to the
+  // display rule retroactive instead of reaching only newly scored JDs. The
+  // model's own verdict/redFlags are never touched.
+  v.displayVerdict = displayProse(track, v.verdict || '');
+  v.displayRedFlags = displayProse(track, v.redFlags || '');
   v.track = track;
   v.functionArea = functionArea;
   v.archetypeRaw = v.archetypeRaw ?? v.archetype;

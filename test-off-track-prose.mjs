@@ -127,7 +127,18 @@ eq('prose that is ALL category error becomes empty',
   // ⚠ Idempotent, which is what lets the nightly run it over the whole board
   // every night rather than needing a one-off migration.
   eq('cleaning clean notes is a no-op', cleanNotesForTrack('teaching', out), out);
-  eq('a pm card is returned byte-identical', cleanNotesForTrack('pm', notes), notes);
+  // ⚠ A pm card loses no CLAIM — but its punctuation IS tidied. "SCORER:
+  // ${verdict}." where the verdict already ends in a full stop rendered as
+  // "AI products.. Comp floor seen:" on every PM card in the queue.
+  {
+    const pmOut = cleanNotesForTrack('pm', notes);
+    eq('a pm card keeps its category error', /not a Product Marketing role/i.test(pmOut), true);
+    eq('a pm card keeps every other segment',
+      pmOut.includes('INTERVIEW PROCESS') && pmOut.includes('Comp floor seen: $65,000.') && pmOut.includes('ON ME:'), true);
+    eq('but a pm card gets no doubled full stop', /\.\./.test(pmOut), false);
+  }
+  eq('doubled full stops are removed on pm too',
+    /\.\./.test(cleanNotesForTrack('pm', 'SCORER: It ends in a stop.. ON ME: x.')), false);
 }
 {
   // A segment that empties out takes its own label AND the separator with it.

@@ -228,7 +228,7 @@ async function fileMtime(p: string): Promise<number> {
 // Cache JD lookups so we don't walk jds/ on every request. Day-keyed so
 // `posted`/`updated` (computed from Date.now()) advance at midnight even if
 // loadPipeline's per-request reset never fires (e.g. /ranked only call site).
-type JdMeta = { posted?: number; updated?: number; locations?: string[]; score?: number; verdict?: string; redFlags?: string; track?: string; geo?: string; credentialWarnings?: string; credentialName?: string; skillWarnings?: string[] };
+type JdMeta = { posted?: number; updated?: number; locations?: string[]; score?: number; verdict?: string; redFlags?: string; displayVerdict?: string; displayRedFlags?: string; track?: string; geo?: string; credentialWarnings?: string; credentialName?: string; skillWarnings?: string[] };
 let jdMetaCache: Map<string, JdMeta> | null = null;
 let jdMetaCacheDay: string | null = null;
 
@@ -277,7 +277,7 @@ export async function loadJdMetaIndex(): Promise<Map<string, JdMeta>> {
   // rank-leads.mjs's score cache, keyed by JD filename. This is the single
   // scoring authority (score-all.mjs and its reports/ dir were retired); the
   // UI must read scores from here or every freshly-scored role shows "unscored".
-  let leadScores: Record<string, { score?: number; verdict?: string; redFlags?: string; track?: string; geo?: string; credentialWarnings?: string; credentialName?: string; skillWarnings?: string[] }> = {};
+  let leadScores: Record<string, { score?: number; verdict?: string; redFlags?: string; displayVerdict?: string; displayRedFlags?: string; track?: string; geo?: string; credentialWarnings?: string; credentialName?: string; skillWarnings?: string[] }> = {};
   try {
     leadScores = JSON.parse(await readFile(path.join(DATA_ROOT, "data", "lead-scores.json"), "utf-8"));
   } catch { /* no scores yet */ }
@@ -314,8 +314,12 @@ export async function loadJdMetaIndex(): Promise<Map<string, JdMeta>> {
       map.set(urlM[1], {
         posted, updated, locations,
         score: typeof sc?.score === "number" ? sc.score : undefined,
-        verdict: sc?.verdict,
-        redFlags: sc?.redFlags,
+        // ⚠ The DISPLAY pair, falling back to the model's raw words for records
+        // scored before those fields existed. rank-leads and recompute-scores
+        // compute them in lib/off-track-prose.mjs; the raw pair stays on the
+        // record untouched because hasCaveat and every audit read it.
+        verdict: sc?.displayVerdict ?? sc?.verdict,
+        redFlags: sc?.displayRedFlags ?? sc?.redFlags,
         track: sc?.track,
         geo: sc?.geo,
         credentialWarnings: sc?.credentialWarnings,
@@ -330,7 +334,7 @@ export async function loadJdMetaIndex(): Promise<Map<string, JdMeta>> {
         const key = canonKey(company, title);
         const prev = canon.get(key);
         if (prev) prev.n += 1; // collision → becomes ambiguous, join won't use it
-        else canon.set(key, { score: sc.score, verdict: sc.verdict, redFlags: sc.redFlags, track: sc.track, geo: sc.geo, n: 1 });
+        else canon.set(key, { score: sc.score, verdict: sc.displayVerdict ?? sc.verdict, redFlags: sc.displayRedFlags ?? sc.redFlags, track: sc.track, geo: sc.geo, n: 1 });
       }
     }
   } catch {}
@@ -566,8 +570,15 @@ export async function loadPipeline(): Promise<PipelineData> {
       if (!lead) continue;
       row.tier = lead.tier;
       if (lead.archetype) row.archetype = lead.archetype;
-      if (lead.verdict) row.verdict = lead.verdict;
-      if (lead.redFlags) row.redFlags = lead.redFlags;
+      // ⚠ FILL, DO NOT OVERWRITE. This join runs LAST, so an unconditional
+      // assignment beat the display-cleaned prose set from lead-scores.json
+      // above — which is why "Ready to apply" still rendered "not a Product or
+      // Product Marketing role" on civic roles, and raw `.,` list joins,
+      // after both the review queue and the score records had been cleaned.
+      // inbox-leads.md is a rendered artifact of the same records; it is the
+      // fallback for rows lead-scores has no entry for, not the authority.
+      if (lead.verdict && !row.verdict) row.verdict = lead.verdict;
+      if (lead.redFlags && !row.redFlags) row.redFlags = lead.redFlags;
     }
   } catch { /* inbox-leads.md unavailable — ranked tab will simply be empty */ }
 

@@ -27,6 +27,7 @@ import { canonKey } from './lib/canonical.mjs';
 import { maxAgeDaysFor } from './lib/freshness.mjs';
 import { parseJd } from './lib/jd-parse.mjs';
 import { detectTrack, titlePassesForTrack, trackFacts, scoreTeaching, scoreCivic, scoreNonprofit, scoreNow, CANNOT_DO } from './lib/track.mjs';
+import { displayProse } from './lib/off-track-prose.mjs';
 import { screenVerdict, findReportableFormats } from './lib/screen-evidence.mjs';
 import { compBand } from './lib/comp-band.mjs';
 import { skillGate, defaultLacks } from './lib/skill-gate.mjs';
@@ -1084,6 +1085,17 @@ async function scoreOne(jd, resume, targets) {
         ...allFacts,
         verdict: String(parsed.verdict || '').slice(0, 240),
         redFlags,
+        // What a CARD should show, computed in code beside the model's own
+        // words rather than instead of them. The raw pair stays exactly as the
+        // model wrote it — hasCaveat reads `redFlags` and every gate and audit
+        // depends on it being untouched — and the UI reads these.
+        //
+        // ⚠ Both rendering paths need them. Review cards read the queue's
+        // `notes`; the home-page views read this record directly, which is why
+        // "Ready to apply" still showed "not a Product or Product Marketing
+        // role" on civic roles after the queue had been cleaned.
+        displayVerdict: displayProse(track, String(parsed.verdict || '').slice(0, 240)),
+        displayRedFlags: displayProse(track, redFlags),
       };
     } catch (e) {
       lastErr = e;
@@ -1148,10 +1160,14 @@ function buildInboxLeadsMd(scored) {
       const ageStr = s.posted_days != null
         ? (s.posted_days <= STALE_AGE_DAYS ? `${s.posted_days}d` : `${s.posted_days}d ⚠`)
         : '?';
-      const flags = s.redFlags ? ` — ⚠ ${s.redFlags}` : '';
+      // The DISPLAY prose, same as the card. This file is a rendered artifact
+      // for humans and for the UI's ranked join — not the record — so it
+      // carries what a card should show. The untouched pair lives on the score
+      // record, which is what hasCaveat and every audit read.
+      const flags = displayProse(s.track, s.redFlags) ? ` — ⚠ ${displayProse(s.track, s.redFlags)}` : '';
       const archetype = s.archetype ? ` · ${s.archetype}` : '';
       lines.push(`- [ ] **${s.title}** @ ${s.company} · ${ageStr}${archetype}`);
-      lines.push(`      ${s.verdict}${flags}`);
+      lines.push(`      ${displayProse(s.track, s.verdict)}${flags}`);
       lines.push(`      ${s.url}`);
       lines.push('');
     }
