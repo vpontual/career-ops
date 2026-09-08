@@ -67,3 +67,29 @@
   outline-offset: 1px;
   background-color: rgba(22, 163, 74, 0.06) !important;
 }
+
+/* ── the role's own pack, shown beside the form ─────────────────────────────
+   Three kinds of row, and they must never look alike: ✅ is VP's vetted answer
+   and is safe to paste as is, ✏️ is a draft to READ first, ⚠ is his to answer
+   because the pack refused to invent it. Colour carries the instruction. */
+#co-autofill-toast .co-pack {
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px solid rgba(148, 163, 184, 0.25);
+  max-height: 42vh; overflow-y: auto;
+}
+#co-autofill-toast .co-rows { margin-top: 6px; display: flex; flex-direction: column; gap: 6px; }
+#co-autofill-toast .co-row {
+  border-left: 2px solid rgba(148, 163, 184, 0.4);
+  padding: 4px 0 4px 8px;
+}
+#co-autofill-toast .co-row.co-ok    { border-left-color: #34d399; }
+#co-autofill-toast .co-row.co-draft { border-left-color: #fbbf24; }
+#co-autofill-toast .co-row.co-you   { border-left-color: #f87171; }
+#co-autofill-toast .co-q { font-weight: 600; font-size: 11px; opacity: 0.85; }
+#co-autofill-toast .co-a { font-size: 12px; white-space: pre-wrap; }
+#co-autofill-toast .co-t {
+  margin-top: 2px; font-size: 9px; letter-spacing: 0.06em;
+  text-transform: uppercase; opacity: 0.7;
+}
+#co-autofill-toast .co-row.co-draft .co-t { color: #fbbf24; }
+#co-autofill-toast .co-row.co-you .co-t   { color: #f87171; }

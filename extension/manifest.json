@@ -2,9 +2,11 @@
   "manifest_version": 3,
   "name": "career-ops autofill",
   "version": "0.1.0",
-  "description": "Fills Greenhouse/Ashby/Lever job applications with your career-ops defaults. Fills and highlights \u2014 never submits.",
+  "description": "Fills job applications with your career-ops answers on any board. Fills and highlights \u2014 never submits.",
   "permissions": [
-    "storage"
+    "storage",
+    "activeTab",
+    "scripting"
   ],
   "host_permissions": [
     "http://*/*",

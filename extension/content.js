@@ -273,6 +273,45 @@
   function short(s) { return (s || "").split("\n")[0].trim().slice(0, 42); }
   function escapeHtml(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 
+  // ---- the pack for THIS role ----------------------------------------------
+  //
+  // The pipeline reads the form and answers it, and until now none of that was
+  // reachable from the page where VP actually fills it in — the answers were in
+  // one tab and the form in another. This puts the pack's own rows beside the
+  // form, and it SHOWS them rather than typing them.
+  //
+  // ⚠ THE THREE KINDS ARE NOT INTERCHANGEABLE and the panel has to keep them
+  // apart: ✅ is VP's vetted answer and is safe to paste as is, ✏️ is a DRAFT
+  // written from cv.md that he must read before sending, and ⚠ is blank by
+  // design because only he can answer it (address, comp, dates, EEO, work
+  // authorisation, prior employment, attestations). generate-answers refuses to
+  // draft that last group; pasting one in from here would undo that from the
+  // other end, so the panel never offers a copy button for them.
+  function renderPack(pack) {
+    const rows = String(pack.answers || "")
+      .split("\n")
+      .filter((l) => l.startsWith("|") && !/^\|\s*[-:]+/.test(l) && !/\|\s*Field\s*\|/i.test(l));
+    if (!rows.length) {
+      const why = pack.enumerated === false
+        ? "This board publishes no form until you have an account, so there is nothing to fill yet."
+        : "No answers were written for this role.";
+      return `<div class="co-pack"><b>${escapeHtml(pack.company)} — ${escapeHtml(pack.role)}</b><br/>${why}</div>`;
+    }
+    const cells = rows.map((r) => {
+      const c = r.split("|").map((x) => x.trim());
+      const label = c[1] || "";
+      const body = (c[3] || "").replace(/<br\/>_.*$/, "").trim();
+      const kind = /^✅/.test(body) ? "ok" : /DRAFT|✏️/.test(body) ? "draft" : /BLANK BY DESIGN|NO DEFAULT|NO DRAFT/.test(body) ? "you" : "info";
+      const text = body.replace(/^[✅✏️⚠\s]*/, "").replace(/\*\*/g, "");
+      const tag = kind === "ok" ? "ready" : kind === "draft" ? "DRAFT — read it" : kind === "you" ? "yours to answer" : "";
+      return `<div class="co-row co-${kind}"><div class="co-q">${escapeHtml(label)}</div>` +
+             `<div class="co-a">${escapeHtml(text.slice(0, 400))}</div>` +
+             (tag ? `<div class="co-t">${tag}</div>` : "") + `</div>`;
+    }).join("");
+    return `<div class="co-pack"><b>${escapeHtml(pack.company)} — ${escapeHtml(pack.role)}</b>` +
+           `<div class="co-rows">${cells}</div></div>`;
+  }
+
   // ---- wire the button ------------------------------------------------------
   btn.addEventListener("click", () => {
     toast("Fetching your career-ops defaults…", "info");
@@ -283,7 +322,15 @@
         return;
       }
       try { run(resp.data); }
-      catch (e) { toast(`Fill error: ${escapeHtml(e.message)}`, "err"); }
+      catch (e) { toast(`Fill error: ${escapeHtml(e.message)}`, "err"); return; }
+
+      // The pack is a bonus, never a precondition. A page with no matching card
+      // still gets filled from the defaults, and says so quietly.
+      chrome.runtime.sendMessage({ type: "getPack", url: location.href }, (p) => {
+        if (chrome.runtime.lastError || !p || !p.ok) return;
+        const t = document.getElementById("co-autofill-toast");
+        if (t) t.innerHTML += renderPack(p.data);
+      });
     });
   });
 })();
