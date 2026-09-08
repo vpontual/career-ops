@@ -108,7 +108,7 @@ async function maybeStat(p: string): Promise<Date | null> {
 }
 
 interface TrackerEntry {
-  url: string;
+  url: string;                 // "" when the row carries none — see the note below
   status: PipelineStatus;
   appliedAt?: string;
   company: string;
@@ -136,21 +136,33 @@ async function readApplicationsMd(): Promise<TrackerEntry[]> {
   try {
     const content = await readFile(path.join(DATA_ROOT, "data", "applications.md"), "utf-8");
     for (const line of content.split("\n")) {
-      const m = line.match(/(https?:\/\/\S+)/);
-      if (!m) continue;
-      const url = m[1];
+      // ⚠ A ROW IS A TABLE ROW, NOT "A LINE WITH A URL IN IT". This used to
+      // require a URL match and `continue` without one, and five of the nine
+      // applications on the tracker carry none — the five backfilled on
+      // 2026-08-10, whose Notes read "VP confirmed all approved packs were
+      // submitted" and whose only path is a local cv.pdf. Those five were
+      // dropped before any of the matching below could run, so they could not
+      // be counted however the join worked.
+      //
+      // The shape is the one /api/status writes and that followup-cadence,
+      // analyze-patterns, verify-pipeline, dedup-tracker and merge-tracker all
+      // require: a leading "|", at least nine columns, and a number in the
+      // first. Anything else is the header, the separator, or prose.
+      if (!line.startsWith("|")) continue;
+      const cols = line.split("|").map(c => c.trim());
+      if (cols.length < 10) continue;
+      if (!/^\d+$/.test(cols[1] ?? "")) continue;
+      const url = line.match(/(https?:\/\/\S+)/)?.[1] ?? "";
       const lower = line.toLowerCase();
       let status: PipelineStatus = "under_review";
       if (lower.includes("rejected") || lower.includes("pass")) status = "rejected";
       else if (lower.includes("applied") || lower.includes("submitted")) status = "applied";
       else if (lower.includes("archived") || lower.includes("ignore")) status = "archived";
-      // Parse the date appended by /api/status: "Applied 2026-05-13" or "Applied 2026-05-13 — note"
-      const dateM = line.match(/(\d{4}-\d{2}-\d{2})/);
+      // The Date column, not "the first date anywhere on the line" — several
+      // notes carry a follow-up or backfill date that would otherwise win.
+      const dateM = (cols[2] ?? "").match(/^(\d{4}-\d{2}-\d{2})$/) ?? line.match(/(\d{4}-\d{2}-\d{2})/);
       const appliedAt = status === "applied" && dateM ? dateM[1] : undefined;
-      // The table /api/status writes is | # | Date | Company | Role | ... Rows
-      // that are not table rows (the header, a stray note) yield empty strings
-      // and are still usable as a URL-keyed overlay, just not on their own.
-      const cols = line.startsWith("|") ? line.split("|").map(c => c.trim()) : [];
+      // | # | Date | Company | Role | Score | Status | PDF | Report | Notes |
       out.push({ url, status, appliedAt, company: cols[3] ?? "", role: cols[4] ?? "" });
     }
   } catch {
@@ -420,7 +432,7 @@ export async function loadPipeline(): Promise<PipelineData> {
   }
 
   const tracker = await readApplicationsMd();
-  const manualStatuses = new Map(tracker.map(t => [t.url, t]));
+  const manualStatuses = new Map(tracker.filter(t => t.url).map(t => [t.url, t]));
   // A second index by canonical company+title. prune-stale can retire the exact
   // URL VP applied through while a per-location twin of the same req survives,
   // and dedup then keeps the twin - so a URL-only overlay drops the status onto
@@ -585,9 +597,9 @@ export async function loadPipeline(): Promise<PipelineData> {
     if (r.company && r.role) represented.add(canonKey(r.company, r.role));
   }
   for (const t of tracker) {
-    if (represented.has(t.url)) continue;
+    if (t.url && represented.has(t.url)) continue;
     if (t.company && t.role && represented.has(canonKey(t.company, t.role))) continue;
-    if (!t.company && !t.role) continue;   // a bare URL is not renderable on its own
+    if (!t.company || !t.role) continue;   // nothing to render or to key on
     dedupedRows.push({
       url: t.url,
       company: t.company,
@@ -597,8 +609,8 @@ export async function loadPipeline(): Promise<PipelineData> {
       checked: true,
       ...(t.appliedAt ? { appliedAt: t.appliedAt } : {}),
     });
-    represented.add(t.url);
-    if (t.company && t.role) represented.add(canonKey(t.company, t.role));
+    if (t.url) represented.add(t.url);
+    represented.add(canonKey(t.company, t.role));
   }
 
   const visibleRows = blacklist.size
