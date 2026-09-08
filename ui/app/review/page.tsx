@@ -99,9 +99,29 @@ async function hydrate(item: QueueItem): Promise<Loaded> {
 // you" and rendered nowhere — `civic` was absent from 2026-08-10, hiding 71
 // cards (26% of the queue), 45 of them the ones failing the ready gate.
 const TRACK_ORDER = ["pm", "now", "civic", "govtech", "nonprofit", "teaching", "venture"];
+
+/**
+ * The tabs to render: every track that actually has cards, in TRACK_ORDER where
+ * the array knows it, then anything it does not, appended.
+ *
+ * ⚠ THE ARRAY IS AN ORDERING, NOT A GUEST LIST. `present` used to be
+ * TRACK_ORDER.filter(...), so a track absent from the array was counted in "N
+ * awaiting you" and rendered nowhere. `civic` was missing for a month: 71
+ * cards, 26% of the queue, counted and unreachable. Adding `civic` to the array
+ * fixed that instance and left the shape that caused it, which would bite again
+ * the next time a track was added. Now an unknown track gets a tab named after
+ * its raw key — ugly, and visible, which is the point.
+ */
+function tracksToShow(withCards: string[]): string[] {
+  const known = TRACK_ORDER.filter(t => withCards.includes(t));
+  const unknown = withCards.filter(t => !TRACK_ORDER.includes(t)).sort();
+  return [...known, ...unknown];
+}
 const TRACK_LABEL: Record<string, string> = {
   pm: "PM / PMM",
   civic: "City of NY",
+  // Was absent, so the tab rendered its raw key, "now".
+  now: "Get Hired Now",
   govtech: "Government",
   nonprofit: "Nonprofit",
   teaching: "Teaching",
@@ -366,7 +386,7 @@ export default async function ReviewPage({
   const showDecided = decidedParam === "1";
   const visible = (t: string) => (grouped[t] ?? []).filter(i => showDecided || !i.decision);
 
-  const present = TRACK_ORDER.filter(t => visible(t).length);
+  const present = tracksToShow(Object.keys(grouped).filter(t => visible(t).length));
   const active = present.includes(trackParam ?? "") ? (trackParam as string) : present[0] ?? "pm";
   // ⚠ FRESHEST FIRST. The list used to render in `queue.items` order — insertion
   // order — so a new card landed at the BOTTOM of a 177-card tab and the first

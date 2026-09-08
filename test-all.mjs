@@ -877,6 +877,24 @@ if (!fileExists('test-track-detect.mjs')) {
   else pass(`track detection ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
 }
 
+// The scorer's prose is Track A's on every track, because there is one scoring
+// prompt and it asks about VP's NYC product search. On a teaching or civic card
+// that makes the model's verdict and redFlags a category error: a card scored 4
+// by the teaching rubric rendered "Role is a Teacher position, not a Product
+// Marketing role" as its warning and argued against its own number. 84 of 287
+// pending cards carried prose like it. The filter is precision-first — a false
+// positive deletes a REAL warning off a card VP is about to act on — so the
+// suite asserts the negative properties: a pm card is byte-identical, and a
+// claim that is not a category error is never dropped on any track.
+console.log('\n21q. Off-track scorer prose');
+if (!fileExists('test-off-track-prose.mjs')) {
+  fail('test-off-track-prose.mjs missing — the card-notes filter has no specification');
+} else {
+  const out = run('node', ['test-off-track-prose.mjs']);
+  if (out === null) fail('off-track prose tests failing — run: node test-off-track-prose.mjs');
+  else pass(`off-track prose ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
+}
+
 // ── 20. SEARCH-RESOLVED APPLY PATHS ─────────────────────────────
 // A wrong resolution is worse than a miss: the chain stages a tailored CV
 // against whatever it resolves and VP reviews the card as real. A permissive

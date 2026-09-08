@@ -27,6 +27,16 @@ eq('NYCPS central-office analyst routes to civic',
    detectTrack(jd('Senior Data Analyst, OGC - 26513', 'NYC Public Schools')), 'civic');
 eq('NYCPS project manager routes to civic',
    detectTrack(jd('Project Manager Consultant, DCP - 26226', 'NYC Public Schools')), 'civic');
+
+// CIVIC_EMPLOYER carried `\\bbureau of` inside a regex LITERAL, where `\\b` is a
+// literal backslash followed by b — not a word boundary. So the one alternative
+// meant to catch a bureau matched nothing, and every "Bureau of ..." agency fell
+// through to the PM rubric and its $150K floor and AI-native thesis. The
+// neighbouring alternatives all worked, which is why it went unseen.
+eq('a bureau is a city agency',
+   detectTrack(jd('Product Manager', 'Bureau of Data Technology & Strategy')), 'civic');
+eq('a bureau mid-name is still a city agency',
+   detectTrack(jd('Program Manager', 'DOHMH Bureau of Mental Health')), 'civic');
 eq('and civic actually admits the title',
    titlePassesForTrack('civic', 'Senior Data Analyst, OGC - 26513'), true);
 

@@ -33,7 +33,8 @@ import { canonKey } from './lib/canonical.mjs';
 import { resolveApplyPath, openCache, DEFAULT_CACHE_PATH } from './lib/apply-url.mjs';
 import { loadReposts, repostNote } from './lib/repost.mjs';
 import { updateQueue } from './lib/queue-file.mjs';
-import { detectTrack } from './lib/track.mjs';
+import { stripOffTrackClaims, cleanNotesForTrack } from './lib/off-track-prose.mjs';
+import { detectTrack, TRACK_LABELS } from './lib/track.mjs';
 import { cvVariantFor } from './lib/cv-variant.mjs';
 import { parseBlacklist, blacklistEntry } from './blacklist.mjs';
 import { canonicalizeUrl } from './lib/url-canonical.mjs';
@@ -859,8 +860,19 @@ const main = async () => {
     const relisted = repostNote(reposts, c.company, c.role);
     const notes = [
       relisted,
-      c.verdict ? `SCORER: ${c.verdict}.` : '',
-      c.redFlags ? `RED FLAGS: ${c.redFlags}` : '',
+      // ⚠ THE SCORER'S PROSE IS TRACK A'S, ON EVERY TRACK. There is one scoring
+      // prompt and it asks about VP's NYC product search, so on a teaching or
+      // civic card the model is answering a question this card is not asking:
+      // an Achievement First teaching role, scored 4 by the TEACHING rubric,
+      // rendered "RED FLAGS: Role is a Teacher position, not a Product
+      // Marketing role." Both true, neither a defect, and the card argued
+      // against its own number. 84 of 287 pending cards carried prose like it.
+      //
+      // Stripped per CLAUSE, so the half that says what the role IS survives.
+      // Display only — hasCaveat still reads the raw redFlags and still caps a
+      // 5 to a 4. See the header of lib/off-track-prose.mjs.
+      (() => { const v = stripOffTrackClaims(c.track, c.verdict); return v ? `SCORER: ${v}` : ''; })(),
+      (() => { const f = stripOffTrackClaims(c.track, c.redFlags); return f ? `RED FLAGS: ${f}` : ''; })(),
       // Nice-to-have skills VP does not have. A normal warning, not a block -
       // his words: "it doesnt have to be a loud warning, just a normal warning".
       (c.skillWarnings || []).length ? `Listed as preferred, not required: ${(c.skillWarnings || []).join(', ')}` : '',
@@ -1031,6 +1043,33 @@ const main = async () => {
   // `slice(-0)` is the WHOLE array, so written===0 must be spelled out.
   const appended = written ? queue.items.slice(-written) : [];
   const final = await updateQueue(QUEUE, (fresh) => {
+    // Restate the track legend from lib/track.mjs every run. It was a hand-
+    // written literal that had not been touched since govtech and venture were
+    // retired: the UI prints `queue.tracks[active]` under the tab bar, so civic
+    // and now — 83 of 287 pending cards — showed no description while two dead
+    // tracks had one. Written before anything else so a mid-callback return
+    // cannot skip it.
+    fresh.tracks = { ...TRACK_LABELS };
+
+    // Re-clean the scorer's prose on every PENDING card, not just the ones
+    // minted tonight. 84 cards were already on the board carrying Track-A prose
+    // when this shipped, and they would have carried it until they expired.
+    // Idempotent by construction (test-off-track-prose.mjs pins that), so it
+    // runs every night instead of needing a one-off migration — which also
+    // covers any card minted by an older build.
+    //
+    // Decided cards are left exactly as they are: the reasoning on a rejection
+    // is the record of why, and rewriting history to look tidier is not this
+    // script's business.
+    {
+      let n = 0;
+      for (const i of fresh.items) {
+        if (i.decision) continue;
+        const cleaned = cleanNotesForTrack(i.track, i.notes || '');
+        if (cleaned !== (i.notes || '')) { i.notes = cleaned; n++; }
+      }
+      if (n) console.log(`cleaned off-track scorer prose on ${n} card(s)`);
+    }
     // ⚠ RETIREMENT MUST HAPPEN HERE, not on the snapshot loaded at the top of
     // the run. `queue` is a read-only copy used to build the `known` index;
     // updateQueue re-reads the file under lock and writes THIS object. The first

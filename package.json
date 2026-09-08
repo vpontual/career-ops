@@ -1,7 +1,7 @@
 {
   "name": "career-ops",
   "version": "1.0.0",
-  "description": "AI-powered job search pipeline built on Claude Code",
+  "description": "VP's NYC job-search pipeline: discovery, scoring, and staged application packs. Never submits.",
   "scripts": {
     "doctor": "node doctor.mjs",
     "verify": "node verify-pipeline.mjs",
@@ -22,11 +22,11 @@
     "career",
     "automation"
   ],
-  "author": "Santiago Fernández de Valderrama <hi@santifer.io> (https://santifer.io)",
-  "homepage": "https://santifer.io",
+  "author": "vpontual",
+  "homepage": "https://github.com/vpontual/career-ops",
   "repository": {
     "type": "git",
-    "url": "https://github.com/santifer/career-ops"
+    "url": "https://github.com/vpontual/career-ops"
   },
   "license": "MIT",
   "dependencies": {
@@ -37,5 +37,11 @@
     "js-yaml": "^4.1.1",
     "mailparser": "^3.9.8",
     "playwright": "^1.58.1"
+  },
+  "forkedFrom": {
+    "name": "career-ops",
+    "author": "Santiago Fernández de Valderrama <hi@santifer.io>",
+    "repository": "https://github.com/santifer/career-ops",
+    "note": "Upstream. Sync is one-way and by hand — see docs/FORK-CHANGES.md and the ban in update-system.mjs."
   }
 }
