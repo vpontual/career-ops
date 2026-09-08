@@ -143,6 +143,50 @@ def slugify(s):
     return re.sub(r"[^a-z0-9]+", "-", (s or "").lower()).strip("-")[:60]
 
 
+def add_apply_line(jd_path, apply_url):
+    """Insert `**Apply:** <url>` into an existing JD that lacks it.
+
+    ⚠ THIS IS THE BACKFILL PATH, AND IT IS THE WHOLE POINT. 351 tier-4+ roles
+    sit in data/unresolved-apply-paths.md because their JD records only the
+    Indeed viewjob link, which has no form on it — while jobspy has been
+    handing us the employer's own apply URL as `job_url_direct` all along and
+    this file read only `job_url`. New rows are fixed by writing the line at
+    ingest, but a role already on disk is skipped long before the write loop
+    (`url in seen`), so without this it would never gain the field. Indeed
+    re-observes the same postings for ~30 days, so the backlog repairs itself
+    over one sweep.
+
+    ⚠ THE RAW VALUE IS WRITTEN, NOT A RESOLVED ONE. `job_url_direct` is often a
+    short link (grnh.se) or a tracker (click.appcast.io); resolving it needs a
+    network call and lives in lib/apply-url.mjs on the Node side, which caches
+    it. This step must stay a pure file write — a scrape that also resolves
+    hundreds of redirects is a scrape that times out.
+
+    Returns True if the file was changed.
+    """
+    try:
+        with open(jd_path, "r", encoding="utf-8") as f:
+            text = f.read()
+    except OSError:
+        return False
+    if "**Apply:**" in text or "**URL:**" not in text:
+        return False
+    out, done = [], False
+    for line in text.split("\n"):
+        out.append(line)
+        if not done and line.startswith("**URL:**"):
+            out.append(f"**Apply:** {apply_url}")
+            done = True
+    if not done:
+        return False
+    try:
+        with open(jd_path, "w", encoding="utf-8") as f:
+            f.write("\n".join(out))
+    except OSError:
+        return False
+    return True
+
+
 def days_ago(date_posted):
     if not date_posted or (isinstance(date_posted, float) and pd.isna(date_posted)):
         return None
@@ -183,6 +227,7 @@ def main():
 
     collected = []  # (url, company, title, location, iso, days, description)
     run_seen = set()
+    backfill = []
     # Every query failing must not look like a quiet night. The exception below
     # printed to stderr and continued, and the summary counted only what was
     # KEPT - so 14 failed searches and 14 searches that legitimately matched
@@ -226,9 +271,20 @@ def main():
             url = cell(r, "job_url")
             title = cell(r, "title")
             company = cell(r, "company")
+            # The employer's own apply URL. Present on effectively every Indeed
+            # row (40/40 in a live sample) and discarded by this script until
+            # 2026-09-02, which is why 351 qualifying roles had no form behind
+            # them and resolve-apply-paths.mjs burned ~43 min a night guessing
+            # board slugs to reconstruct it.
+            apply_url = cell(r, "job_url_direct")
             if not url or not title or not company:
                 continue
             if url in seen or url in run_seen:
+                # Already on disk. Still worth one thing: giving an older JD the
+                # apply URL it never got. Cheap, idempotent, no network.
+                if apply_url and url not in run_seen:
+                    backfill.append((company, title, apply_url))
+                    run_seen.add(url)
                 continue
             if not title_passes(title, pos, neg):
                 continue
@@ -238,7 +294,7 @@ def main():
             days, iso = (da if da else (None, None))
             desc = r.get("description")
             desc = "" if (desc is None or (isinstance(desc, float) and pd.isna(desc))) else str(desc)
-            collected.append((url, company, title, location, iso, days, desc))
+            collected.append((url, company, title, location, iso, days, desc, apply_url))
             kept += 1
         print(f"  {kept} kept  [{term} @ {loc}] (of {len(df)})")
 
@@ -254,7 +310,7 @@ def main():
     today = dt.date.today().isoformat()
     pipe_lines, hist_lines = [], []
     duplicates = 0
-    for url, company, title, location, iso, days, desc in collected:
+    for url, company, title, location, iso, days, desc, apply_url in collected:
         # `"indeed-" + slugify(...) or "indeed-role"` never reached the fallback:
         # + binds tighter than or, and "indeed-" is always truthy, so an empty
         # slugify produced the filename "indeed-.md".
@@ -271,11 +327,19 @@ def main():
         jd_path = os.path.join(JDS_DIR, jd_name)
         if os.path.exists(jd_path):
             duplicates += 1
+            if apply_url:
+                add_apply_line(jd_path, apply_url)
             continue
 
         posted = f"{iso} ({days} days ago)" if iso and days is not None else "(date unknown)"
+        # ⚠ **URL:** STAYS THE IDENTITY. scan-history.tsv, pipeline.md, dedup and
+        # canonicalizeUrl all join on it, so the apply URL is recorded as a
+        # SEPARATE field. Making the direct link the row identity would split
+        # every existing role into a second record.
+        apply_line = f"**Apply:** {apply_url}\n" if apply_url else ""
         header = (f"# {title}\n"
                   f"**URL:** {url}\n"
+                  f"{apply_line}"
                   f"**Company:** {company}\n"
                   f"**Location:** {location or '(not stated)'}\n"
                   f"**Posted:** {posted}\n"
@@ -294,6 +358,15 @@ def main():
         if write_header:
             f.write("url\tfirst_seen\tportal\ttitle\tcompany\tstatus\n")
         f.writelines(hist_lines)
+
+    patched = 0
+    for company, title, apply_url in backfill:
+        body = slugify(f"{company}-{title}") or "role"
+        jd_path = os.path.join(JDS_DIR, "indeed-" + body + ".md")
+        if os.path.exists(jd_path) and add_apply_line(jd_path, apply_url):
+            patched += 1
+    if patched:
+        print(f"         {patched} existing JD(s) gained an apply URL they never had")
 
     _report(queries_run, queries_failed, queries_empty, len(pipe_lines), duplicates)
     print("Next: rank-leads.mjs scores them; stage-applications.mjs packages tier 4+.")

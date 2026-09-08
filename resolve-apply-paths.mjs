@@ -152,6 +152,7 @@ const main = async () => {
   // Everything already known by a real ATS URL, so we never re-add a duplicate.
   const knownKeys = new Set();
   const targets = [];
+  let skippedKnown = 0;
   for (const f of jdFiles) {
     const rec = scores[f];
     if (!rec || typeof rec !== 'object') continue;
@@ -160,13 +161,23 @@ const main = async () => {
     if (!company || /^(nan|unknown|none|null)$/i.test(company)) continue;
     const key = canonKey(company, jd.title || '');
     if (!AGG.test(jd.url || '')) { knownKeys.add(key); continue; }
+    // ⚠ THE APPLY URL IS ALREADY KNOWN — DO NOT GUESS FOR IT.
+    // This step exists to reconstruct an employer's own posting by guessing
+    // board slugs and proving them with an exact title match: ~43 minutes a
+    // night, and on 2026-09-02 it resolved 24 of 459. Since that morning
+    // fetch-indeed.py records jobspy's `job_url_direct` as the JD's
+    // `**Apply:**` line, which is the same answer for free and exactly. A JD
+    // carrying one needs no search at all, so this loop shrinks as the 30-day
+    // backfill sweep proceeds rather than re-guessing what is already on disk.
+    if (jd.apply_url) { skippedKnown++; continue; }
     if (Number(rec.score) >= MIN_SCORE) targets.push({ f, jd, rec, key, company });
   }
 
   const todo = targets.filter(t => !knownKeys.has(t.key));
   const work = LIMIT ? todo.slice(0, LIMIT) : todo;
   console.log(`aggregator-only at tier ${MIN_SCORE}+: ${targets.length}; ` +
-              `${targets.length - todo.length} already known by a real URL; resolving ${work.length}\n`);
+              `${targets.length - todo.length} already known by a real URL; ` +
+              `${skippedKnown} already carry an apply URL from the source; resolving ${work.length}\n`);
 
   const rows = [];
   let hit = 0, miss = 0;
