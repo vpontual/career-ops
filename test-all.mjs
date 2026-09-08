@@ -815,6 +815,51 @@ if (!fileExists('test-applied-gate.mjs')) {
   else pass(`applied gate ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
 }
 
+console.log('\n21p. CV coverage facts');
+if (!fileExists('test-cv-coverage-facts.mjs')) {
+  fail('test-cv-coverage-facts.mjs missing — nothing pins the two writers of cvCoverage* to the same shape');
+} else {
+  const out = run('node', ['test-cv-coverage-facts.mjs']);
+  if (out === null) fail('cv coverage facts tests failing — run: node test-cv-coverage-facts.mjs');
+  else pass(`cv coverage facts ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
+}
+
+console.log('\n21o. Queue expiry');
+if (!fileExists('test-queue-expiry.mjs')) {
+  fail('test-queue-expiry.mjs missing — nothing specifies when a card leaves the queue');
+} else {
+  const out = run('node', ['test-queue-expiry.mjs']);
+  if (out === null) fail('queue expiry tests failing — run: node test-queue-expiry.mjs');
+  else pass(`queue expiry ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
+}
+
+console.log('\n21n. Slate selection');
+if (!fileExists('test-slate.mjs')) {
+  fail('test-slate.mjs missing — the thing VP is shown each day has no specification');
+} else {
+  const out = run('node', ['test-slate.mjs']);
+  if (out === null) fail('slate tests failing — run: node test-slate.mjs');
+  else pass(`slate ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
+}
+
+console.log('\n21m. Apply-URL resolution');
+if (!fileExists('test-apply-url.mjs')) {
+  fail('test-apply-url.mjs missing — the Indeed direct-apply resolver has no specification');
+} else {
+  const out = run('node', ['test-apply-url.mjs']);
+  if (out === null) fail('apply-url tests failing — run: node test-apply-url.mjs');
+  else pass(`apply-url ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
+}
+
+console.log('\n21l. Account-wall findings');
+if (!fileExists('test-wall-finding.mjs')) {
+  fail('test-wall-finding.mjs missing — the ready gate failed for ten nights on a board that requires an account, and nothing specified what to record instead');
+} else {
+  const out = run('node', ['test-wall-finding.mjs']);
+  if (out === null) fail('wall finding tests failing — run: node test-wall-finding.mjs');
+  else pass(`wall finding ${out.split('\n').filter(l => /passed/.test(l)).join(' ')}`);
+}
+
 // ── 21k. TRACK DETECTION ────────────────────────────────────────
 // Which rubric a posting is scored against. This had NO assertions at all —
 // test-track.mjs prints corpus counts and was never run from here — and the
