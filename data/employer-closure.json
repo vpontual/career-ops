@@ -1,120 +1,160 @@
 {
-  "measuredAt": "2026-08-11",
+  "measuredAt": "2026-09-08",
   "matureDays": 30,
   "note": "pctAlive = share of this employer's postings, watched MATURE+ days, that are STILL OPEN. High means the board is evergreen and an old posting there signals nothing about hiring intent.",
   "curve": [
     {
       "lo": 0,
       "hi": 3,
-      "n": 13,
-      "alive": 12,
-      "pct": 92.3076923076923
-    },
-    {
-      "lo": 4,
-      "hi": 7,
-      "n": 331,
-      "alive": 304,
-      "pct": 91.8429003021148
-    },
-    {
-      "lo": 8,
-      "hi": 14,
-      "n": 224,
-      "alive": 186,
-      "pct": 83.03571428571429
-    },
-    {
-      "lo": 15,
-      "hi": 21,
       "n": 10,
       "alive": 10,
       "pct": 100
     },
     {
+      "lo": 4,
+      "hi": 7,
+      "n": 29,
+      "alive": 28,
+      "pct": 96.55172413793103
+    },
+    {
+      "lo": 8,
+      "hi": 14,
+      "n": 35,
+      "alive": 32,
+      "pct": 91.42857142857143
+    },
+    {
+      "lo": 15,
+      "hi": 21,
+      "n": 51,
+      "alive": 34,
+      "pct": 66.66666666666667
+    },
+    {
       "lo": 22,
       "hi": 30,
-      "n": 13,
-      "alive": 12,
-      "pct": 92.3076923076923
+      "n": 69,
+      "alive": 37,
+      "pct": 53.6231884057971
     },
     {
       "lo": 31,
       "hi": 45,
-      "n": 13,
-      "alive": 11,
-      "pct": 84.61538461538461
+      "n": 441,
+      "alive": 239,
+      "pct": 54.19501133786848
     },
     {
       "lo": 46,
       "hi": 60,
-      "n": 18,
-      "alive": 15,
-      "pct": 83.33333333333333
+      "n": 11,
+      "alive": 7,
+      "pct": 63.63636363636363
     },
     {
       "lo": 61,
       "hi": 90,
-      "n": 28,
-      "alive": 9,
-      "pct": 32.142857142857146
+      "n": 8,
+      "alive": 3,
+      "pct": 37.5
     },
     {
       "lo": 91,
       "hi": 9999,
-      "n": 106,
-      "alive": 38,
-      "pct": 35.84905660377358
+      "n": 58,
+      "alive": 15,
+      "pct": 25.862068965517242
     }
   ],
   "employers": {
-    "sierra": {
+    "democracy prep public schools": {
+      "n": 19,
+      "pctAlive": 100
+    },
+    "scale ai": {
       "n": 18,
-      "pctAlive": 94
+      "pctAlive": 83
     },
-    "decagon": {
-      "n": 11,
-      "pctAlive": 64
+    "cresta": {
+      "n": 4,
+      "pctAlive": 75
     },
-    "figma": {
-      "n": 5,
-      "pctAlive": 60
+    "robin hood foundation": {
+      "n": 4,
+      "pctAlive": 75
     },
-    "suno": {
-      "n": 5,
-      "pctAlive": 60
+    "justworks": {
+      "n": 6,
+      "pctAlive": 67
+    },
+    "vtex": {
+      "n": 9,
+      "pctAlive": 67
+    },
+    "success academy charter schools": {
+      "n": 46,
+      "pctAlive": 59
+    },
+    "gitlab": {
+      "n": 129,
+      "pctAlive": 57
     },
     "mercury": {
-      "n": 6,
+      "n": 9,
+      "pctAlive": 56
+    },
+    "braze": {
+      "n": 16,
       "pctAlive": 50
     },
-    "anthropic": {
-      "n": 15,
+    "code for america": {
+      "n": 4,
+      "pctAlive": 50
+    },
+    "ebanx": {
+      "n": 27,
+      "pctAlive": 48
+    },
+    "wellhub": {
+      "n": 62,
       "pctAlive": 47
+    },
+    "quintoandar": {
+      "n": 26,
+      "pctAlive": 46
     },
     "glean": {
       "n": 18,
       "pctAlive": 44
     },
-    "harvey": {
-      "n": 20,
-      "pctAlive": 35
+    "brilla public charter schools": {
+      "n": 9,
+      "pctAlive": 44
     },
-    "cohere": {
-      "n": 6,
+    "anthropic": {
+      "n": 19,
+      "pctAlive": 37
+    },
+    "intercom": {
+      "n": 15,
       "pctAlive": 33
     },
-    "ramp": {
+    "figma": {
+      "n": 9,
+      "pctAlive": 33
+    },
+    "descript": {
       "n": 4,
       "pctAlive": 25
     },
-    "crusoe": {
-      "n": 5,
-      "pctAlive": 20
+    "coney island prep": {
+      "n": 14,
+      "pctAlive": 14
     },
-    "intercom": {
-      "n": 11,
-      "pctAlive": 9
+    "grafana labs": {
+      "n": 7,
+      "pctAlive": 0
     },
     "algolia": {
       "n": 5,
