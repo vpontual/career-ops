@@ -757,6 +757,21 @@ async function writeUnreadableForm(card, url, { loginWall, how, reason, note }) 
   await writeFile(path.join(dir, 'answers.md'), md);
   await writeFile(path.join(dir, 'answers-meta.json'), JSON.stringify({
     writtenOn: today(), sha256: sha(md),
+    // ⚠ THE FIELD THAT SAYS THIS FILE HOLDS NO ANSWERS.
+    //
+    // A finding and a filled form are both `answers.md`, and until 2026-09-08
+    // nothing downstream could tell them apart: 127 of 514 packs held a finding,
+    // batch/ready-check.py passed every one of them `ready`, build-slate.mjs
+    // counted them as pack-ready, and /today badged them "answers drafted" over
+    // a file whose own last line says nothing above is an answer. That is the
+    // same bug as the `cv:` badge built from intent rather than fact.
+    //
+    // Written by BOTH writers, never inferred by a reader. A reader that has to
+    // parse the prose to learn what a file is will drift from the writer.
+    enumerated: false,
+    // The finding's own words, so a reader can say WHY without re-parsing the
+    // markdown. Short by construction — it is the same string the file renders.
+    reason: reason || 'the application form could not be read',
   }, null, 2));
 }
 
@@ -1234,6 +1249,10 @@ const main = async () => {
       await writeFile(path.join(dir, 'answers.md'), md);
       await writeFile(path.join(dir, 'answers-meta.json'), JSON.stringify({
         writtenOn: today(), sha256: sha(md),
+        // A real field list was read and answered. See the note on the other
+        // writer for why this is recorded rather than inferred.
+        enumerated: true,
+        fieldCount: fields.length,
       }, null, 2));
     }
     ok++;

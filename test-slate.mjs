@@ -134,6 +134,41 @@ eq('readiness: unknown cover letter is NOT treated as settled',
 eq('readiness: no packs input means unchecked, not unready',
   packReadiness(card({ slug: 'r' }), null).checked, false);
 
+// ── an unreadable form is a THIRD state, not "not ready yet" ───────────────
+// 127 of 514 packs on 2026-09-08 held a finding rather than answers, and the
+// caller read the FILENAME, so every one of them ranked as fully ready and
+// /today badged it "answers drafted" over a file whose last line says nothing
+// above is an answer.
+eq('readiness: an unreadable form does not count as answers',
+  packReadiness(card({ slug: 'r', coverLetter: 'absent' }),
+    { r: { answers: false, formUnreadable: true } }).answers, false);
+eq('readiness: an unreadable form scores like a missing pack, not a finished one',
+  packReadiness(card({ slug: 'r', coverLetter: 'absent' }),
+    { r: { answers: false, formUnreadable: true } }).level, 1);
+eq('readiness: an unreadable form is reported as its own state',
+  packReadiness(card({ slug: 'r' }), { r: { answers: false, formUnreadable: true } }).formUnreadable, true);
+// The two are mutually exclusive by construction: a pack cannot both hold
+// answers and hold a finding, and a caller that sets both must not get both.
+eq('readiness: answers win over a stale formUnreadable flag',
+  packReadiness(card({ slug: 'r' }), { r: { answers: true, formUnreadable: true } }).formUnreadable, false);
+eq('readiness: an unchecked pack is not an unreadable one',
+  packReadiness(card({ slug: 'r' }), null).formUnreadable, false);
+
+// build-slate.mjs falls back to this exact sentence for packs written before
+// answers-meta.enumerated existed. Rewording renderWallFinding() without
+// updating that fallback would silently re-promote every one of them, so the
+// string is pinned here rather than left to a comment.
+{
+  const src = readFileSync(new URL('./generate-answers.mjs', import.meta.url), 'utf-8');
+  eq('the finding sentence build-slate falls back on still exists',
+    src.includes('no field list could be read for this pack'), true);
+  const bs = readFileSync(new URL('./build-slate.mjs', import.meta.url), 'utf-8');
+  eq('build-slate still carries that fallback marker',
+    bs.includes('no field list could be read for this pack'), true);
+  eq('build-slate prefers the written flag over the prose',
+    bs.includes("typeof meta.enumerated === 'boolean'"), true);
+}
+
 same('ATS friction: extension-fillable before other before Workday',
   slugs(pmOnly([
     card({ slug: 'wd', ats: 'other', applyUrl: 'https://acme.wd5.myworkdayjobs.com/en-US/careers/job/1' }),
@@ -424,8 +459,17 @@ eq('the input cards are not mutated',
   const why = pmOnly([card({ slug: 'x', ageDays: 2, enqueuedAt: shift(TODAY, -4), coverLetter: 'required', ats: 'other',
     applyUrl: 'https://acme.wd5.myworkdayjobs.com/x' })], { packs: {} }).items[0].why;
   eq('a drifted age says so, with the numbers', why.includes(`about 6d old (2d when carded on ${shift(TODAY, -4)})`), true);
-  eq('an unwritten answers.md is stated, not hidden', why.includes('no answers.md yet'), true);
+  eq('an unwritten answers file is stated, not hidden', why.includes('no answers yet'), true);
   eq('a required, undrafted letter is stated', why.includes('cover letter still needed'), true);
+  // Three readiness states must read as three different sentences on the card.
+  // "answers drafted" over a finding was the bug; "no answers yet" over one
+  // would be the opposite lie, promising a pack tonight's run cannot produce.
+  {
+    const w = pmOnly([card({ slug: 'x', coverLetter: 'absent' })],
+      { packs: { x: { answers: false, formUnreadable: true } } }).items[0].why;
+    eq('an unreadable form says so, and does not claim answers',
+      w.includes('form not readable — fill it by hand') && !w.includes('answers drafted'), true);
+  }
   eq('Workday friction is stated', why.includes('workday — needs an employer account first'), true);
   eq('no packs input reads as unchecked', pmOnly([card()]).items[0].why.includes('pack not checked'), true);
   eq('unknown cover letter reads as unchecked, never as "not needed"',

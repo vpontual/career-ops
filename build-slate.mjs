@@ -25,7 +25,7 @@
  */
 
 import { readFile, writeFile, readdir } from 'fs/promises';
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import yaml from 'js-yaml';
@@ -36,6 +36,10 @@ import { loadAppliedIdentities, isApplied } from './lib/applied-gate.mjs';
 import { classifyLivenessFromFetch, htmlToText } from './liveness-core.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
+
+// The one sentence renderWallFinding() puts at the foot of every finding. Only
+// used for packs written before answers-meta.enumerated existed.
+const FINDING_MARKER = /no field list could be read for this pack/;
 const argv = process.argv.slice(2);
 const DRY = argv.includes('--dry-run');
 const dateArg = (() => { const i = argv.indexOf('--date'); return i >= 0 ? argv[i + 1] : null; })();
@@ -45,6 +49,30 @@ const QUEUE = path.join(ROOT, 'data', 'review-queue.json');
 const SLATE = path.join(ROOT, 'data', 'slate.json');
 const HISTORY = path.join(ROOT, 'data', 'slate-history.json');
 const CONFIG = path.join(ROOT, 'config', 'slate.yml');
+
+/**
+ * Whether output/<slug>/ holds ANSWERS or a finding that the form is unreadable.
+ *
+ * Prefers answers-meta.json's `enumerated`, which generate-answers writes on
+ * both paths. Falls back to the finding's own sentence for packs written before
+ * that field existed — a fallback that is safe only because renderWallFinding()
+ * emits one fixed string, and it is asserted in test-slate.mjs so a reword of
+ * that sentence fails a test rather than silently re-promoting 127 packs.
+ *
+ * @returns {{answers:boolean, formUnreadable:boolean}}
+ */
+function readAnswersState(dir) {
+  const md = path.join(dir, 'answers.md');
+  if (!existsSync(md)) return { answers: false, formUnreadable: false };
+  try {
+    const meta = JSON.parse(readFileSync(path.join(dir, 'answers-meta.json'), 'utf-8'));
+    if (typeof meta.enumerated === 'boolean') {
+      return { answers: meta.enumerated, formUnreadable: !meta.enumerated };
+    }
+  } catch { /* pre-2026-09-08 pack, or no meta at all — fall through */ }
+  const unreadable = FINDING_MARKER.test(readFileSync(md, 'utf-8'));
+  return { answers: !unreadable, formUnreadable: unreadable };
+}
 
 const readJson = async (p, fallback) => {
   try { return JSON.parse(await readFile(p, 'utf-8')); } catch { return fallback; }
@@ -76,15 +104,25 @@ async function main() {
     const d = deadlineByUrl.get(it.sourceUrl) || deadlineByUrl.get(it.applyUrl);
     if (d) deadlines[it.slug] = d;
 
-    // What is actually on disk for this role. `answers.md` means the form was
-    // enumerated and answered; a drafted cover letter means the one thing VP
-    // would otherwise write by hand is already written. Neither is a claim the
-    // pack is good — only that it is finished.
+    // What is actually on disk for this role.
+    //
+    // ⚠ NOT existsSync('answers.md'). That file has TWO meanings: a filled form,
+    // or a dated finding that the form could not be read at all (an account wall
+    // on NYC Jobs or OLAS), whose own last line says "nothing above is an
+    // answer". 127 of the 514 packs on 2026-09-08 were the second kind, and
+    // reading the filename counted every one of them as ready — so /today badged
+    // "answers drafted" over a pack with no answers in it, and ranked it above
+    // a genuinely finished one.
+    //
+    // answers-meta.json's `enumerated` is written by both of generate-answers'
+    // writers, so it is the writer's own statement rather than a reader's guess.
+    // Absent on packs written before 2026-09-08: those fall back to the prose,
+    // which is checkable because renderWallFinding() has always emitted that
+    // exact sentence. A drafted cover letter means the one thing VP would
+    // otherwise write by hand is already written. Neither is a claim the pack is
+    // GOOD — only that it is finished.
     const dir = path.join(ROOT, 'output', it.slug);
-    packs[it.slug] = {
-      answers: existsSync(path.join(dir, 'answers.md')),
-      coverDrafted: existsSync(path.join(dir, 'cover-letter.md')),
-    };
+    packs[it.slug] = { ...readAnswersState(dir), coverDrafted: existsSync(path.join(dir, 'cover-letter.md')) };
   }
 
   const history = await readJson(HISTORY, {});
