@@ -1,0 +1,159 @@
+{
+ "date": "2026-09-08",
+ "items": [
+  {
+   "slug": "stripe-product-manager-identity-access-management",
+   "company": "Stripe",
+   "role": "Product Manager, Identity & Access Management",
+   "sourceUrl": "https://stripe.com/jobs/search?gh_jid=8165137",
+   "applyUrl": "https://stripe.com/jobs/search?gh_jid=8165137",
+   "ats": "other",
+   "score": 5,
+   "ageDays": 10,
+   "geo": "remote-us",
+   "coverLetter": "optional",
+   "cvVariant": "ai-enterprise",
+   "notes": "INTERVIEW PROCESS — NOT STATED: The posting says nothing about interview format. That is normal and not a red flag, but it is unresolved - ask at first recruiter contact, before investing in rounds. || SCORER: This is a strong match for a Senior Product Manager with deep expertise in identity, security, and AI agent authorization, aligning perfectly with the candidate's background in IAM and platform infrastructure.. Comp floor seen: $150,000.",
+   "decision": null,
+   "decidedAt": null,
+   "track": "pm",
+   "glassdoor": null,
+   "autoEnqueued": true,
+   "enqueuedAt": "2026-08-29",
+   "scoreSource": "stripe-8165137.md",
+   "postedAt": "2026-08-28T16:31:07-04:00",
+   "updatedAt": null,
+   "slatedAt": "2026-09-07",
+   "why": [
+    "tier 5",
+    "whale",
+    "posted 11d ago",
+    "answers drafted",
+    "cover letter optional",
+    "other — fill by hand",
+    "pm slot 1 of 2"
+   ]
+  },
+  {
+   "slug": "google-group-product-manager-voice-experiences-on-search",
+   "company": "Google",
+   "role": "Group Product Manager, Voice Experiences on Search",
+   "sourceUrl": "https://www.indeed.com/viewjob?jk=929c61342c4490b4",
+   "applyUrl": "https://www.google.com/about/careers/applications/jobs/results/88412252419302086-group-product-manager/",
+   "ats": "other",
+   "score": 5,
+   "ageDays": 1,
+   "postedAt": "2026-09-07",
+   "updatedAt": null,
+   "geo": "nyc",
+   "coverLetter": "unknown",
+   "cvVariant": "ai-infra",
+   "notes": "INTERVIEW PROCESS — NOT STATED: The posting says nothing about interview format. That is normal and not a red flag, but it is unresolved - ask at first recruiter contact, before investing in rounds. || SCORER: This is a strong match for a senior product leader with deep AI and voice experience, offering top-tier compensation and a role that aligns perfectly with the candidate's background in consumer-facing AI products.. Comp floor seen: $240,000.",
+   "decision": null,
+   "decidedAt": null,
+   "track": "pm",
+   "glassdoor": null,
+   "autoEnqueued": true,
+   "enqueuedAt": "2026-09-08",
+   "scoreSource": "indeed-google-group-product-manager-voice-experiences-on-search.md",
+   "slatedAt": "2026-09-08",
+   "why": [
+    "tier 5",
+    "posted 1d ago",
+    "answers drafted",
+    "cover letter requirement unchecked",
+    "other — fill by hand",
+    "pm slot 2 of 2"
+   ]
+  },
+  {
+   "slug": "department-of-transportation-senior-project-manager-rapid-bu",
+   "company": "DEPARTMENT OF TRANSPORTATION",
+   "role": "Senior Project Manager, Rapid Bus Network Development",
+   "sourceUrl": "https://cityjobs.nyc.gov/job/785799",
+   "applyUrl": "https://cityjobs.nyc.gov/job/785799",
+   "ats": "other",
+   "score": 5,
+   "ageDays": 34,
+   "geo": "nyc",
+   "coverLetter": "unknown",
+   "cvVariant": "civic",
+   "notes": "INTERVIEW PROCESS — NOT STATED: The posting says nothing about interview format. That is normal and not a red flag, but it is unresolved - ask at first recruiter contact, before investing in rounds. || SCORER: This is a public sector infrastructure role focused on transit planning and community outreach, which is a significant domain mismatch for a candidate with a background in software product management and AI.. RED FLAGS: Domain mismatch: Candidate is a PM/AI specialist; role is City Planner/Transit Development.,Civil service requirement: Must be a City Planner or on Exam No. 5045 list.,Residency requirement: Must resi",
+   "decision": null,
+   "decidedAt": null,
+   "track": "civic",
+   "glassdoor": null,
+   "autoEnqueued": true,
+   "enqueuedAt": "2026-08-10",
+   "scoreSource": "nyc-department-of-transportation-senior-project-manager-rapid-bus-network-devel.md",
+   "postedAt": "2026-08-04T11:27:12+00:00",
+   "updatedAt": null,
+   "slatedAt": "2026-09-07",
+   "why": [
+    "tier 5",
+    "posted 35d ago",
+    "answers drafted",
+    "cover letter requirement unchecked",
+    "other — fill by hand",
+    "closes in 6d (post_until 2026-09-14)",
+    "rotation slot — civic's turn"
+   ]
+  }
+ ],
+ "expired": [
+  {
+   "slug": "admin-for-children-s-svcs-deputy-chief-of-staff",
+   "why": "post_until has passed (3d ago)"
+  },
+  {
+   "slug": "dept-of-environment-protection-bureau-of-water-supply-chief-",
+   "why": "post_until has passed (5d ago)"
+  },
+  {
+   "slug": "dept-of-parks-recreation-program-manager-for-stormwater-perm",
+   "why": "post_until has passed (4d ago)"
+  }
+ ],
+ "excluded": {
+  "decided": 231,
+  "dead": 0,
+  "deadlinePassed": 3,
+  "stale": 6,
+  "rolledOff": 0
+ },
+ "owed": [
+  {
+   "kind": "approved-unsubmitted",
+   "slug": "wikimedia-foundation-lead-program-manager-community-wishlist",
+   "company": "Wikimedia Foundation",
+   "role": "Lead Program Manager, Community Wishlist",
+   "applyUrl": "https://job-boards.greenhouse.io/wikimedia/jobs/8105001",
+   "decidedAt": "2026-08-11T18:24:08.394Z",
+   "daysWaiting": 27,
+   "liveness": "expired",
+   "livenessReason": "redirect to https://job-boards.greenhouse.io/wikimedia?error=true"
+  },
+  {
+   "kind": "approved-unsubmitted",
+   "slug": "nava-pbc-product-manager",
+   "company": "Nava PBC",
+   "role": "Product Manager",
+   "applyUrl": "https://job-boards.greenhouse.io/navapbc/jobs/4361894009",
+   "decidedAt": "2026-08-11T19:54:12.276Z",
+   "daysWaiting": 27,
+   "liveness": "expired",
+   "livenessReason": "redirect to https://job-boards.greenhouse.io/navapbc?error=true"
+  },
+  {
+   "kind": "approved-unsubmitted",
+   "slug": "gitlab-senior-product-manager-growth",
+   "company": "GitLab",
+   "role": "Senior Product Manager, Growth",
+   "applyUrl": "https://job-boards.greenhouse.io/gitlab/jobs/8684348002",
+   "decidedAt": "2026-09-01T17:00:02.553Z",
+   "daysWaiting": 6,
+   "liveness": "active",
+   "livenessReason": "posting still served"
+  }
+ ]
+}

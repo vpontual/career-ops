@@ -135,6 +135,13 @@ run_step enqueue    /usr/bin/node enqueue-review.mjs
 run_step answers    /usr/bin/docker compose run --rm applier node generate-answers.mjs
 run_step research   /usr/bin/node research-roles.mjs
 
+# Chooses the handful VP should actually act on today, out of everything the
+# steps above produced. Runs AFTER research so a slated card already has its
+# diligence, and BEFORE the gates so a broken slate fails the run rather than
+# reaching him. Pure policy lives in lib/slate.mjs; VP's shape of the day is
+# config/slate.yml, read live.
+run_step slate      /usr/bin/node build-slate.mjs
+
 # ── gates: is what VP will see actually fit to look at? ────────────────────
 # None of these ran until 2026-08-06. ready-check.py's own docstring promised
 # "Exit 1 if anything is not ready, so this can gate a 'done' claim" and nothing

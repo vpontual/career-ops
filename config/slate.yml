@@ -1,0 +1,31 @@
+# What lands on /today. Read live every run — edit and the next nightly obeys it.
+#
+# VP set these on 2026-09-02: three cards a day, two of them PM, one rotating
+# through the other tracks. The shape matters more than the number: his measured
+# approve rate is 12% over 103 decisions and roughly six new qualifying cards
+# arrive a day, so a three-card slate is about a day's worth of genuinely new
+# material — small enough to clear, big enough to be worth opening.
+#
+# ⚠ THERE IS NO CROSS-TRACK SCORE ANYWHERE, AND THERE MUST NOT BE. A 5 means a
+# different thing on each track (fastest income on `now`, best NYC fit on `pm`),
+# so tracks compete for SLOTS, never on a merged number. Changing `quotas`
+# changes how many slots a track gets; it can never make one track's 4 beat
+# another's 5, because the two are never compared.
+n: 3
+
+quotas:
+  pm: 2
+
+rotation:
+  slots: 1
+  among: [civic, nonprofit, now, teaching]
+
+# A civic role this close to its published close date takes the rotating slot
+# whichever track's day it is. NYC is the only source that publishes a real
+# deadline (fetch-civic.mjs carries it as **Post Until:**), so this is the one
+# place the pipeline knows a role is about to become unavailable.
+deadlinePreemptDays: 7
+
+# How long a card may sit on the slate undecided before it rolls off. It is not
+# rejected — it returns to the queue and can be slated again.
+maxDaysOnSlate: 3

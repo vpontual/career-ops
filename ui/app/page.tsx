@@ -322,7 +322,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
   // Guarded by the presence of `tab`, NOT by pathname: /review links back here
   // with ?tab=shortlist, so an unconditional redirect would bounce between the
   // two forever.
-  if (!sp.tab) redirect("/review");
+  // Lands on Today, not the queue. See the header of ui/app/today/page.tsx for
+  // why: the queue answers "what exists", which is not the question he opens
+  // this with.
+  if (!sp.tab) redirect("/today");
   const { tab = "shortlist", sort: sortParam, q: rawQ, fresh: freshParam } = sp;
   const q = (rawQ ?? "").trim().toLowerCase();
   const fresh = freshParam === "1";

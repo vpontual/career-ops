@@ -22,7 +22,7 @@ import { loadPipeline, PipelineRow } from "@/lib/pipeline";
  * calls loadPipeline for its table, pays for it once per request rather than
  * twice.
  */
-export type SiteNavId = "review" | "shortlist" | "staged" | "ranked" | "all" | "applied" | "now";
+export type SiteNavId = "today" | "review" | "shortlist" | "staged" | "ranked" | "all" | "applied" | "now";
 
 /**
  * The view predicates, shared with page.tsx (ui/lib/views.ts) so the count in
@@ -31,9 +31,14 @@ export type SiteNavId = "review" | "shortlist" | "staged" | "ranked" | "all" | "
 import { VIEW_MATCH } from "@/lib/views";
 
 export const SITE_NAV: { id: SiteNavId; label: string; href: string; accent?: "blue" | "emerald" }[] = [
-  // Review queue first: the only view where every card is complete - CV,
-  // answers, diligence, a resolved apply URL, a posting confirmed live.
-  { id: "review", label: "Review queue", href: "/review", accent: "blue" },
+  // Today first. The review queue is complete and correct and it is not where
+  // a day should start: it answers "what exists" (277 cards on 2026-09-02) and
+  // Today answers "what should I do now" (three). The queue keeps its place
+  // immediately after, as the everything-else view.
+  { id: "today", label: "Today", href: "/today", accent: "blue" },
+  // The only view where every card is complete - CV, answers, diligence, a
+  // resolved apply URL, a posting confirmed live.
+  { id: "review", label: "Review queue", href: "/review" },
   { id: "shortlist", label: "Shortlist", href: "/?tab=shortlist" },
   { id: "staged", label: "Ready to apply", href: "/?tab=staged" },
   { id: "ranked", label: "Ranked", href: "/?tab=ranked" },
@@ -62,8 +67,21 @@ const nowTrackCount = cache(async (): Promise<number> => {
   }
 });
 
+const slateCount = cache(async (): Promise<number | undefined> => {
+  try {
+    const root = process.env.CAREER_OPS_ROOT ?? "/data";
+    const s = JSON.parse(await readFile(path.join(root, "data", "slate.json"), "utf-8"));
+    return (s.items?.length ?? 0) + (s.owed?.length ?? 0);
+  } catch {
+    // ⚠ undefined, not 0. No slate built yet and a genuinely empty day are
+    // different facts, and a "0" badge would assert the second.
+    return undefined;
+  }
+});
+
 const navCounts = cache(async (): Promise<Partial<Record<SiteNavId, number>>> => {
   const out: Partial<Record<SiteNavId, number>> = {};
+  out.today = await slateCount();
   out.review = await pendingReviewCount();
   out.now = await nowTrackCount();
   try {
