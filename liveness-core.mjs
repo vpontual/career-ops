@@ -73,3 +73,67 @@ export function classifyLiveness({ status = 0, finalUrl = '', bodyText = '', app
 
   return { result: 'uncertain', reason: 'content present but no visible apply control found' };
 }
+
+/**
+ * classifyLivenessFromFetch — the browser-free subset of the rules above, for
+ * callers holding only an HTTP response.
+ *
+ * WHY IT EXISTS. nightly-report.mjs runs on the HOST (`node nightly-report.mjs`
+ * in nightly.sh), while every Playwright step runs inside the `applier` /
+ * `scanner` containers — the host has no chromium libraries at all. The report
+ * still has to answer "is this requisition open?", and until 2026-09-02 it did
+ * so with `fetch(url, { redirect: 'follow' })` and called any HTTP 200 OPEN.
+ * Greenhouse answers a dead job by redirecting to `<board>?error=true`, which
+ * is a 200, so the report advertised two closed roles as OPEN for three weeks.
+ *
+ * ⚠ THIS MUST NEVER RETURN `expired` FOR THIN CONTENT. classifyLiveness treats
+ * a short body as death because a browser had already hydrated the page, so
+ * "almost no text" really does mean nav-and-footer. A raw fetch of an SPA board
+ * (Ashby, Lever, Workday) returns an empty shell for a perfectly open role, so
+ * applying that rule here would declare live requisitions dead — the most
+ * expensive error in this file, and the one check-liveness.mjs's header exists
+ * to warn about. Thin content is `uncertain`, and uncertain is not dead.
+ */
+export function classifyLivenessFromFetch({ status = 0, finalUrl = '', bodyText = '' } = {}) {
+  if (status === 404 || status === 410) {
+    return { result: 'expired', reason: `HTTP ${status}` };
+  }
+
+  const expiredUrl = firstMatch(EXPIRED_URL_PATTERNS, finalUrl);
+  if (expiredUrl) {
+    return { result: 'expired', reason: `redirect to ${finalUrl}` };
+  }
+
+  const expiredBody = firstMatch(HARD_EXPIRED_PATTERNS, bodyText);
+  if (expiredBody) {
+    return { result: 'expired', reason: `pattern matched: ${expiredBody.source}` };
+  }
+
+  const listingPage = firstMatch(LISTING_PAGE_PATTERNS, bodyText);
+  if (listingPage) {
+    return { result: 'expired', reason: `pattern matched: ${listingPage.source}` };
+  }
+
+  // A non-2xx we do not recognise says something about our fetch, not about the
+  // requisition: bot protection answers 403, rate limiters 429.
+  if (status >= 400) {
+    return { result: 'uncertain', reason: `HTTP ${status}` };
+  }
+
+  if (bodyText.trim().length >= MIN_CONTENT_CHARS) {
+    return { result: 'active', reason: 'posting still served' };
+  }
+
+  return { result: 'uncertain', reason: 'thin response — cannot tell without a browser' };
+}
+
+/** Crude HTML → visible text, good enough for the pattern rules above. */
+export function htmlToText(html) {
+  return String(html ?? '')
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}

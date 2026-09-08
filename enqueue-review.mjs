@@ -28,8 +28,9 @@
 import { readFile, writeFile, readdir, copyFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 import { canonKey } from './lib/canonical.mjs';
+import { resolveApplyPath, openCache, DEFAULT_CACHE_PATH } from './lib/apply-url.mjs';
 import { loadReposts, repostNote } from './lib/repost.mjs';
 import { updateQueue } from './lib/queue-file.mjs';
 import { detectTrack } from './lib/track.mjs';
@@ -49,6 +50,10 @@ const JDS_DIR = path.join(ROOT, 'jds');
 const SCORES = path.join(ROOT, 'data', 'lead-scores.json');
 const QUEUE = path.join(ROOT, 'data', 'review-queue.json');
 const BLACKLIST = path.join(ROOT, 'data', 'blacklist.md');
+// prune-stale.mjs's ledger of rows it took off the board, with the reason. The
+// only PERSISTED record anywhere of a requisition observed dead - nightly-report
+// classifies liveness in memory and writes nothing back to the card.
+const ARCHIVE = path.join(ROOT, 'data', 'pipeline-archive.md');
 
 const args = process.argv.slice(2);
 const DRY = args.includes('--dry-run');
@@ -137,6 +142,153 @@ export function chooseSlug({ base, canon, claimedByCard, outputDirs, packKeys })
     if (key === null || key === canon) return slug;
   }
   return `${base}-${Date.now()}`;   // pathological; never seen, but never loop forever
+}
+
+// ── Expiry and revival ─────────────────────────────────────────────────────
+//
+// The queue was a RATCHET. `ageDays` was written once at mint, and the re-gate
+// in main() re-checked score and geo from lead-scores.json every night but
+// never recency - so from 2026-08-13 to 2026-09-02 not one undecided card left
+// the queue except by VP's click. Measured on the 277 pending cards that
+// morning: the badge trailed reality by a median 19 days (p90 26, max 28); 131
+// were past the window that would have refused to MINT them, 58 over 30 days;
+// the first cards on the page were minted 5-6 August and read "1d". VP's own
+// rule (lib/freshness.mjs) was applied at mint and at staging and then never
+// again.
+//
+// Rules, in order of authority:
+//
+//   1. A DECISION IS VP'S RECORD. Only a card with NO decision can expire, and
+//      only `expired` can be revived. approved / rejected / hold are never
+//      touched: the reasoning on a rejection is the most useful thing about it
+//      later, and the record is what stops a role being re-added by a scan.
+//   2. FAILING TO OBSERVE IS NOT A VERDICT. No JD on disk, an unparseable JD, a
+//      posting with no date at all: the card is left exactly as it is, badge
+//      included. Recording a failure to observe as a fact about the data is
+//      this repo's most expensive recurring bug (check-liveness.mjs's header,
+//      test-liveness-verdict.mjs, prune-stale.mjs all exist because of it), and
+//      a missing JD must never expire a live role.
+//   3. THE WINDOW IS lib/freshness.mjs's - per track AND per employer (whale,
+//      evergreen) - passed in by the caller. There is no copy of it here.
+//   4. FRESH EVIDENCE BEATS A DEATH RECORD, as long as it comes from a posting
+//      the record does not cover. The caller discards evidence from any URL
+//      prune-stale has already seen die BEFORE it is weighed; that is what stops
+//      a card expiring one night on the death record and reviving the next on
+//      the same dead req's JD, for ever.
+//   5. EXPIRY IS REVERSIBLE and nothing is deleted. The UI's `clear` un-decides
+//      an expired card exactly as it un-decides an approval; the card is then
+//      pending again and subject to the same rule on the next run.
+//
+// Pure, so test-queue-expiry.mjs can exercise every branch without a queue.
+
+// prune-stale.mjs's reasons that are a POSITIVE observation of death: the ATS
+// API said the req is gone, or a browser read the page and it said so (a
+// navigation error is never written as `page:` - see prune-stale). `age Nd`,
+// `no JD after Nd` and `not a posting` are NOT death and are excluded.
+export const POSITIVE_DEATH = /^(ats: req gone|page: )/;
+
+/**
+ * URLs prune-stale has recorded as dead, from the text of data/pipeline-archive.md.
+ * @param {string} text
+ * @returns {Map<string,string>} canonical URL -> reason, e.g. "ats: req gone (pipeline-archive 2026-08-06)"
+ */
+export function knownDeadFromArchive(text) {
+  const out = new Map();
+  for (const line of String(text || '').split('\n')) {
+    const m = /^- (\d{4}-\d{2}-\d{2}) \| ([^|]+?) \| (\S+) \|/.exec(line);
+    if (!m) continue;
+    const reason = m[2].trim();
+    if (!POSITIVE_DEATH.test(reason)) continue;
+    out.set(canonicalizeUrl(m[3]), `${reason} (pipeline-archive ${m[1]})`);
+  }
+  return out;
+}
+
+/**
+ * What should happen to this card, given what could be observed about it.
+ *
+ * @param {object} card   a review-queue item (decision, track, company, notes, ...)
+ * @param {{ageDays:number, postedAt?:string|null, updatedAt?:string|null}|null} obs
+ *        the LIVE recency, or null when nothing could be observed
+ * @param {{maxAgeDays:number, now:string, deadReason?:string, relistNote?:string}} o
+ *        maxAgeDays from lib/freshness.mjs's maxAgeDaysFor(card); now = ISO
+ *        timestamp; deadReason = the archive's reason when the card's own URL
+ *        is known dead; relistNote = lib/repost.mjs's repostNote() or ''.
+ * @returns {{action:'none'|'refresh'|'expire'|'revive', expects:string|null, patch?:object, why?:string}}
+ *        `expects` is the decision the card had when this was decided; the
+ *        writer applies the patch only if the live card still carries it.
+ */
+export function decideExpiry(card, obs, { maxAgeDays, now, deadReason = '', relistNote = '' }) {
+  const expects = card.decision ?? null;
+  if (expects !== null && expects !== 'expired') return { action: 'none', expects, why: 'decided' };
+  if (!Number.isFinite(maxAgeDays)) return { action: 'none', expects, why: 'no window' };
+
+  const observed = !!obs && Number.isFinite(obs.ageDays);
+  const fresh = observed && obs.ageDays <= maxAgeDays;
+  const today = String(now).slice(0, 10);
+  const age = observed
+    ? { ageDays: obs.ageDays, postedAt: obs.postedAt ?? null, updatedAt: obs.updatedAt ?? null }
+    : {};
+  const differs = (patch) => Object.entries(patch).some(([k, v]) => (card[k] ?? null) !== (v ?? null));
+
+  if (expects === 'expired') {
+    if (!fresh) {
+      // Still past its window, or unobservable: stays expired. The badge is
+      // kept honest when it can be.
+      return differs(age)
+        ? { action: 'refresh', expects, patch: age, why: 'expired, age corrected' }
+        : { action: 'none', expects, why: observed ? 'still past window' : 'unobserved' };
+    }
+    const was = `was expired ${String(card.decidedAt || '').slice(0, 10) || 'earlier'}`
+      + (card.expiredWhy ? ` (${card.expiredWhy})` : '');
+    // repost.mjs's note when scan-history saw the relist; otherwise the recency
+    // itself is the evidence - the employer touched the requisition.
+    const note = relistNote
+      || `↻ RELISTED: the employer touched this requisition after it expired here — it is ${obs.ageDays}d old again, inside its ${maxAgeDays}d window.`;
+    return {
+      action: 'revive', expects,
+      why: `${obs.ageDays}d <= ${maxAgeDays}d; ${was}`,
+      patch: {
+        ...age,
+        decision: null, decidedAt: null, expiredWhy: null, revivedAt: today,
+        notes: `${note} Revived ${today}; ${was}. ${card.notes || ''}`.trim(),
+      },
+    };
+  }
+
+  // Pending.
+  if (fresh) {
+    // A cleared card keeps its old expiredWhy (the UI's clear touches only
+    // decision/decidedAt); a fresh pending card should not wear a stale one.
+    const patch = { ...age, ...(card.expiredWhy ? { expiredWhy: null } : {}) };
+    return differs(patch)
+      ? { action: 'refresh', expects, patch, why: 'age corrected' }
+      : { action: 'none', expects, why: 'fresh' };
+  }
+  if (deadReason) {
+    const why = `known dead: ${deadReason}`;
+    return { action: 'expire', expects, why,
+             patch: { ...age, decision: 'expired', decidedAt: now, expiredWhy: why } };
+  }
+  if (observed) {
+    const why = `${obs.ageDays}d old, past the ${maxAgeDays}d window for ${card.track || 'this track'}`;
+    return { action: 'expire', expects, why,
+             patch: { ...age, decision: 'expired', decidedAt: now, expiredWhy: why } };
+  }
+  return { action: 'none', expects, why: 'unobserved' };
+}
+
+/**
+ * Apply a decision to the LIVE card inside the updateQueue callback. Refuses
+ * when VP decided the card between the read at the top of the run and the
+ * locked re-read here - his click wins, always.
+ * @returns {boolean} whether the patch was applied
+ */
+export function applyExpiryDecision(live, d) {
+  if (!live || !d || d.action === 'none' || !d.patch) return false;
+  if ((live.decision ?? null) !== d.expects) return false;
+  Object.assign(live, d.patch);
+  return true;
 }
 
 const main = async () => {
@@ -235,6 +387,12 @@ const main = async () => {
                   blacklisted: 0, already: 0, noApplyPath: 0,
                   aggregatorOther: 0, legacyNoFacts: 0 };
 
+  // Resolved Indeed apply URLs, one lookup per posting EVER (write-through, on
+  // disk). Opened once here rather than per call so a run does not re-read the
+  // file 2,500 times.
+  const applyCache = openCache(DEFAULT_CACHE_PATH);
+  let applyResolved = 0, applyStillDead = 0;
+
   // ── Pass 1: every scored JD, grouped by the canonical role it describes ────
   // The same posting arrives from several places - the company's Greenhouse
   // board and an Indeed scrape of it - and the copies disagree. They disagree on
@@ -274,9 +432,45 @@ const main = async () => {
       days: recencyDays(jd),
       postedDays: jd.posted_days,
       updatedDays: jd.updated_days,
+      // The employer's own timestamps, carried onto the card at mint. Without
+      // them a card minted tonight has only a frozen `ageDays`, which is honest
+      // for exactly one day and then drifts until the next re-gate picks it up.
+      // The re-gate already writes these for existing cards; setting them here
+      // closes the one-day window rather than leaving a card that lies briefly.
+      postedAt: jd.posted_at || null,
+      updatedAt: jd.updated_at || null,
+      postedAt: jd.posted_at ?? null,     // carried onto the card by the expiry pass
+      updatedAt: jd.updated_at ?? null,
       role: jd.title || '',
       url: jd.url || '',
-      applyable: isApplyable(jd.url),
+      // WHERE THE FORM ACTUALLY IS. `url` stays the identity everything joins
+      // on; this is the employer's own apply URL, recovered from the
+      // `**Apply:**` line fetch-indeed.py now writes from jobspy's
+      // `job_url_direct`. Before 2026-09-02 the field was discarded at ingest,
+      // so 351 tier-4+ roles were "aggregator-only" while the real URL sat in
+      // the scrape, and resolve-apply-paths.mjs spent ~43 min a night guessing
+      // board slugs to reconstruct it (24 of 459 last night).
+      //
+      // ⚠ RESOLVED ONLY WHEN THE PRIMARY URL HAS NO FORM. That is precisely the
+      // population this fixes, and it keeps a nightly run from making ~2,500
+      // needless HEAD requests. Resolution is cached forever per posting.
+      // ⚠ `unknown` (a timeout, a 5xx) is NOT `not-a-form`. It leaves the role
+      // exactly where it was — recorded as unresolved and retried tomorrow —
+      // because recording a network failure as a verdict about the data is this
+      // repo's most expensive recurring bug.
+      ...(await (async () => {
+        const primaryOk = isApplyable(jd.url);
+        if (primaryOk || !jd.apply_url) {
+          return { applyable: primaryOk, applyUrl: jd.url || '' };
+        }
+        const r = await resolveApplyPath(jd.apply_url, { cache: applyCache });
+        if (r.verdict === 'resolved' && r.url) {
+          applyResolved++;
+          return { applyable: true, applyUrl: r.url };
+        }
+        if (r.verdict === 'not-a-form') applyStillDead++;
+        return { applyable: false, applyUrl: jd.url || '' };
+      })()),
       jdContent: `${jd.title}\n${jd.body}`.slice(0, 20000),
       track: rec.track || detectTrack(jd),
       geo: rec.geo,
@@ -298,6 +492,76 @@ const main = async () => {
       cvCoverageRatio: rec.cvCoverageRatio ?? null,
       cvCoverageGap: rec.cvCoverageGap === true,
     });
+  }
+
+  // ── Recency: honest age, expiry, revival of the cards already in the queue ─
+  // See decideExpiry() above for the rules and the measurement. This pass only
+  // DECIDES; every write happens inside the updateQueue callback at the bottom,
+  // beside the retirements, for the reason that callback's own comment gives.
+  const knownDead = existsSync(ARCHIVE) ? knownDeadFromArchive(await readFile(ARCHIVE, 'utf-8')) : new Map();
+  const deadFor = (u) => (u ? knownDead.get(canonicalizeUrl(String(u))) : undefined) || '';
+
+  // The freshest EMPLOYER-HOSTED posting of each canonical role seen this run.
+  // A role relisted under a new URL arrives as a new JD that pass 2 correctly
+  // refuses to re-mint (its key is known, as an expired card), so this is the
+  // only place the relist can register. Aggregator copies are excluded on
+  // purpose - Indeed's date is Indeed's, not the employer's - and so is any URL
+  // prune-stale has recorded dead (rule 4 in decideExpiry).
+  const freshestByKey = new Map();
+  for (const [key, variants] of groups) {
+    for (const v of variants) {
+      if (!v.applyable || v.days == null || deadFor(v.url)) continue;
+      const cur = freshestByKey.get(key);
+      if (!cur || v.days < cur.ageDays) {
+        freshestByKey.set(key, { ageDays: v.days, postedAt: v.postedAt, updatedAt: v.updatedAt, via: v.file });
+      }
+    }
+  }
+
+  const jdFiles = new Set(files);
+  // The card's own JD (via scoreSource) and the freshest relist of the same
+  // role; whichever is more recent. null = nothing observable, which is NOT a
+  // verdict (rule 2).
+  async function observeRecency(it) {
+    let own = null;
+    if (it.scoreSource && jdFiles.has(it.scoreSource)) {
+      try {
+        const jd = parseJd(await readFile(path.join(JDS_DIR, it.scoreSource), 'utf-8'), it.scoreSource);
+        const days = recencyDays(jd);
+        if (days != null && !deadFor(jd.url)) {
+          own = { ageDays: days, postedAt: jd.posted_at ?? null, updatedAt: jd.updated_at ?? null, via: it.scoreSource };
+        }
+      } catch { /* unreadable JD = unobserved, never expiry */ }
+    }
+    const relist = freshestByKey.get(canonKey(it.company || '', it.role || ''));
+    const alt = relist && relist.via !== it.scoreSource ? relist : null;
+    if (own && alt) return alt.ageDays < own.ageDays ? alt : own;
+    return own || alt;
+  }
+
+  const now = new Date().toISOString();
+  const expiry = new Map();   // slug -> decideExpiry() result, applied under lock below
+  const exp = { expire: [], revive: [], refresh: 0, unobserved: 0, knownDead: 0, byTrack: {} };
+  for (const it of queue.items) {
+    if (it.decision != null && it.decision !== 'expired') continue;   // rule 1
+    const d = decideExpiry(it, await observeRecency(it), {
+      maxAgeDays: freshness.maxAgeDaysFor(it),       // per track AND per employer
+      now,
+      deadReason: deadFor(it.applyUrl) || deadFor(it.sourceUrl),
+      relistNote: repostNote(reposts, it.company, it.role),
+    });
+    if (d.action === 'none') { if (d.why === 'unobserved') exp.unobserved++; continue; }
+    expiry.set(it.slug, d);
+    if (d.action === 'expire') {
+      exp.expire.push({ it, why: d.why });
+      const t = it.track || '?';
+      exp.byTrack[t] = (exp.byTrack[t] || 0) + 1;
+      if (/^known dead/.test(d.why)) exp.knownDead++;
+    } else if (d.action === 'revive') {
+      exp.revive.push({ it, why: d.why });
+    } else {
+      exp.refresh++;
+    }
   }
 
   // ── Pass 2: one representative per role, then the gates ───────────────────
@@ -465,19 +729,53 @@ const main = async () => {
     console.log('  These need the employer\'s own posting resolved before they can be filled.');
   }
 
+  // ⚠ REPORTED AND SAVED BEFORE THE DRY-RUN RETURN. The cache is a memo, not a
+  // record — a --dry-run that resolves 55 redirects and throws the answers away
+  // makes every subsequent run pay for them again, and the point of the file is
+  // that a posting is resolved once, ever.
+  if (applyResolved || applyStillDead) {
+    console.log(`apply-url: ${applyResolved} aggregator-only role(s) gained a real form, ${applyStillDead} led nowhere`);
+  }
+  applyCache.save();
+
+  // What the recency pass decided, in the idiom of the re-gate block, so the
+  // nightly log shows it. Printed in dry-run too - a wildly different count from
+  // the measurement (131 past-window of 277 on 2026-09-02) means the windows
+  // are being read differently, and that has to be visible BEFORE it writes.
+  const would = DRY ? 'would ' : '';
+  const byTrack = Object.entries(exp.byTrack).sort((a, b) => b[1] - a[1]).map(([t, n]) => `${t} ${n}`).join(', ');
+  console.log(`\nexpiry: ${exp.expire.length} pending card(s) ${would}expire` +
+              ` (${byTrack || 'none'}${exp.knownDead ? `; ${exp.knownDead} known dead` : ''}),` +
+              ` ${exp.revive.length} expired card(s) ${would}revive,` +
+              ` ${exp.refresh} age badge(s) ${would}refresh,` +
+              ` ${exp.unobserved} unobserved (no readable JD or no date) left untouched`);
+  for (const { it, why } of exp.expire.slice(0, 12)) {
+    console.log(`  - [${it.score}] ${it.company} | ${String(it.role).slice(0, 44)} — ${why}`);
+  }
+  if (exp.expire.length > 12) console.log(`  ...and ${exp.expire.length - 12} more`);
+  for (const { it, why } of exp.revive) {
+    console.log(`  ↻ [${it.score}] ${it.company} | ${String(it.role).slice(0, 44)} — ${why}`);
+  }
+
   if (DRY) { console.log('\n--dry-run, queue not written'); return; }
 
-  if (unresolved.length) {
-    await writeFile(
-      path.join(ROOT, 'data', 'unresolved-apply-paths.md'),
-      `# Roles that score well but have no form behind them\n\n` +
-      `Written by enqueue-review.mjs on ${new Date().toISOString().slice(0, 10)}. Each of these is\n` +
-      `tier ${MIN_SCORE}+, geo-clean and fresh, but is known only from an aggregator listing, so\n` +
-      `there is nothing to fill. Resolving the employer's own posting promotes it into the queue.\n\n` +
-      unresolved.map(u => `- [ ] [${u.score}] ${u.company} | ${u.role} | ${u.days}d | ${u.url}`).join('\n') + '\n'
-    );
-    console.log(`\nrecorded ${unresolved.length} unresolved roles in data/unresolved-apply-paths.md`);
-  }
+  // ⚠ ALWAYS WRITTEN, EVEN WHEN EMPTY. This used to run only when the list
+  // was non-empty, so the file froze at its last non-empty state — 2026-08-18 —
+  // and nightly-report.mjs went on counting it as live every night for a
+  // fortnight. An absent write is indistinguishable from "nothing changed",
+  // which is the same silent-absence trap as a card whose age never updates.
+  await writeFile(
+    path.join(ROOT, 'data', 'unresolved-apply-paths.md'),
+    `# Roles that score well but have no form behind them\n\n` +
+    `Written by enqueue-review.mjs on ${new Date().toISOString().slice(0, 10)}. Each of these is\n` +
+    `tier ${MIN_SCORE}+, geo-clean and fresh, but is known only from an aggregator listing, so\n` +
+    `there is nothing to fill. Resolving the employer's own posting promotes it into the queue.\n\n` +
+    (unresolved.length
+      ? unresolved.map(u => `- [ ] [${u.score}] ${u.company} | ${u.role} | ${u.days}d | ${u.url}`).join('\n') + '\n'
+      : 'None — every qualifying role has a form behind it.\n')
+  );
+  console.log(`\nrecorded ${unresolved.length} unresolved roles in data/unresolved-apply-paths.md`);
+
 
   // ⚠ THIRD exit that skipped the writer. There are three ways this function
   // can decide it has no new cards - no candidates at all (here), everything
@@ -487,18 +785,16 @@ const main = async () => {
   // only the first two left Nubank's Ciudad de Mexico and Wellhub's Sao Paulo
   // roles on VP's board through two more "successful" runs, each of which
   // printed "re-gated 4 pending cards" and persisted none of them.
-  if (!fresh.length && !retiredSlugs.size) { console.log('nothing new to enqueue'); return; }
-  if (!fresh.length) {
-    console.log('nothing new to enqueue, but there are retirements to persist');
-    await updateQueue(QUEUE, (q) => {
-      const before = q.items.length;
-      q.items = q.items.filter((i) => i.decision || !retiredSlugs.has(i.slug));
-      console.log(`retired ${before - q.items.length} pending card(s) that no longer qualify`);
-    });
-    return;
-  }
-
-  await copyFile(QUEUE, `${QUEUE}.bak-enqueue-${new Date().toISOString().slice(0, 10)}`);
+  //
+  // ⚠ AND A FOURTH KIND OF WRITE, 2026-09-02: expiry. Recomputing a card's age
+  // and expiring or reviving it is a write exactly like retiring it, and it is
+  // needed most on the nights that mint nothing. So there is now NO early
+  // return between here and the single updateQueue() below - the two exits that
+  // used to live here (one of them running its own retirement-only writer, with
+  // no backup and without the coverLetter refresh) are gone. Everything that
+  // needs persisting is gathered first and the ONE guard before the writer asks
+  // "is there anything at all to write".
+  if (!fresh.length) console.log('nothing new to enqueue');
 
   // output/<slug>/ is a directory, so two roles sharing a slug would share a
   // pack. Indeed lists "Product Manager II" and "Product Manager II
@@ -607,10 +903,12 @@ const main = async () => {
       company: c.company,
       role: c.role,
       sourceUrl: c.url,
-      applyUrl: c.url,
-      ats: atsOf(c.url),
+      applyUrl: c.applyUrl || c.url,
+      ats: atsOf(c.applyUrl || c.url),
       score: c.score,
       ageDays: c.days,
+      postedAt: c.postedAt ?? null,
+      updatedAt: c.updatedAt ?? null,
       geo: c.geo,
       // ⚠ THIS WAS THE LITERAL STRING 'unknown', ALWAYS (fixed 2026-08-11).
       // Staging had already resolved the requirement and written it into the
@@ -634,16 +932,23 @@ const main = async () => {
   // Roles that qualified but have no rendered pack. These are NOT dropped - they
   // are recorded so the gap is visible and so the next staging run can pick them
   // up. Silently discarding them would trade one invisible failure for another.
+  // ⚠ ALWAYS WRITTEN, EVEN WHEN EMPTY. This used to run only when the list
+  // was non-empty, so the file froze at its last non-empty state — 2026-08-18 —
+  // and nightly-report.mjs went on counting it as live every night for a
+  // fortnight. An absent write is indistinguishable from "nothing changed",
+  // which is the same silent-absence trap as a card whose age never updates.
+  await writeFile(
+    path.join(ROOT, 'data', 'held-no-pack.md'),
+    `# Qualified roles held back for a missing CV\n\n` +
+    `Written by enqueue-review.mjs on ${new Date().toISOString().slice(0, 10)}. Each of these\n` +
+    `passed every gate but has no output/<slug>/cv.pdf, so it was NOT enqueued: per VP's\n` +
+    `standing rule, a card in the review queue must have a completed CV. Run\n` +
+    `stage-applications.mjs and re-run enqueue to promote them.\n\n` +
+    (held.length
+      ? held.map(h => `- [ ] [${h.score}] ${h.company} | ${h.role} | ${h.days}d | output/${h.slug}/ | ${h.url}`).join('\n') + '\n'
+      : 'None — every qualified role has a rendered CV.\n')
+  );
   if (held.length) {
-    await writeFile(
-      path.join(ROOT, 'data', 'held-no-pack.md'),
-      `# Qualified roles held back for a missing CV\n\n` +
-      `Written by enqueue-review.mjs on ${new Date().toISOString().slice(0, 10)}. Each of these\n` +
-      `passed every gate but has no output/<slug>/cv.pdf, so it was NOT enqueued: per VP's\n` +
-      `standing rule, a card in the review queue must have a completed CV. Run\n` +
-      `stage-applications.mjs and re-run enqueue to promote them.\n\n` +
-      held.map(h => `- [ ] [${h.score}] ${h.company} | ${h.role} | ${h.days}d | output/${h.slug}/ | ${h.url}`).join('\n') + '\n'
-    );
     console.log(`\n⚠ HELD ${held.length} qualified role(s) with no rendered CV — see data/held-no-pack.md`);
     for (const h of held.slice(0, 10)) console.log(`    [${h.score}] ${h.company} | ${String(h.role).slice(0, 52)}`);
   }
@@ -663,29 +968,69 @@ const main = async () => {
     if (found && found !== 'unknown' && found !== it.coverLetter) clRefresh.set(it.slug, found);
   }
 
-  const written = fresh.length - held.length;
-  // ⚠ THIRD reason to reach the writer. This guard has now skipped it three
-  // separate ways (see the note below); refreshing an existing card is a WRITE
-  // exactly like retiring one, and leaving clRefresh out here would have made
-  // the refresh above a no-op on precisely the nights it matters - the ones
-  // that mint nothing.
-  if (!written && !retiredSlugs.size && !clRefresh.size) {
-    console.log('\nno cards written (every qualifying role was held for a missing CV)');
-    return;
+  // ── CV coverage, same problem, same fix ───────────────────────────────────
+  // Does the CV we would actually send mention the concrete things the posting
+  // names? lib/cv-coverage.mjs answers it, rank-leads.mjs has written the answer
+  // into lead-scores.json for every scored role since 2026-08-14, and the card
+  // mints the fields (see the card build above) — but a card is minted ONCE, so
+  // every card older than that change carries nothing. Measured 2026-09-02: 276
+  // of 277 pending cards had a scored record with coverage, and 0 cards showed
+  // it. The CV COVERAGE note below, written after Harvey's rejection, could not
+  // fire on a single card in the queue.
+  //
+  // ⚠ NULL IS NOT ZERO. cvCoverage returns ratio: null when the posting names no
+  // extractable terms — 1,683 of 2,502 records — which means "not measurable
+  // here", not "the CV covers nothing". Only a measured value is copied across,
+  // so an unmeasurable posting leaves the card exactly as it was.
+  const covRefresh = new Map();
+  for (const it of queue.items) {
+    if (it.decision) continue;
+    const rec = it.scoreSource ? scores[it.scoreSource] : null;
+    if (!rec || typeof rec !== 'object') continue;
+    if (rec.cvCoverageRatio == null) continue;
+    if (it.cvCoverageRatio === rec.cvCoverageRatio) continue;
+    covRefresh.set(it.slug, {
+      cvCoverageRatio: rec.cvCoverageRatio,
+      cvCoverageMissing: rec.cvCoverageMissing || [],
+      cvCoverageGap: rec.cvCoverageGap === true,
+    });
   }
-  // ⚠ Do NOT return early when there is nothing to add but something to REMOVE.
-  // A night can legitimately produce zero new cards while still needing to
-  // retire ones that stopped qualifying, and returning here skipped the writer
-  // entirely: the run printed "re-gated 11 cards", wrote nothing, and left 7
-  // non-US roles on VP's board. Retirement is a write like any other.
-  if (!written) console.log('\nno new cards, but there are retirements to persist');
+  if (covRefresh.size) {
+    const gaps = [...covRefresh.values()].filter((v) => v.cvCoverageGap).length;
+    console.log(`CV coverage: ${covRefresh.size} existing card(s) gain a measured ratio (${gaps} with a gap)`);
+  }
+
+  const written = fresh.length - held.length;
+  if (fresh.length && !written) console.log('\nno cards written (every qualifying role was held for a missing CV)');
+
+  // ⚠ THE ONE GUARD BEFORE THE ONE WRITER. It has skipped the writer three
+  // separate ways before this - no candidates, everything held for a missing
+  // CV, written===0 - and each time a run printed a success line ("re-gated 11
+  // cards") while persisting nothing: 7 non-US roles stayed on VP's board
+  // through two more "successful" nights. Every kind of edit to an existing
+  // card is a WRITE exactly like minting one - retirement, the coverLetter
+  // refresh, and now expiry/revival/age - and each is needed most on the
+  // nights that mint nothing. Add a new kind of edit here, never a new return.
+  const edits = [
+    retiredSlugs.size && `${retiredSlugs.size} retirement(s)`,
+    clRefresh.size && `${clRefresh.size} coverLetter refresh(es)`,
+    covRefresh.size && `${covRefresh.size} CV-coverage refresh(es)`,
+    expiry.size && `${expiry.size} expiry/revival/age update(s)`,
+  ].filter(Boolean);
+  if (!written && !edits.length) { console.log('\nnothing to persist; queue not written'); return; }
+  if (!written) console.log(`\nno new cards, but there is something to persist: ${edits.join(', ')}`);
+
+  // Backed up before EVERY write, whichever kind. The retirement-only path used
+  // to reach its own writer without this.
+  await copyFile(QUEUE, `${QUEUE}.bak-enqueue-${new Date().toISOString().slice(0, 10)}`);
 
   // Append the new cards to a FRESHLY read queue, under an exclusive lock. This
   // used to write the copy loaded at the top of the run, so a decision VP made
   // in the UI during the nightly was silently reverted - and vice versa, the
   // UI's write could drop a whole night's new cards.
-  const appended = queue.items.slice(-written);
-  await updateQueue(QUEUE, (fresh) => {
+  // `slice(-0)` is the WHOLE array, so written===0 must be spelled out.
+  const appended = written ? queue.items.slice(-written) : [];
+  const final = await updateQueue(QUEUE, (fresh) => {
     // ⚠ RETIREMENT MUST HAPPEN HERE, not on the snapshot loaded at the top of
     // the run. `queue` is a read-only copy used to build the `known` index;
     // updateQueue re-reads the file under lock and writes THIS object. The first
@@ -709,12 +1054,50 @@ const main = async () => {
       }
       if (n) console.log(`refreshed coverLetter on ${n} existing card(s)`);
     }
+    if (covRefresh.size) {
+      let n = 0;
+      for (const i of fresh.items) {
+        if (i.decision) continue;
+        const v = covRefresh.get(i.slug);
+        if (!v) continue;
+        Object.assign(i, v);
+        n++;
+      }
+      if (n) console.log(`refreshed CV coverage on ${n} existing card(s)`);
+    }
+    // ⚠ EXPIRY IS APPLIED HERE, to the locked re-read, for the same reason
+    // retirement is. The snapshot was only ever consulted; the decisions carry
+    // the decision each card had at the time, and a card VP decided in the UI
+    // meanwhile is skipped - his click wins. Nothing is removed: an expired
+    // card stays in the file under decision "expired", reversible by `clear`.
+    if (expiry.size) {
+      const n = { expire: 0, revive: 0, refresh: 0, skipped: 0 };
+      for (const i of fresh.items) {
+        const d = expiry.get(i.slug);
+        if (!d) continue;
+        if (applyExpiryDecision(i, d)) n[d.action]++; else n.skipped++;
+      }
+      console.log(`expired ${n.expire} pending card(s) past their window, revived ${n.revive} relisted card(s), ` +
+                  `corrected the age on ${n.refresh} other(s)` +
+                  (n.skipped ? ` — ${n.skipped} skipped, VP decided them during the run` : ''));
+    }
     const have = new Set(fresh.items.map((i) => i.slug));
     for (const card of appended) if (!have.has(card.slug)) fresh.items.push(card);
-    fresh.note = `${fresh.note || ''} | auto-enqueued ${written} on ${new Date().toISOString().slice(0, 10)}`.replace(/^ \| /, '');
+    if (written) {
+      fresh.note = `${fresh.note || ''} | auto-enqueued ${written} on ${new Date().toISOString().slice(0, 10)}`.replace(/^ \| /, '');
+    }
   });
   console.log(`\nwrote ${written} new cards to data/review-queue.json`);
-  console.log(`queue now: ${queue.items.filter(i => !i.decision).length} pending, ${queue.items.length} total`);
+  const finalItems = final?.items || [];
+  console.log(`queue now: ${finalItems.filter(i => !i.decision).length} pending, ` +
+              `${finalItems.filter(i => i.decision === 'expired').length} expired, ${finalItems.length} total`);
 };
 
-main().catch((e) => { console.error(e); process.exit(1); });
+// Only run when invoked directly (node enqueue-review.mjs ...), so the pure
+// functions above can be imported by tests without firing the nightly step.
+// Same idiom as check-liveness.mjs. test-slug-identity.mjs has imported
+// chooseSlug from here since 2026-08-06, and until this guard that import RAN
+// main() against the live queue.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((e) => { console.error(e); process.exit(1); });
+}

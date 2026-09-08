@@ -19,7 +19,7 @@
  */
 
 import { checkUrl } from './check-liveness.mjs';
-import { classifyLiveness } from './liveness-core.mjs';
+import { classifyLiveness, classifyLivenessFromFetch, htmlToText } from './liveness-core.mjs';
 
 const T = [];
 const eq = (l, got, want) => T.push([l, got, want]);
@@ -62,6 +62,67 @@ eq('a live posting is still active',
     applyControls: ['Apply for this Job'],
   }).result,
   'active');
+
+// ── classifyLivenessFromFetch — the browser-free path used by the nightly ──
+//
+// The report runs on the host, where no chromium exists, so it classifies from
+// a plain fetch. Two opposite errors are possible and both were live:
+// calling a `?error=true` redirect OPEN (three weeks of nagging about two dead
+// roles), and — if the thin-content rule were copied over — calling every SPA
+// board dead, which would silently bury live requisitions.
+
+eq('a Greenhouse error redirect is dead',
+  classifyLivenessFromFetch({
+    status: 200,
+    finalUrl: 'https://job-boards.greenhouse.io/wikimedia?error=true',
+    bodyText: 'Jobs at Wikimedia Foundation '.repeat(40),
+  }).result,
+  'expired');
+
+eq('HTTP 404 is dead',
+  classifyLivenessFromFetch({ status: 404, finalUrl: 'https://x/y', bodyText: '' }).result,
+  'expired');
+
+eq('a hard expiry phrase is dead',
+  classifyLivenessFromFetch({
+    status: 200, finalUrl: 'https://x/y',
+    bodyText: 'This job is no longer available. ' + 'filler '.repeat(80),
+  }).result,
+  'expired');
+
+// ⚠ The load-bearing case. An Ashby/Lever/Workday shell is a few hundred bytes
+// of nothing for a perfectly open role. classifyLiveness calls that dead
+// because a browser had already hydrated the page; from a raw fetch it means
+// only that we cannot see.
+eq('a thin SPA shell is UNCERTAIN, never dead',
+  classifyLivenessFromFetch({
+    status: 200,
+    finalUrl: 'https://jobs.ashbyhq.com/acme/abc-123',
+    bodyText: '<div id="root">',
+  }).result,
+  'uncertain');
+
+eq('bot protection (403) is uncertain, not dead',
+  classifyLivenessFromFetch({ status: 403, finalUrl: 'https://x/y', bodyText: 'Access denied' }).result,
+  'uncertain');
+
+eq('rate limiting (429) is uncertain, not dead',
+  classifyLivenessFromFetch({ status: 429, finalUrl: 'https://x/y', bodyText: '' }).result,
+  'uncertain');
+
+eq('a served posting is active',
+  classifyLivenessFromFetch({
+    status: 200,
+    finalUrl: 'https://job-boards.greenhouse.io/gitlab/jobs/8684348002',
+    bodyText: 'Senior Product Manager, Growth at GitLab. '.repeat(30),
+  }).result,
+  'active');
+
+eq('no arguments does not throw', classifyLivenessFromFetch().result, 'uncertain');
+
+eq('htmlToText strips scripts and tags',
+  htmlToText('<script>var a=1</script><p>Hello <b>world</b></p>'),
+  'Hello world');
 
 let pass = 0;
 const fails = [];
